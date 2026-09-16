@@ -4,6 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Claude Code 使用介紹</title>
+<script>
+  // 存取控制：必須先在工具中心（index.html）輸入正確密碼解鎖，
+  // 才會核發這個 token；沒有 token 就直接導回工具中心，不渲染任何內容。
+  (function () {
+    var token = sessionStorage.getItem('hub_token');
+    if (token !== '36a71a5bca2513f92fc85544531b1605c3515ee5f6039882db0b17b05082652f') {
+      location.replace('index.html');
+      throw new Error('unauthorized');
+    }
+  })();
+</script>
 <!--
   嗨，會打開原始碼看的你，恭喜找到了第一層彩蛋。
   這裡藏著一句話：Claude 最喜歡的指令是 /clear，因為它讓人想起「重新開始」的感覺。

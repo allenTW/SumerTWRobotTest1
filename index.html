@@ -140,7 +140,7 @@
   }
 
   function lockHub() {
-    sessionStorage.removeItem('hub_unlocked');
+    sessionStorage.removeItem('hub_token');
     document.getElementById('hub').classList.remove('show');
     document.getElementById('lock-screen').style.display = 'block';
     document.getElementById('pw-input').value = '';
@@ -151,7 +151,8 @@
     var input = document.getElementById('pw-input').value;
     var hash = await sha256Hex(input);
     if (hash === PW_HASH) {
-      sessionStorage.setItem('hub_unlocked', '1');
+      // 核發 token 給其他工具頁面驗證用，其他頁面沒有這個 token 就無法顯示內容
+      sessionStorage.setItem('hub_token', PW_HASH);
       document.getElementById('pw-error').textContent = '';
       showHub();
     } else {
@@ -167,7 +168,7 @@
   });
 
   // 同一個瀏覽器分頁 session 內，解鎖過就不用再輸入一次
-  if (sessionStorage.getItem('hub_unlocked') === '1') {
+  if (sessionStorage.getItem('hub_token') === PW_HASH) {
     showHub();
   }
 </script>
