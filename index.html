@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Claude Code 使用介紹</title>
+<!--
+  嗨，會打開原始碼看的你，恭喜找到了第一層彩蛋。
+  這裡藏著一句話：Claude 最喜歡的指令是 /clear，因為它讓人想起「重新開始」的感覺。
+  真正好玩的彩蛋在頁面上，試試看：連續點擊標題 5 下、輸入 konami 指令、或是打開瀏覽器 console。
+-->
 <style>
   :root {
     --bg: #0f1117;
@@ -25,7 +30,7 @@
     line-height: 1.7;
   }
   header {
-    padding: 64px 24px 48px;
+    padding: 64px 24px 32px;
     text-align: center;
     border-bottom: 1px solid var(--border);
     background: radial-gradient(ellipse at top, var(--accent-soft), transparent 60%);
@@ -33,6 +38,9 @@
   header h1 {
     font-size: 2.4rem;
     margin: 0 0 12px;
+    cursor: pointer;
+    user-select: none;
+    display: inline-block;
   }
   header p {
     color: var(--text-dim);
@@ -40,6 +48,25 @@
     max-width: 560px;
     margin: 0 auto;
   }
+  .meta-bar {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+  }
+  .badge b { color: var(--accent); font-weight: 600; }
   main {
     max-width: 860px;
     margin: 0 auto;
@@ -113,6 +140,45 @@
     color: var(--text);
     font-size: 0.95rem;
   }
+  .scenario {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .scenario h3 {
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .scenario .num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+  .scenario p { font-size: 0.95rem; margin-top: 0; }
+  .toc {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+  }
+  .toc a {
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
   footer {
     text-align: center;
     color: var(--text-dim);
@@ -120,14 +186,68 @@
     padding: 32px 24px;
     border-top: 1px solid var(--border);
   }
+  footer .footer-meta {
+    margin-top: 8px;
+    font-size: 0.8rem;
+    opacity: 0.8;
+  }
   a { color: var(--accent); }
+
+  /* 彩蛋樣式 */
+  #egg-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 17, 23, 0.92);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+    backdrop-filter: blur(4px);
+  }
+  #egg-overlay.show { display: flex; }
+  #egg-overlay .egg-box {
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 420px;
+  }
+  #egg-overlay .egg-box h3 { color: var(--accent); margin-top: 0; }
+  #egg-overlay button {
+    margin-top: 16px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 18px;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  .confetti-piece {
+    position: fixed;
+    top: -20px;
+    z-index: 1000;
+    pointer-events: none;
+    border-radius: 2px;
+  }
+  @keyframes fall {
+    to { transform: translateY(110vh) rotate(540deg); opacity: 0.3; }
+  }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Claude Code 使用介紹</h1>
+  <h1 id="egg-title" title="試試連續點我 5 下">Claude Code 使用介紹</h1>
   <p>Anthropic 推出的命令列 AI 開發助手，讓 Claude 直接在你的終端機中讀取程式碼、編輯檔案、執行指令，協助完成軟體工程任務。</p>
+  <div class="meta-bar">
+    <span class="badge">✍️ 作者：<b>allenTW</b></span>
+    <span class="badge">🏷️ 版本：<b>v1.1.0</b></span>
+    <span class="badge">🗓️ 最後更新：<b>2026-09-17</b></span>
+    <span class="badge">📦 <a href="https://github.com/allenTW/SumerTWRobotTest1" target="_blank" rel="noopener">原始碼</a></span>
+  </div>
 </header>
 
 <main>
@@ -191,17 +311,108 @@ claude</code></pre>
       <tr><td><code>/clear</code></td><td>清空目前對話上下文</td></tr>
       <tr><td><code>/init</code></td><td>初始化 CLAUDE.md，建立專案說明文件</td></tr>
       <tr><td><code>/config</code></td><td>調整模型、主題等設定</td></tr>
+      <tr><td><code>/compact</code></td><td>手動壓縮目前對話上下文，釋放空間</td></tr>
       <tr><td><code>Esc</code></td><td>中斷目前執行中的動作</td></tr>
+      <tr><td><code>Shift+Tab</code></td><td>切換權限模式（如自動接受編輯）</td></tr>
     </table>
   </section>
 
-  <section>
-    <h2>基本使用範例</h2>
-    <pre><code>$ claude
-&gt; 幫我找出這個專案裡所有沒有測試覆蓋的函式
-&gt; 修正 src/api.py 裡的第 42 行的 bug，並補上單元測試
-&gt; 幫我把這次的改動建立一個 git commit</code></pre>
-    <p>你可以用自然語言描述任務，Claude Code 會自動規劃並使用工具（讀檔、搜尋、編輯、執行測試）逐步完成。</p>
+  <section id="scenarios">
+    <h2>詳細使用情境與範例</h2>
+    <p>以下整理 8 種常見的實際使用情境，每種都附上可以直接照抄修改的提示詞範例。</p>
+
+    <div class="toc">
+      <a href="#s1">1. 除錯</a>
+      <a href="#s2">2. 重構程式碼</a>
+      <a href="#s3">3. 補齊測試</a>
+      <a href="#s4">4. Code Review</a>
+      <a href="#s5">5. 撰寫文件</a>
+      <a href="#s6">6. 熟悉陌生專案</a>
+      <a href="#s7">7. Git 與 PR 流程</a>
+      <a href="#s8">8. 大型跨檔案變更</a>
+    </div>
+
+    <div class="scenario" id="s1">
+      <h3><span class="num">1</span>除錯（Bug Fixing）</h3>
+      <p>描述症狀（錯誤訊息、重現步驟）比直接說「這裡壞了」更有效，Claude Code 會自動搜尋相關檔案、加上除錯輸出、執行測試驗證。</p>
+      <pre><code>&gt; 使用者回報登入後偶爾會被導回登入頁，錯誤log是
+  "TokenExpiredError: jwt expired"，
+  幫我找出原因並修正
+
+&gt; 執行 npm test 後 auth.test.js 有 3 個失敗，
+  幫我逐一排查並修好，改完後重新跑一次測試確認</code></pre>
+    </div>
+
+    <div class="scenario" id="s2">
+      <h3><span class="num">2</span>重構程式碼</h3>
+      <p>可以指定重構範圍與目標（可讀性、效能、拆分職責），Claude Code 會先說明計畫再動手，避免大範圍破壞性修改。</p>
+      <pre><code>&gt; UserService.ts 裡的 processOrder 函式有 200 多行，
+  幫我拆成幾個職責單一的小函式，行為要完全不變
+
+&gt; 把這個專案裡重複出現的 fetch + try/catch 邏輯
+  抽成一個共用的 apiClient，並套用到所有呼叫的地方</code></pre>
+    </div>
+
+    <div class="scenario" id="s3">
+      <h3><span class="num">3</span>補齊測試</h3>
+      <p>可以請它先分析覆蓋率缺口，再針對邊界案例（空值、例外、併發）補測試，而不只是測 happy path。</p>
+      <pre><code>&gt; 幫我找出 src/utils 裡沒有單元測試的函式，
+  列出清單後依優先順序幫我補上測試
+
+&gt; 幫 PaymentValidator 補上測試，特別涵蓋
+  金額為 0、負數、超過上限、幣別不合法這幾種邊界情況</code></pre>
+    </div>
+
+    <div class="scenario" id="s4">
+      <h3><span class="num">4</span>Code Review / 安全性檢查</h3>
+      <p>在合併前讓 Claude Code 幫忙看一次 diff，抓邏輯錯誤、資源洩漏、或 OWASP Top 10 類型的安全性問題。</p>
+      <pre><code>&gt; 幫我 review 目前這個分支和 main 的差異，
+  找出可能的 bug 或可以簡化的地方
+
+&gt; 檢查這次改動有沒有 SQL injection 或
+  XSS 風險，特別是有拼接使用者輸入的地方</code></pre>
+    </div>
+
+    <div class="scenario" id="s5">
+      <h3><span class="num">5</span>撰寫文件</h3>
+      <p>可以請它依照程式碼實際行為產生文件，而不是憑空捏造，並保持與現有文件風格一致。</p>
+      <pre><code>&gt; 幫這個專案寫一份 README，
+  說明安裝方式、環境變數設定、和啟動指令
+
+&gt; 幫 src/api/*.ts 裡所有 exported 函式
+  補上 JSDoc 註解，說明參數與回傳值</code></pre>
+    </div>
+
+    <div class="scenario" id="s6">
+      <h3><span class="num">6</span>熟悉陌生專案（Onboarding）</h3>
+      <p>接手一個不熟悉的大型專案時，可以請它先幫忙畫出架構全貌，再逐步深入特定模組。</p>
+      <pre><code>&gt; 我剛加入這個專案，幫我快速說明整體架構、
+  主要模組分工、以及資料是怎麼從前端流到資料庫的
+
+&gt; 這個專案的付款流程程式碼在哪裡？
+  幫我整理呼叫順序和涉及的檔案清單</code></pre>
+    </div>
+
+    <div class="scenario" id="s7">
+      <h3><span class="num">7</span>Git 與 PR 流程</h3>
+      <p>Claude Code 會參考專案既有的 commit 風格撰寫訊息，也能協助處理 merge conflict。</p>
+      <pre><code>&gt; 幫我把目前的改動分成兩個邏輯清楚的 commit，
+  一個是重構、一個是新功能
+
+&gt; 幫我建立一個 PR，標題和描述要說明
+  這次改了什麼、為什麼改、以及怎麼測試</code></pre>
+    </div>
+
+    <div class="scenario" id="s8">
+      <h3><span class="num">8</span>大型跨檔案變更（遷移、升級）</h3>
+      <p>面對牽涉數十個檔案的變更（例如升級套件版本、更換 API），建議先讓它進入 Plan Mode 產出計畫，確認範圍後再執行，避免改壞不相關的地方。</p>
+      <pre><code>&gt; 我們要把整個專案從 Moment.js 換成 date-fns，
+  先幫我列出所有用到 Moment 的地方和影響範圍，
+  規劃好之後再開始改
+
+&gt; 把所有 class component 改寫成 function component
+  加 hooks，一個檔案一個檔案做，每改完一個就跑一次測試</code></pre>
+    </div>
   </section>
 
   <section>
@@ -211,6 +422,7 @@ claude</code></pre>
       <li>對於有風險的操作（如刪除檔案、強制推送），Claude Code 會先詢問確認再執行。</li>
       <li>複雜任務建議先讓它進入 Plan Mode 產出計畫，確認方向無誤後再執行。</li>
       <li>可透過 <code>.claude/settings.json</code> 客製化權限與行為。</li>
+      <li>對話太長時可用 <code>/compact</code> 或 <code>/clear</code>，避免上下文過度膨脹影響回應品質。</li>
     </ul>
   </section>
 
@@ -218,7 +430,81 @@ claude</code></pre>
 
 <footer>
   此頁面為靜態介紹頁，內容整理自 Claude Code 官方文件與功能說明。
+  <div class="footer-meta">作者 allenTW ・ 版本 v1.1.0 ・ 最後更新 2026-09-17 ・ 頁面裡藏了 3 個彩蛋，找找看 👀</div>
 </footer>
+
+<!-- 彩蛋 1：連續點擊標題 5 次 -->
+<div id="egg-overlay">
+  <div class="egg-box">
+    <h3 id="egg-title-text">🎉 彩蛋！</h3>
+    <p id="egg-body">你發現了第一個彩蛋。</p>
+    <button onclick="document.getElementById('egg-overlay').classList.remove('show')">關閉</button>
+  </div>
+</div>
+
+<script>
+  // 彩蛋 1：連續點擊標題 5 次，跳出隱藏訊息
+  (function() {
+    var clicks = 0, timer = null;
+    document.getElementById('egg-title').addEventListener('click', function() {
+      clicks++;
+      clearTimeout(timer);
+      timer = setTimeout(function() { clicks = 0; }, 1500);
+      if (clicks >= 5) {
+        clicks = 0;
+        document.getElementById('egg-title-text').textContent = '🥚 彩蛋一：標題連點王';
+        document.getElementById('egg-body').textContent =
+          '恭喜你連續點了 5 下標題！Claude 想跟你說：每一次 Hello World，都是一段新旅程的開始。';
+        document.getElementById('egg-overlay').classList.add('show');
+      }
+    });
+  })();
+
+  // 彩蛋 2：輸入 konami 指令（上上下下左右左右BA）觸發五彩紙屑
+  (function() {
+    var seq = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+    var pos = 0;
+    document.addEventListener('keydown', function(e) {
+      var key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+      if (key === seq[pos]) {
+        pos++;
+        if (pos === seq.length) {
+          pos = 0;
+          launchConfetti();
+          document.getElementById('egg-title-text').textContent = '🥚 彩蛋二：Konami Code';
+          document.getElementById('egg-body').textContent =
+            '你輸入了經典的 Konami Code！這是寫給老派玩家的彩蛋，也是給認真讀完整個頁面的你的獎勵。';
+          document.getElementById('egg-overlay').classList.add('show');
+        }
+      } else {
+        pos = (key === seq[0]) ? 1 : 0;
+      }
+    });
+    function launchConfetti() {
+      var colors = ['#d97757', '#f0c090', '#9aa0b4', '#e8e9ee'];
+      for (var i = 0; i < 60; i++) {
+        var piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.left = Math.random() * 100 + 'vw';
+        piece.style.width = piece.style.height = (6 + Math.random() * 6) + 'px';
+        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.animation = 'fall ' + (2 + Math.random() * 2) + 's linear forwards';
+        document.body.appendChild(piece);
+        (function(p) { setTimeout(function() { p.remove(); }, 4200); })(piece);
+      }
+    }
+  })();
+
+  // 彩蛋 3：打開瀏覽器 console 會看到的隱藏訊息
+  console.log(
+    '%c🥚 彩蛋三：你打開了 console！',
+    'color:#d97757; font-size:16px; font-weight:bold;'
+  );
+  console.log(
+    '%c這個頁面由 Claude Code 協助開發，作者是 allenTW。\n如果你也在用 Claude Code，歡迎把你發現的彩蛋數量告訴作者 😉',
+    'color:#9aa0b4; font-size:12px;'
+  );
+</script>
 
 </body>
 </html>
