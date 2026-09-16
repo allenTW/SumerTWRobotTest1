@@ -244,7 +244,7 @@
   <p>Anthropic 推出的命令列 AI 開發助手，讓 Claude 直接在你的終端機中讀取程式碼、編輯檔案、執行指令，協助完成軟體工程任務。</p>
   <div class="meta-bar">
     <span class="badge">✍️ 作者：<b>allenTW</b></span>
-    <span class="badge">🏷️ 版本：<b>v1.2.0</b></span>
+    <span class="badge">🏷️ 版本：<b>v1.3.0</b></span>
     <span class="badge">🗓️ 最後更新：<b>2026-09-17</b></span>
     <span class="badge">📦 <a href="https://github.com/allenTW/SumerTWRobotTest1" target="_blank" rel="noopener">原始碼</a></span>
   </div>
@@ -507,11 +507,25 @@ claude</code></pre>
     </ul>
   </section>
 
+  <section id="jokes">
+    <h2>寫程式的人需要的笑話</h2>
+    <p>認真看完前面這麼多內容，休息一下。以下是給工程師和 Claude Code 使用者的專屬笑話，點按鈕換下一則。</p>
+    <div class="scenario">
+      <p id="joke-text" style="font-size: 1.05rem; color: var(--text); min-height: 3em;">
+        為什麼工程師分不清楚萬聖節和聖誕節？因為 Oct 31 == Dec 25。
+      </p>
+      <button id="joke-btn" onclick="nextJoke()"
+        style="background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 8px 18px; cursor: pointer; font-size: 0.9rem;">
+        😂 換下一則
+      </button>
+    </div>
+  </section>
+
 </main>
 
 <footer>
   此頁面為靜態介紹頁，內容整理自 Claude Code 官方文件與功能說明。
-  <div class="footer-meta">作者 allenTW ・ 版本 v1.2.0 ・ 最後更新 2026-09-17 ・ 頁面裡藏了 3 個彩蛋，找找看 👀</div>
+  <div class="footer-meta">作者 allenTW ・ 版本 v1.3.0 ・ 最後更新 2026-09-17 ・ 頁面裡藏了 3 個彩蛋，找找看 👀</div>
 </footer>
 
 <!-- 彩蛋 1：連續點擊標題 5 次 -->
@@ -575,6 +589,25 @@ claude</code></pre>
       }
     }
   })();
+
+  // 笑話輪播
+  var jokes = [
+    '為什麼工程師分不清楚萬聖節和聖誕節？因為 Oct 31 == Dec 25。',
+    '有 10 種人看得懂這個笑話：懂二進位的，和不懂的。',
+    '我請 Claude Code 幫我修 bug，它說先幫我補了 12 個測試 —— 現在我有 13 個 bug 了。',
+    '工程師的三大美德：懶惰、沒耐性、傲慢。用 Claude Code 之後，懶惰的部分終於名正言順了。',
+    '我問 Claude：「/clear 之後你還記得我嗎？」它說：「不記得，但這才是我們感情最單純的時候。」',
+    'PM：「這個功能很簡單，改一下就好。」工程師：「好，那你來改一下 CSS。」',
+    '為什麼要用 Claude Code？因為它不會在 code review 時說「這是我很久以前寫的」。',
+    '世界上有兩種程式碼：能動的，和沒有註解的。通常是同一份。',
+    'git commit -m "fix bug" 之後，才是真正 bug 的開始。',
+    '有人問我為什麼喜歡 Plan Mode，我說：因為它讓我在闖禍之前，至少先知道自己要闖什麼禍。'
+  ];
+  var jokeIndex = 0;
+  function nextJoke() {
+    jokeIndex = (jokeIndex + 1) % jokes.length;
+    document.getElementById('joke-text').textContent = jokes[jokeIndex];
+  }
 
   // 彩蛋 3：打開瀏覽器 console 會看到的隱藏訊息
   console.log(
