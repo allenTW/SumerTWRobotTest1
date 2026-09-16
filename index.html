@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code 使用介紹</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #171a23;
+    --surface-2: #1f2330;
+    --text: #e8e9ee;
+    --text-dim: #9aa0b4;
+    --accent: #d97757;
+    --accent-soft: rgba(217, 119, 87, 0.15);
+    --border: #2a2e3c;
+    --code-bg: #11141c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+  }
+  header {
+    padding: 64px 24px 48px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    background: radial-gradient(ellipse at top, var(--accent-soft), transparent 60%);
+  }
+  header h1 {
+    font-size: 2.4rem;
+    margin: 0 0 12px;
+  }
+  header p {
+    color: var(--text-dim);
+    font-size: 1.1rem;
+    max-width: 560px;
+    margin: 0 auto;
+  }
+  main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+  section {
+    margin-bottom: 56px;
+  }
+  h2 {
+    font-size: 1.5rem;
+    border-left: 4px solid var(--accent);
+    padding-left: 12px;
+    margin-bottom: 20px;
+  }
+  h3 {
+    font-size: 1.1rem;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  p { color: var(--text-dim); }
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .card h3 { margin-top: 0; color: var(--accent); }
+  .card p { margin: 0; font-size: 0.95rem; }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    overflow-x: auto;
+    font-size: 0.9rem;
+  }
+  code {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    color: #f0c090;
+  }
+  pre code { color: #c9d1e0; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  th, td {
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.95rem;
+  }
+  th {
+    background: var(--surface-2);
+    color: var(--accent);
+  }
+  tr:last-child td { border-bottom: none; }
+  .tip {
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 14px 18px;
+    color: var(--text);
+    font-size: 0.95rem;
+  }
+  footer {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    padding: 32px 24px;
+    border-top: 1px solid var(--border);
+  }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Claude Code 使用介紹</h1>
+  <p>Anthropic 推出的命令列 AI 開發助手，讓 Claude 直接在你的終端機中讀取程式碼、編輯檔案、執行指令，協助完成軟體工程任務。</p>
+</header>
+
+<main>
+
+  <section>
+    <h2>什麼是 Claude Code？</h2>
+    <p>
+      Claude Code 是一個在終端機（CLI）中運作的 AI 程式設計代理人。它可以理解你整個專案的程式碼結構、
+      直接讀寫檔案、執行 shell 指令、操作 git，並依照你的指示完成除錯、重構、新增功能等任務。
+      除了 CLI，也提供桌面版、網頁版（claude.ai/code）以及 VS Code、JetBrains 的 IDE 擴充套件。
+    </p>
+  </section>
+
+  <section>
+    <h2>安裝方式</h2>
+    <pre><code># 使用 npm 安裝
+npm install -g @anthropic-ai/claude-code
+
+# 安裝完成後，在專案資料夾中啟動
+cd your-project
+claude</code></pre>
+    <div class="tip">💡 需要 Node.js 環境。安裝完成後首次執行會引導你登入 Anthropic 帳號完成授權。</div>
+  </section>
+
+  <section>
+    <h2>核心功能</h2>
+    <div class="cards">
+      <div class="card">
+        <h3>讀寫程式碼</h3>
+        <p>直接瀏覽、搜尋、編輯專案中的檔案，理解跨檔案的邏輯關係。</p>
+      </div>
+      <div class="card">
+        <h3>執行指令</h3>
+        <p>可執行測試、建置、安裝套件等 shell 指令，並根據結果自動調整。</p>
+      </div>
+      <div class="card">
+        <h3>Git 整合</h3>
+        <p>協助撰寫 commit、開 PR、檢視 diff，遵循專案既有的提交風格。</p>
+      </div>
+      <div class="card">
+        <h3>子代理與技能</h3>
+        <p>可呼叫專門的 Subagent 處理探索、審查等任務，或使用自訂 Skill 執行固定流程。</p>
+      </div>
+      <div class="card">
+        <h3>Plan Mode</h3>
+        <p>先規劃再執行，複雜任務可先產出計畫供你確認後再動手實作。</p>
+      </div>
+      <div class="card">
+        <h3>MCP 擴充</h3>
+        <p>透過 Model Context Protocol 連接外部工具，如資料庫、瀏覽器、第三方服務。</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>常用指令</h2>
+    <table>
+      <tr><th>指令</th><th>說明</th></tr>
+      <tr><td><code>claude</code></td><td>在目前資料夾啟動互動式對話</td></tr>
+      <tr><td><code>/help</code></td><td>顯示使用說明與可用指令</td></tr>
+      <tr><td><code>/clear</code></td><td>清空目前對話上下文</td></tr>
+      <tr><td><code>/init</code></td><td>初始化 CLAUDE.md，建立專案說明文件</td></tr>
+      <tr><td><code>/config</code></td><td>調整模型、主題等設定</td></tr>
+      <tr><td><code>Esc</code></td><td>中斷目前執行中的動作</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>基本使用範例</h2>
+    <pre><code>$ claude
+&gt; 幫我找出這個專案裡所有沒有測試覆蓋的函式
+&gt; 修正 src/api.py 裡的第 42 行的 bug，並補上單元測試
+&gt; 幫我把這次的改動建立一個 git commit</code></pre>
+    <p>你可以用自然語言描述任務，Claude Code 會自動規劃並使用工具（讀檔、搜尋、編輯、執行測試）逐步完成。</p>
+  </section>
+
+  <section>
+    <h2>使用建議</h2>
+    <ul style="color: var(--text-dim);">
+      <li>在專案根目錄放置 <code>CLAUDE.md</code>，說明專案慣例、架構與注意事項，Claude Code 會自動參考。</li>
+      <li>對於有風險的操作（如刪除檔案、強制推送），Claude Code 會先詢問確認再執行。</li>
+      <li>複雜任務建議先讓它進入 Plan Mode 產出計畫，確認方向無誤後再執行。</li>
+      <li>可透過 <code>.claude/settings.json</code> 客製化權限與行為。</li>
+    </ul>
+  </section>
+
+</main>
+
+<footer>
+  此頁面為靜態介紹頁，內容整理自 Claude Code 官方文件與功能說明。
+</footer>
+
+</body>
+</html>
