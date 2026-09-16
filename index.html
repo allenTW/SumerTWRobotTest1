@@ -244,7 +244,7 @@
   <p>Anthropic 推出的命令列 AI 開發助手，讓 Claude 直接在你的終端機中讀取程式碼、編輯檔案、執行指令，協助完成軟體工程任務。</p>
   <div class="meta-bar">
     <span class="badge">✍️ 作者：<b>allenTW</b></span>
-    <span class="badge">🏷️ 版本：<b>v1.1.0</b></span>
+    <span class="badge">🏷️ 版本：<b>v1.2.0</b></span>
     <span class="badge">🗓️ 最後更新：<b>2026-09-17</b></span>
     <span class="badge">📦 <a href="https://github.com/allenTW/SumerTWRobotTest1" target="_blank" rel="noopener">原始碼</a></span>
   </div>
@@ -315,6 +315,87 @@ claude</code></pre>
       <tr><td><code>Esc</code></td><td>中斷目前執行中的動作</td></tr>
       <tr><td><code>Shift+Tab</code></td><td>切換權限模式（如自動接受編輯）</td></tr>
     </table>
+  </section>
+
+  <section id="settings">
+    <h2>.claude/settings.json 詳解：如何減少授權跳出視窗</h2>
+    <p>
+      Claude Code 預設對「有風險的動作」（執行 shell 指令、編輯檔案、存取網路等）都會跳出確認視窗。
+      這是安全設計，但如果每次都要手動點「允許」，體驗會很卡。<code>settings.json</code> 讓你把
+      「已經確認安全、常用的動作」預先加入允許清單，之後就不會再跳出詢問。
+    </p>
+
+    <h3>設定檔放在哪裡？（優先順序由高到低）</h3>
+    <table>
+      <tr><th>檔案位置</th><th>作用範圍</th><th>建議用途</th></tr>
+      <tr><td><code>~/.claude/settings.json</code></td><td>個人全域設定</td><td>你自己在所有專案都通用的允許清單</td></tr>
+      <tr><td><code>.claude/settings.json</code></td><td>專案共用設定</td><td>建議提交進 git，讓整個團隊共享同一套規則</td></tr>
+      <tr><td><code>.claude/settings.local.json</code></td><td>專案個人設定</td><td>只給你自己用，通常加進 <code>.gitignore</code>，不提交</td></tr>
+    </table>
+    <div class="tip">💡 更精確的名詞是「權限規則的合併」而非單純覆蓋：不同層級的 allow / deny / ask 清單會合併生效，deny 的優先權高於 allow。若組織有設定「企業層級管理政策」，那一層的規則優先權最高，個人設定無法覆蓋。</div>
+
+    <h3>基本結構</h3>
+    <pre><code>{
+  "permissions": {
+    "allow": [
+      "Bash(npm run test:*)",
+      "Bash(npm run lint)",
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Read(~/.zshrc)"
+    ],
+    "deny": [
+      "Bash(rm -rf:*)",
+      "Bash(git push --force:*)"
+    ],
+    "ask": [
+      "Bash(npm publish:*)"
+    ]
+  },
+  "defaultMode": "default"
+}</code></pre>
+    <p>規則語法是 <code>工具名稱(細節條件)</code>：</p>
+    <ul style="color: var(--text-dim);">
+      <li><code>allow</code>：符合的動作直接放行，不再詢問</li>
+      <li><code>deny</code>：符合的動作永遠拒絕，優先權最高（即使 allow 裡也有寫，deny 仍會擋下）</li>
+      <li><code>ask</code>：即使有更寬鬆的 allow 規則，符合這裡的仍會強制詢問（適合「大部分允許，但這個例外要小心」的情境）</li>
+      <li>Bash 規則可用 <code>:*</code> 當作字首萬用字元，例如 <code>Bash(npm run test:*)</code> 會允許 <code>npm run test</code>、<code>npm run test:unit</code> 等所有以此開頭的指令</li>
+      <li>Read / Edit / Write 規則可用檔案路徑或 glob，例如 <code>Edit(src/**)</code> 只允許編輯 <code>src</code> 目錄內的檔案</li>
+    </ul>
+
+    <h3>減少授權跳出視窗的實用做法</h3>
+    <div class="cards">
+      <div class="card">
+        <h3>1. 允許唯讀 / 無風險指令</h3>
+        <p>把 <code>git status</code>、<code>git diff:*</code>、<code>git log:*</code>、<code>ls</code>、<code>cat</code>、<code>grep</code> 這類不會修改任何東西的指令加入 allow，是最安全也最有感的第一步。</p>
+      </div>
+      <div class="card">
+        <h3>2. 針對專案常用指令加白名單</h3>
+        <p>例如 <code>Bash(npm run test:*)</code>、<code>Bash(npm run build)</code>、<code>Bash(pytest:*)</code>，把你天天在用、確定安全的指令加進去。</p>
+      </div>
+      <div class="card">
+        <h3>3. 用 /permissions 互動式管理</h3>
+        <p>在對話中輸入 <code>/permissions</code> 可以直接檢視、新增、刪除目前的權限規則，不用手動編輯 JSON。</p>
+      </div>
+      <div class="card">
+        <h3>4. 用 fewer-permission-prompts 技能自動產生</h3>
+        <p>這是內建的 Skill，會掃描你近期的對話紀錄，找出你「已經常常手動允許」的唯讀指令，自動幫你整理成建議的 allowlist 加進 <code>.claude/settings.json</code>。</p>
+      </div>
+      <div class="card">
+        <h3>5. 謹慎使用 defaultMode</h3>
+        <p><code>"defaultMode": "acceptEdits"</code> 會自動接受檔案編輯類動作，適合你已經很信任的專案；但危險操作（強制推送、刪除、bypass 所有權限）不建議整批放行，寧可用明確的 allow 清單逐項加。</p>
+      </div>
+      <div class="card">
+        <h3>6. deny 擋住高風險指令</h3>
+        <p>即使你把整體模式放寬，也建議明確 <code>deny</code> 掉 <code>rm -rf</code>、<code>git push --force</code>、<code>git reset --hard</code> 這類不可逆操作，多一層保險。</p>
+      </div>
+    </div>
+
+    <div class="tip">
+      ⚠️ 提醒：allowlist 是「你確定安全才加」的清單，不是越多越好。像 <code>curl</code>、<code>rm</code>、
+      涉及金鑰 / 憑證的指令，建議保留詢問，避免 Claude Code 在你沒注意時執行到非預期的高風險操作。
+    </div>
   </section>
 
   <section id="scenarios">
@@ -430,7 +511,7 @@ claude</code></pre>
 
 <footer>
   此頁面為靜態介紹頁，內容整理自 Claude Code 官方文件與功能說明。
-  <div class="footer-meta">作者 allenTW ・ 版本 v1.1.0 ・ 最後更新 2026-09-17 ・ 頁面裡藏了 3 個彩蛋，找找看 👀</div>
+  <div class="footer-meta">作者 allenTW ・ 版本 v1.2.0 ・ 最後更新 2026-09-17 ・ 頁面裡藏了 3 個彩蛋，找找看 👀</div>
 </footer>
 
 <!-- 彩蛋 1：連續點擊標題 5 次 -->
