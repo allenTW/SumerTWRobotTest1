@@ -77,7 +77,8 @@
   .report-card .stats div { font-size: 0.8rem; color: var(--text-muted); }
   .report-card .stats b { display: block; color: var(--pos); font-size: 1.05rem; font-weight: 600; line-height: 1.4; }
   .report-card .stats b.neg { color: #d03b3b; }
-  .report-card .tag.revised { color: #fab219; border-color: rgba(250,178,25,0.4); }
+  .report-card .tag.live { color: #3987e5; border-color: rgba(57,135,229,0.45); }
+  .report-card .tag.dead { color: #d03b3b; border-color: rgba(208,59,59,0.45); }
 
   .empty {
     border: 1px dashed var(--border); border-radius: 14px;
@@ -97,30 +98,47 @@
 </header>
 
 <main>
-  <div class="count">共 1 份報告</div>
+  <div class="count">共 2 份報告</div>
 
-  <a class="report-card" href="crypto-de1-report.html">
+  <a class="report-card" href="crypto-te1-report.html">
     <div class="top">
       <span class="title">趨勢引擎 TE-1</span>
       <span class="tag">BTCUSDT</span>
       <span class="tag">15 分 K</span>
       <span class="tag">2019–2026</span>
-      <span class="tag revised">已更正</span>
+      <span class="tag live">現行</span>
     </div>
     <div class="desc">
-      比特幣永續合約的唐奇安突破趨勢策略。含年化報酬計算、互動式淨值曲線，
-      以及一份完整的稽核紀錄——說明前一版「雙引擎 DE-1」公布的數字為何高估、錯在哪裡，
-      以及比特幣四年減半週期理論的測試為何結果是無效。
+      比特幣永續合約的唐奇安突破趨勢策略。含巢狀 walk-forward 驗證、挑選規則比較、
+      未經最佳化的樸素參數網格，以及為什麼結論是「選定參數後就不要再重新最佳化」。
     </div>
     <div class="stats">
-      <div>年化報酬<b>21.5%</b></div>
+      <div>年化報酬（區間）<b>15% ～ 26%</b></div>
       <div>Sharpe<b>0.79</b></div>
       <div>最大回撤<b class="neg">-33.7%</b></div>
       <div>往返交易<b>187</b></div>
     </div>
   </a>
 
-  <div class="empty">更多報告陸續加入</div>
+  <a class="report-card" href="crypto-de1-report.html">
+    <div class="top">
+      <span class="title">雙引擎 DE-1</span>
+      <span class="tag">BTCUSDT</span>
+      <span class="tag">2019–2026</span>
+      <span class="tag dead">已退役</span>
+    </div>
+    <div class="desc">
+      趨勢＋震盪雙引擎依 ADX 動態配重。曾公布年化 35.9%，稽核後證實是兩個時間切分錯誤造成的高估。
+      本頁保留完整錯誤分析、震盪引擎為何失效，以及比特幣四年減半週期理論的測試為何結果是無效。
+    </div>
+    <div class="stats">
+      <div>曾公布<b class="neg">35.9%</b></div>
+      <div>更正後<b>6.2%</b></div>
+      <div>退役原因<b style="font-size:.86rem">不如趨勢引擎單獨</b></div>
+    </div>
+  </a>
+
+<div class="empty">更多報告陸續加入</div>
 
   <p class="note">
     所有報告的數據皆由回測程式直接產生，非人工抄錄。回測結果不代表未來表現，也不構成投資建議。
