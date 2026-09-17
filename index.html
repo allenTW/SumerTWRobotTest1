@@ -86,20 +86,6 @@
   .tool-card:hover { border-color: var(--accent); }
   .tool-card .title { color: var(--accent); font-size: 1.1rem; font-weight: 600; margin-bottom: 6px; }
   .tool-card .desc { color: var(--text-dim); font-size: 0.9rem; }
-  .tool-card .stats {
-    display: flex; gap: 14px; flex-wrap: wrap;
-    margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);
-  }
-  .tool-card .stats span { font-size: 0.82rem; color: var(--text-dim); }
-  .tool-card .stats b { color: #3987e5; font-weight: 600; }
-  .cat {
-    font-size: 0.8rem;
-    letter-spacing: 1px;
-    color: #6b7185;
-    margin: 28px 0 12px;
-    text-transform: uppercase;
-  }
-  .cat:first-of-type { margin-top: 0; }
   .lock-btn {
     display: inline-block;
     margin-top: 8px;
@@ -126,24 +112,14 @@
     <h1>🧰 工具中心</h1>
     <div class="sub">所有工具、報告與說明文件的入口</div>
 
-    <div class="cat">工具與文件</div>
-
     <a class="tool-card" href="claude-code.html">
       <div class="title">📘 Claude Code 使用介紹</div>
       <div class="desc">安裝方式、核心功能、常用指令、詳細使用情境與範例、權限設定教學</div>
     </a>
 
-    <div class="cat">加密貨幣報告</div>
-
-    <a class="tool-card" href="crypto-de1-report.html">
-      <div class="title">📊 雙引擎 DE-1 · BTCUSDT 回測報告</div>
-      <div class="desc">趨勢引擎＋震盪引擎依市場狀態動態配重的比特幣永續合約策略。含策略架構拆解、互動式淨值曲線、逐年報酬與未來情境壓力測試。</div>
-      <div class="stats">
-        <span>總報酬 <b>+766%</b></span>
-        <span>Sharpe <b>1.30</b></span>
-        <span>最大回撤 <b>-31%</b></span>
-        <span>2019–2026</span>
-      </div>
+    <a class="tool-card" href="crypto-reports.html">
+      <div class="title">📊 加密貨幣報告</div>
+      <div class="desc">自動化交易策略的回測結果與績效分析</div>
     </a>
 
     <span class="lock-btn" onclick="lockHub()">🔒 重新鎖定</span>

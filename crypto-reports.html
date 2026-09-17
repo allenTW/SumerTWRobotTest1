@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>加密貨幣報告</title>
+<script>
+  // 存取控制：必須先在工具中心（index.html）輸入正確密碼解鎖，
+  // 才會核發這個 token；沒有 token 就直接導回工具中心，不渲染任何內容。
+  (function () {
+    var token = sessionStorage.getItem('hub_token');
+    if (token !== '36a71a5bca2513f92fc85544531b1605c3515ee5f6039882db0b17b05082652f') {
+      location.replace('index.html');
+      throw new Error('unauthorized');
+    }
+  })();
+</script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #171a23;
+    --surface-2: #1f2330;
+    --text: #e8e9ee;
+    --text-dim: #9aa0b4;
+    --text-muted: #6b7185;
+    --accent: #d97757;
+    --accent-soft: rgba(217, 119, 87, 0.15);
+    --border: #2a2e3c;
+    --pos: #3987e5;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+  }
+  header {
+    padding: 40px 24px 28px;
+    border-bottom: 1px solid var(--border);
+    background: radial-gradient(ellipse at top, var(--accent-soft), transparent 60%);
+  }
+  .inner { max-width: 760px; margin: 0 auto; }
+  .crumb { font-size: 0.9rem; margin-bottom: 20px; }
+  .crumb a { text-decoration: none; color: var(--text-dim); }
+  .crumb a:hover { color: var(--accent); }
+  header h1 { font-size: 1.9rem; margin: 0 0 6px; }
+  header p { color: var(--text-dim); margin: 0; font-size: 1rem; }
+
+  main { max-width: 760px; margin: 0 auto; padding: 36px 24px 72px; }
+  .count { color: var(--text-muted); font-size: 0.82rem; letter-spacing: 1px; margin-bottom: 14px; }
+
+  .report-card {
+    display: block;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    text-decoration: none;
+    color: var(--text);
+    margin-bottom: 16px;
+    transition: border-color 0.15s, transform 0.15s;
+  }
+  .report-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .report-card .top { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+  .report-card .title { color: var(--accent); font-size: 1.15rem; font-weight: 600; }
+  .report-card .tag {
+    font-size: 0.72rem; color: var(--text-muted);
+    border: 1px solid var(--border); border-radius: 999px; padding: 1px 9px;
+  }
+  .report-card .desc { color: var(--text-dim); font-size: 0.92rem; margin-bottom: 14px; }
+  .report-card .stats {
+    display: flex; gap: 18px; flex-wrap: wrap;
+    padding-top: 14px; border-top: 1px solid var(--border);
+  }
+  .report-card .stats div { font-size: 0.8rem; color: var(--text-muted); }
+  .report-card .stats b { display: block; color: var(--pos); font-size: 1.05rem; font-weight: 600; line-height: 1.4; }
+  .report-card .stats b.neg { color: #d03b3b; }
+
+  .empty {
+    border: 1px dashed var(--border); border-radius: 14px;
+    padding: 20px; color: var(--text-muted); font-size: 0.88rem; text-align: center;
+  }
+  .note { color: var(--text-muted); font-size: 0.85rem; margin-top: 28px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="inner">
+    <div class="crumb"><a href="index.html">← 工具中心</a></div>
+    <h1>📊 加密貨幣報告</h1>
+    <p>自動化交易策略的回測結果與績效分析</p>
+  </div>
+</header>
+
+<main>
+  <div class="count">共 1 份報告</div>
+
+  <a class="report-card" href="crypto-de1-report.html">
+    <div class="top">
+      <span class="title">雙引擎 DE-1</span>
+      <span class="tag">BTCUSDT</span>
+      <span class="tag">15 分 K</span>
+      <span class="tag">2019–2026</span>
+    </div>
+    <div class="desc">
+      趨勢引擎與震盪引擎並行，依 ADX 動態分配資金的比特幣永續合約策略。
+      含策略架構拆解、年化報酬計算、互動式淨值曲線，以及「大循環收斂、短線盤整加劇」的未來情境壓力測試。
+    </div>
+    <div class="stats">
+      <div>年化報酬<b>35.9%</b></div>
+      <div>總報酬<b>+765.7%</b></div>
+      <div>Sharpe<b>1.30</b></div>
+      <div>最大回撤<b class="neg">-31.2%</b></div>
+    </div>
+  </a>
+
+  <div class="empty">更多報告陸續加入</div>
+
+  <p class="note">
+    所有報告的數據皆由回測程式直接產生，非人工抄錄。回測結果不代表未來表現，也不構成投資建議。
+  </p>
+</main>
+
+</body>
+</html>
