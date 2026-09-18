@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude 看板</title>
+<script>
+  // 存取控制：必須先在工具中心（index.html）輸入正確密碼解鎖，
+  // 才會核發這個 token；沒有 token 就直接導回工具中心，不渲染任何內容。
+  (function () {
+    var token = sessionStorage.getItem('hub_token');
+    if (token !== '36a71a5bca2513f92fc85544531b1605c3515ee5f6039882db0b17b05082652f') {
+      location.replace('index.html');
+      throw new Error('unauthorized');
+    }
+  })();
+</script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #171a23;
+    --surface-2: #1f2330;
+    --text: #e8e9ee;
+    --text-dim: #9aa0b4;
+    --text-muted: #6b7185;
+    --accent: #d97757;
+    --border: #2a2e3c;
+    /* 狀態色：固定四色，永遠搭配圖示與文字，不靠顏色單獨表意 */
+    --good: #0ca30c;
+    --warning: #fab219;
+    --serious: #ec835a;
+    --critical: #d03b3b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-text-size-adjust: 100%;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 24px 16px 56px; }
+
+  header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+  h1 { font-size: 1.5rem; margin: 0; }
+  .back { color: var(--text-dim); text-decoration: none; font-size: 0.85rem; }
+  .back:hover { color: var(--accent); }
+  .updated { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 20px; }
+  .updated b { color: var(--text); font-weight: 600; }
+
+  /* 提示橫幅 —— 圖示 + 文字 + 顏色，三者同時出現 */
+  .banner {
+    display: none;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 0.9rem;
+    margin-bottom: 18px;
+    border: 1px solid;
+    background: var(--surface);
+  }
+  .banner.show { display: block; }
+  .banner.warn { border-color: var(--warning); color: var(--warning); }
+  .banner.crit { border-color: var(--critical); color: var(--critical); }
+
+  /* 數字磚 */
+  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 26px; }
+  .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 12px; }
+  .tile .n { font-size: 1.7rem; font-weight: 650; line-height: 1.2; font-variant-numeric: tabular-nums; }
+  .tile .l { color: var(--text-dim); font-size: 0.78rem; margin-top: 2px; }
+  .tile.good .n { color: var(--good); }
+  .tile.warn .n { color: var(--warning); }
+
+  h2 { font-size: 0.95rem; color: var(--text-dim); font-weight: 600; margin: 26px 0 10px; letter-spacing: 0.04em; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+  .card.busy { border-left: 3px solid var(--good); }
+  .card.stalled { border-left: 3px solid var(--warning); }
+  .card.idle { border-left: 3px solid var(--text-muted); }
+  .card.ended { border-left: 3px solid var(--border); }
+
+  /* min-width:0 —— flex 子項目預設不會縮到比內容窄，長字串會把整頁撐寬 */
+  .card-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .card-name { font-size: 1.05rem; font-weight: 600; word-break: break-word; min-width: 0; }
+  .state { font-size: 0.82rem; font-weight: 600; white-space: nowrap; }
+  .state.busy { color: var(--good); }
+  .state.stalled { color: var(--warning); }
+  .state.idle { color: var(--text-dim); }
+  .state.ended { color: var(--text-muted); }
+
+  .path { color: var(--text-dim); font-size: 0.82rem; word-break: break-all; margin-top: 2px; }
+  .rows { margin-top: 10px; display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; font-size: 0.86rem; }
+  .rows dt { color: var(--text-muted); white-space: nowrap; }
+  .rows dd { margin: 0; color: var(--text); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; min-width: 0; }
+  .rows dd .dim { color: var(--text-dim); }
+
+  .repo { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; }
+  .repo > div { min-width: 0; }
+  .repo .r-name { font-weight: 600; font-size: 0.95rem; }
+  .repo .r-sub { color: var(--text-dim); font-size: 0.8rem; overflow-wrap: anywhere; }
+  .repo .r-right { text-align: right; font-size: 0.8rem; color: var(--text-dim); white-space: nowrap; }
+  .repo .dirty { color: var(--warning); }
+
+  .empty { color: var(--text-muted); font-size: 0.88rem; padding: 14px 0; }
+  footer { margin-top: 34px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.78rem; }
+  footer p { margin: 4px 0; overflow-wrap: anywhere; }
+
+  @media (max-width: 480px) {
+    .tiles { grid-template-columns: repeat(2, 1fr); }
+    .rows { column-gap: 10px; }
+  }
+  /* 很窄的螢幕才把標籤和數值拆成上下兩行，一般手機維持兩欄比較省高度 */
+  @media (max-width: 360px) {
+    .rows { grid-template-columns: 1fr; }
+    .rows dt { margin-top: 6px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>🖥 Claude 看板</h1>
+    <a class="back" href="index.html">← 回工具中心</a>
+  </header>
+  <div class="updated" id="updated">讀取中…</div>
+
+  <div class="banner" id="banner"></div>
+
+  <div class="tiles" id="tiles"></div>
+
+  <h2>CLAUDE CODE 工作階段</h2>
+  <div id="cli"></div>
+
+  <div id="desktop-wrap" style="display:none">
+    <h2>桌面版 / COWORK 工作階段</h2>
+    <div id="desktop"></div>
+  </div>
+
+  <h2>程式庫狀態</h2>
+  <div id="repos"></div>
+
+  <footer>
+    <p>這是唯讀看板。資料由 Mac mini 上的 <code>tools/claude_monitor.py</code> 每分鐘產生一次，寫進 <code>claude-status.json</code> 後推送到 GitHub；本頁每 60 秒自動重新讀取。</p>
+    <p id="meta"></p>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var REFRESH_MS = 60000;   // 重新抓 JSON
+  var TICK_MS = 10000;      // 只重算「幾分鐘前」
+  var STALE_WARN_MIN = 8;   // 心跳 3 分鐘，漏兩次才示警
+  var STALE_CRIT_MIN = 20;
+  var data = null;
+
+  var STATES = {
+    busy:    { icon: '▶', label: '執行中' },
+    idle:    { icon: '⏸', label: '閒置' },
+    stalled: { icon: '⚠', label: '停滯' },
+    ended:   { icon: '■', label: '已結束' },
+    unknown: { icon: '·', label: '未知' }
+  };
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined && text !== null) n.textContent = text;
+    return n;
+  }
+
+  function parseTs(s) {
+    if (!s) return null;
+    var t = Date.parse(s);
+    return isNaN(t) ? null : t;
+  }
+
+  // 「多久以前」——用瀏覽器當下時間算，所以頁面被快取住也看得出資料舊了
+  function ago(iso) {
+    var t = parseTs(iso);
+    if (t === null) return '—';
+    return dur(Math.max(0, Date.now() - t)) + '前';
+  }
+
+  function dur(ms) {
+    var s = Math.floor(ms / 1000);
+    if (s < 10) return '剛剛';
+    if (s < 60) return s + ' 秒';
+    var m = Math.floor(s / 60);
+    if (m < 60) return m + ' 分鐘';
+    var h = Math.floor(m / 60), rm = m % 60;
+    if (h < 24) return h + ' 小時' + (rm ? ' ' + rm + ' 分' : '');
+    var d = Math.floor(h / 24), rh = h % 24;
+    return d + ' 天' + (rh ? ' ' + rh + ' 小時' : '');
+  }
+
+  function tokens(n) {
+    if (!n && n !== 0) return null;
+    if (n < 1000) return String(n);
+    if (n < 1000000) return (n / 1000).toFixed(n < 10000 ? 1 : 0) + 'k';
+    return (n / 1000000).toFixed(2) + 'M';
+  }
+
+  function clock(iso) {
+    var t = parseTs(iso);
+    if (t === null) return '—';
+    var d = new Date(t);
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
+           ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+
+  function addRow(dl, label, value) {
+    if (value === null || value === undefined || value === '') return;
+    dl.appendChild(el('dt', null, label));
+    dl.appendChild(el('dd', null, value));
+  }
+
+  function sessionCard(s) {
+    var state = STATES[s.status] || STATES.unknown;
+    var card = el('div', 'card ' + (STATES[s.status] ? s.status : 'idle'));
+
+    var top = el('div', 'card-top');
+    top.appendChild(el('div', 'card-name', s.name || '（未命名）'));
+    top.appendChild(el('div', 'state ' + (STATES[s.status] ? s.status : 'idle'),
+                       state.icon + ' ' + state.label));
+    card.appendChild(top);
+
+    if (s.cwd) card.appendChild(el('div', 'path', s.cwd + (s.git_branch ? '  ·  ' + s.git_branch : '')));
+
+    var dl = el('dl', 'rows');
+    if (s.kind === 'cli') {
+      addRow(dl, '最後動作', s.last_tool ? s.last_tool + '  ·  ' + ago(s.last_tool_at || s.last_activity)
+                                         : ago(s.last_activity));
+      addRow(dl, '已啟動', s.started_at ? dur(Date.now() - parseTs(s.started_at)) : null);
+    } else {
+      addRow(dl, '最後活動', ago(s.last_activity));
+    }
+    var model = [s.model, s.effort].filter(Boolean).join('  ·  ');
+    addRow(dl, '模型', model || null);
+    var ctx = tokens(s.context_tokens);
+    addRow(dl, '上下文', ctx ? ctx + ' tokens' : null);
+    if (s.records) {
+      addRow(dl, '累計', s.records.toLocaleString() + ' 筆' +
+             (s.tool_calls ? '  ·  ' + s.tool_calls.toLocaleString() + ' 次工具' : '') +
+             (s.counts_partial ? '（從監控啟動起算）' : ''));
+    }
+    if (s.last_prompt) addRow(dl, '最後指示', s.last_prompt);
+    if (s.last_text) addRow(dl, '最後回覆', s.last_text);
+    card.appendChild(dl);
+    return card;
+  }
+
+  function repoRow(r) {
+    var row = el('div', 'repo');
+    var left = el('div');
+    left.appendChild(el('div', 'r-name', r.name));
+    var sub = (r.branch ? r.branch : '') +
+              (r.last_commit && r.last_commit.subject ? '  ·  ' + r.last_commit.subject : '');
+    left.appendChild(el('div', 'r-sub', sub));
+    row.appendChild(left);
+
+    var right = el('div', 'r-right');
+    if (r.last_commit && r.last_commit.at) right.appendChild(el('div', null, ago(r.last_commit.at)));
+    var flags = [];
+    if (r.dirty_files) flags.push('⚠ ' + r.dirty_files + ' 個未提交');
+    if (r.ahead) flags.push('↑ ' + r.ahead + ' 未推送');
+    if (flags.length) {
+      var f = el('div', 'dirty', flags.join('  '));
+      right.appendChild(f);
+    }
+    row.appendChild(right);
+    return row;
+  }
+
+  function render() {
+    if (!data) return;
+    var gen = parseTs(data.generated_at);
+    var ageMin = gen === null ? Infinity : (Date.now() - gen) / 60000;
+
+    document.getElementById('updated').innerHTML =
+      '資料時間 <b>' + clock(data.generated_at) + '</b>（' + ago(data.generated_at) + '）';
+
+    var banner = document.getElementById('banner');
+    banner.className = 'banner';
+    if (ageMin >= STALE_CRIT_MIN) {
+      banner.className = 'banner show crit';
+      banner.textContent = '⛔ 資料已經 ' + dur(Date.now() - gen) + '沒有更新。Mac mini 上的收集器、網路或外接碟可能出了問題，畫面上的狀態不能當真。';
+    } else if (ageMin >= STALE_WARN_MIN) {
+      banner.className = 'banner show warn';
+      banner.textContent = '⚠ 資料已經 ' + dur(Date.now() - gen) + '沒有更新，可能剛好卡住，也可能收集器停了。';
+    } else if (data.host && data.host.last_push_error) {
+      banner.className = 'banner show warn';
+      banner.textContent = '⚠ 上一次推送 GitHub 失敗：' + data.host.last_push_error;
+    }
+
+    var sessions = data.sessions || [];
+    var cli = sessions.filter(function (s) { return s.kind === 'cli'; });
+    var desktop = sessions.filter(function (s) { return s.kind !== 'cli'; });
+    var sm = data.summary || {};
+
+    var tiles = document.getElementById('tiles');
+    tiles.innerHTML = '';
+    [['good', sm.busy || 0, '執行中'],
+     ['', sm.idle || 0, '閒置'],
+     [(sm.stalled ? 'warn' : ''), sm.stalled || 0, '停滯'],
+     ['', (data.repos || []).length, '程式庫']].forEach(function (t) {
+      var tile = el('div', 'tile' + (t[0] ? ' ' + t[0] : ''));
+      tile.appendChild(el('div', 'n', t[1]));
+      tile.appendChild(el('div', 'l', t[2]));
+      tiles.appendChild(tile);
+    });
+
+    var cliBox = document.getElementById('cli');
+    cliBox.innerHTML = '';
+    if (!cli.length) cliBox.appendChild(el('div', 'empty', '目前沒有執行中的 Claude Code 工作階段。'));
+    cli.forEach(function (s) { cliBox.appendChild(sessionCard(s)); });
+
+    document.getElementById('desktop-wrap').style.display = desktop.length ? 'block' : 'none';
+    var dBox = document.getElementById('desktop');
+    dBox.innerHTML = '';
+    desktop.forEach(function (s) { dBox.appendChild(sessionCard(s)); });
+
+    var rBox = document.getElementById('repos');
+    rBox.innerHTML = '';
+    var repos = data.repos || [];
+    if (!repos.length) rBox.appendChild(el('div', 'empty', '沒有偵測到程式庫。'));
+    repos.forEach(function (r) { rBox.appendChild(repoRow(r)); });
+
+    document.getElementById('meta').textContent =
+      '主機 ' + ((data.host && data.host.hostname) || '—') +
+      '  ·  收集器 v' + (data.monitor_version || '—') +
+      '  ·  詳細程度 ' + (data.detail || '—') +
+      (data.detail === 'standard' ? '（不含對話內容）' : '');
+  }
+
+  function load() {
+    fetch('claude-status.json?t=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (json) { data = json; render(); })
+      .catch(function (err) {
+        var banner = document.getElementById('banner');
+        banner.className = 'banner show crit';
+        banner.textContent = '⛔ 讀不到 claude-status.json（' + err.message + '）。' +
+          (data ? '以下為上一次成功讀取的內容。' : '收集器可能還沒跑過第一次。');
+      });
+  }
+
+  load();
+  setInterval(load, REFRESH_MS);
+  setInterval(render, TICK_MS);   // 頁面沒重新抓資料時，相對時間也要繼續走
+})();
+</script>
+</body>
+</html>

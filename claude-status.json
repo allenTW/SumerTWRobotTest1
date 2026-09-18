@@ -1,0 +1,95 @@
+{
+ "detail": "standard",
+ "generated_at": "2026-09-18T03:49:59Z",
+ "heartbeat_seconds": 180,
+ "host": {
+  "branch": "main",
+  "hostname": "Mac-mini.local",
+  "last_push_error": null
+ },
+ "interval_seconds": 60,
+ "monitor_version": "1.0.0",
+ "repos": [
+  {
+   "ahead": 0,
+   "branch": "main",
+   "dirty_files": 0,
+   "last_commit": {
+    "at": "2026-09-18T10:47:37+07:00",
+    "hash": "a29cfd1",
+    "subject": "Find a hedge that works, by dropping 唐1 as the trigger"
+   },
+   "name": "SumerTWRobotTest2",
+   "path": "/Volumes/FCP 512GB/Claude/SumerTWRobotTest2"
+  },
+  {
+   "ahead": 0,
+   "branch": "main",
+   "dirty_files": 3,
+   "last_commit": {
+    "at": "2026-09-18T10:13:50+07:00",
+    "hash": "5a1f4fb",
+    "subject": "Correct two cost errors in the COIN-M overlay model"
+   },
+   "name": "SumerTWRobotTest1",
+   "path": "/Volumes/FCP 512GB/Claude/SumerTWRobotTest1"
+  }
+ ],
+ "sessions": [
+  {
+   "context_tokens": 122558,
+   "counts_partial": false,
+   "cwd": "/Volumes/FCP 512GB/Claude",
+   "effort": "high",
+   "entrypoint": "sdk-cli",
+   "git_branch": null,
+   "kind": "cli",
+   "last_activity": "2026-09-18T03:49:40.678Z",
+   "last_tool": "Bash",
+   "last_tool_at": "2026-09-18T03:49:40.678Z",
+   "model": "claude-opus-5",
+   "name": "claude-7b",
+   "output_tokens": 164634,
+   "pid": 22898,
+   "raw_status": "busy",
+   "records": 343,
+   "session_id": "44f177ff-fceb-5202-be3f-6e60af4f03f3",
+   "started_at": "2026-09-18T03:24:51Z",
+   "status": "busy",
+   "status_updated_at": "2026-09-18T03:24:52Z",
+   "tool_calls": 68,
+   "version": "2.1.273"
+  },
+  {
+   "context_tokens": 484138,
+   "counts_partial": true,
+   "cwd": "/Volumes/FCP 512GB/Claude",
+   "effort": "high",
+   "entrypoint": "sdk-cli",
+   "git_branch": null,
+   "kind": "cli",
+   "last_activity": "2026-09-18T03:48:09.981Z",
+   "last_tool": "Bash",
+   "last_tool_at": "2026-09-18T03:47:37.575Z",
+   "model": "claude-opus-5",
+   "name": "claude-b9",
+   "output_tokens": 48713,
+   "pid": 5620,
+   "raw_status": "idle",
+   "records": 4105,
+   "session_id": "9b2f6501-f3f7-5b49-a417-03154aba3464",
+   "started_at": "2026-09-16T19:30:14Z",
+   "status": "idle",
+   "status_updated_at": "2026-09-18T03:48:12Z",
+   "tool_calls": 10,
+   "version": "2.1.273"
+  }
+ ],
+ "summary": {
+  "busy": 1,
+  "cli_total": 2,
+  "desktop_total": 0,
+  "idle": 1,
+  "stalled": 0
+ }
+}
