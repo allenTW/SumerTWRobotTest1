@@ -141,7 +141,7 @@
   <div id="repos"></div>
 
   <footer>
-    <p>這是唯讀看板。資料由 Mac mini 上的 <code>tools/claude_monitor.py</code> 每分鐘產生一次，寫進 <code>claude-status.json</code> 後推送到 GitHub；本頁每 60 秒自動重新讀取，直接讀 commit 內容，不必等 Pages 重新建置。</p>
+    <p>這是唯讀看板。Mac mini 上的 <code>tools/claude_monitor.py</code> 每分鐘檢查一次狀態，有變動才推送（最快 3 分鐘一次，沒變動也會每 10 分鐘送一次心跳）。本頁每 60 秒重新讀取一次，同時問 GitHub Pages 和 raw 兩個來源，用比較新的那份。</p>
     <p id="meta"></p>
   </footer>
 
@@ -153,8 +153,10 @@
 
   var REFRESH_MS = 60000;   // 重新抓 JSON
   var TICK_MS = 10000;      // 只重算「幾分鐘前」
-  var STALE_WARN_MIN = 8;   // 心跳 3 分鐘，漏兩次才示警
-  var STALE_CRIT_MIN = 20;
+  // 正常情況最舊也就是「心跳 10 分鐘 + 來源快取 5 分鐘」，所以門檻要壓在那之後，
+  // 否則看板會三不五時自己喊狼來了，喊久了就沒人信。
+  var STALE_WARN_MIN = 18;
+  var STALE_CRIT_MIN = 40;
   var data = null;
   var source = null;        // 資料是從哪個來源讀到的，顯示在頁尾方便排錯
 
@@ -336,36 +338,47 @@
       '  ·  收集器 v' + (data.monitor_version || '—') +
       '  ·  詳細程度 ' + (data.detail || '—') +
       (data.detail === 'standard' ? '（不含對話內容）' : '') +
-      '  ·  來源 ' + (source === 0 ? 'raw.githubusercontent' : 'GitHub Pages');
+      '  ·  來源 ' + (source || '—');
   }
 
-  // 優先讀 raw.githubusercontent：GitHub Pages 每次推送都要重新建置，而且每小時
-  // 的建置次數有軟性上限，一分鐘推一次一定塞車；raw 讀到的是 commit 當下的內容。
-  // raw 失敗（例如 repo 改成私有）就退回 Pages 上的同名檔案。
+  // 兩個來源都讀，取比較新的那份。兩邊都會落後，但落後的原因不一樣：
+  //   Pages —— 每次推送要重新建置（35-65 秒），忙的時候會排隊，但查詢字串可以繞過 CDN 快取
+  //   raw   —— 不必建置，但 CDN 快取 300 秒而且**會忽略查詢字串**，所以最多慢 5 分鐘
+  // 任一邊掛掉或落後，另一邊都還能把畫面撐住。
   var SOURCES = [
-    'https://raw.githubusercontent.com/allenTW/SumerTWRobotTest1/main/claude-status.json',
-    'claude-status.json'
+    { name: 'GitHub Pages', url: 'claude-status.json' },
+    { name: 'raw.githubusercontent',
+      url: 'https://raw.githubusercontent.com/allenTW/SumerTWRobotTest1/main/claude-status.json' }
   ];
 
   function fetchFrom(i) {
-    return fetch(SOURCES[i] + '?t=' + Date.now(), { cache: 'no-store' })
+    return fetch(SOURCES[i].url + '?t=' + Date.now(), { cache: 'no-store' })
       .then(function (r) {
         if (!r.ok) throw new Error('HTTP ' + r.status);
         return r.json();
       })
-      .then(function (json) { source = i; return json; });
+      .then(function (json) { return { i: i, json: json }; })
+      .catch(function () { return null; });
   }
 
   function load() {
-    fetchFrom(0)
-      .catch(function () { return fetchFrom(1); })
-      .then(function (json) { data = json; render(); })
-      .catch(function (err) {
+    Promise.all([fetchFrom(0), fetchFrom(1)]).then(function (results) {
+      var best = null;
+      results.forEach(function (res) {
+        if (!res || !res.json) return;
+        if (!best || parseTs(res.json.generated_at) > parseTs(best.json.generated_at)) best = res;
+      });
+      if (!best) {
         var banner = document.getElementById('banner');
         banner.className = 'banner show crit';
-        banner.textContent = '⛔ 讀不到 claude-status.json（' + err.message + '）。' +
+        banner.textContent = '⛔ 兩個來源都讀不到 claude-status.json。' +
           (data ? '以下為上一次成功讀取的內容。' : '收集器可能還沒跑過第一次。');
-      });
+        return;
+      }
+      data = best.json;
+      source = SOURCES[best.i].name;
+      render();
+    });
   }
 
   load();

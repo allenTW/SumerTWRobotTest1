@@ -87,11 +87,27 @@ git clone https://github.com/allenTW/SumerTWRobotTest1.git ~/claude-status-repo
 GitHub 網頁看該 repo 裡的 `claude-status.json`（私有 repo 不能用 GitHub Pages，
 所以看得到原始 JSON、看不到這個排版好的頁面）。
 
-## 推送頻率
+## 更新頻率：為什麼不是真的每分鐘
 
-內容有變才 commit；完全沒變也至少每 3 分鐘推一次心跳，這樣網頁才能分辨
-「沒事發生」和「收集器掛了」。commit 訊息一律是 `status: Claude 看板 N 執行中 / N 閒置`，
-之後要整理歷史很好篩。
+收集是每分鐘做一次（純本機，很便宜），但**發佈**被 GitHub 的免費靜態託管卡住：
+
+| 來源 | 落後多久 | 原因 |
+|---|---|---|
+| GitHub Pages | 約 1–2 分鐘 | 每次推送都要重新建置（實測 35–65 秒），分支式流程還有每小時 10 次建置的軟性上限 |
+| raw.githubusercontent | 最多 5 分鐘 | 不必建置，但 CDN 快取 300 秒，而且**會忽略查詢字串**，`?t=` 這種手法對它無效 |
+
+所以看板同時問兩個來源、取比較新的那份，並且把推送節流成：**有變動最快 3 分鐘推一次，
+沒變動每 10 分鐘送一次心跳**。實際看到的狀態大約落後 1–4 分鐘。
+
+一分鐘推一次的話，建置會排隊互相蓋掉（實測已經出現 `errored` 的建置），
+而且會排擠到你發報告時的建置 —— 這才是不設成一分鐘的主因。
+
+想改：plist 裡的 `CLAUDE_MONITOR_MIN_PUSH`（秒）與 `CLAUDE_MONITOR_HEARTBEAT`（秒）。
+真的要逼近一分鐘，就得把 Pages 換成 GitHub Actions 部署（`build_type=workflow`），
+那條路沒有每小時建置上限 —— 但會動到現有報告網站的部署方式，弄壞就整站不更新，
+所以沒有自作主張改。
+
+commit 訊息一律是 `status: Claude 看板 N 執行中 / N 閒置`，之後要整理歷史很好篩。
 
 ## 疑難排解
 

@@ -40,8 +40,12 @@ STATE_FILE = HOME / ".claude-monitor" / "state.json"
 # verbose = 再加上最後一則訊息的摘錄（會把工作內容發佈到公開網頁，預設關閉）
 DETAIL = os.environ.get("CLAUDE_MONITOR_DETAIL", "standard")
 
+# 收集每分鐘做一次（很便宜，純本機），但推送要節制：GitHub Pages 每次推送都要重新
+# 建置，每次 35-65 秒，而且分支式的舊流程有「每小時 10 次建置」的軟性上限。推太快
+# 會排隊、互相蓋掉，還會排擠到發報告時的建置。所以內容有變也至少隔這麼久才推。
+MIN_PUSH_SECONDS = int(os.environ.get("CLAUDE_MONITOR_MIN_PUSH", "180"))
 # 內容沒變也至少每 HEARTBEAT_SECONDS 推一次，讓網頁能分辨「沒事發生」和「收集器掛了」
-HEARTBEAT_SECONDS = int(os.environ.get("CLAUDE_MONITOR_HEARTBEAT", "180"))
+HEARTBEAT_SECONDS = int(os.environ.get("CLAUDE_MONITOR_HEARTBEAT", "600"))
 PUSH = os.environ.get("CLAUDE_MONITOR_PUSH", "1") != "0"
 
 DESKTOP_WINDOW_HOURS = 24      # 桌面版工作階段只列出這段時間內有活動的
@@ -469,11 +473,10 @@ def publish(payload, state):
     """寫檔、必要時 commit 並推送。回傳這次做了什麼。"""
     pub = state.setdefault("publish", {})
     digest = content_hash(payload)
-    last_commit_ts = pub.get("last_commit_ts") or 0
+    since_last = time.time() - (pub.get("last_commit_ts") or 0)
     changed = digest != pub.get("hash")
-    heartbeat_due = (time.time() - last_commit_ts) >= HEARTBEAT_SECONDS
     pub["last_run_ts"] = time.time()
-    if not changed and not heartbeat_due:
+    if not (changed and since_last >= MIN_PUSH_SECONDS) and since_last < HEARTBEAT_SECONDS:
         return "skipped"
 
     OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
