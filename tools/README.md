@@ -22,6 +22,40 @@ cd "/Volumes/FCP 512GB/Claude/SumerTWRobotTest1/tools"
 
 網址：<https://allentw.github.io/SumerTWRobotTest1/> → 工具中心 → 🖥 Claude 看板。
 
+### 必要的一次性授權：完全取用磁碟
+
+這個 repo 放在外接 USB 碟上。launchd 代理程式預設**沒有**存取外接碟的權限
+（互動式終端機有，所以手動跑得動、排程跑不動），日誌會出現：
+
+```
+can't open file '.../claude_monitor.py': [Errno 1] Operation not permitted
+```
+
+在 Mac mini 上做一次就好：
+
+1. 系統設定 → 隱私權與安全性 → **完全取用磁碟**
+2. 按 ＋ → 在檔案選擇視窗按 `Cmd+Shift+G` → 貼上
+   `/Library/Developer/CommandLineTools/usr/bin/python3`
+3. 打開它的開關
+4. `launchctl kickstart -k gui/$(id -u)/com.allentw.claude-monitor`
+
+代價要知道：**這台機器上所有用這個 python3 執行的腳本都會拿到完整磁碟存取權**，
+不只是這個收集器。
+
+### 不授權的替代做法
+
+不想給 python3 這麼大的權限，就把監控用的 clone 放進家目錄（家目錄不受這層保護）：
+
+```bash
+git clone https://github.com/allenTW/SumerTWRobotTest1.git ~/claude-status-repo
+# 把 plist 裡的 CLAUDE_MONITOR_REPO 指過去，並把 ProgramArguments 的腳本路徑
+# 也改成 ~/claude-status-repo/tools/claude_monitor.py
+```
+
+代價也要知道：從此有兩個 clone 在推同一個 branch，看板每分鐘推一次，
+所以**外接碟上那個 clone 每次要推東西前都得先 `git pull --rebase`**，
+不然一定被拒。日常發報告的摩擦會變大，所以預設選了上面那條路。
+
 ## 看板上的欄位
 
 - **狀態** — `▶ 執行中`（Claude 正在處理）、`⏸ 閒置`（等你輸入）、
