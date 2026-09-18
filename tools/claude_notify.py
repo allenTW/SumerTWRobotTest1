@@ -49,6 +49,9 @@ DEFAULTS = {
     "idle_only_minutes": 0,
     # 同一個工作階段這麼多秒內不重複發相同類型的通知
     "dedup_seconds": 45,
+    # 靜默心跳：完全沒發過任何通知超過這麼多小時，就送一則「我還活著」。
+    # 不是每日定時訊息 —— 有在通知的日子一則都不會多。0 = 關閉。
+    "heartbeat_hours": 24,
 }
 
 
@@ -349,6 +352,13 @@ def should_skip(cfg, kind, session_id, turn):
     return None
 
 
+def last_sent_ts():
+    """最後一次真的送出通知是什麼時候（不分種類、不分階段）。"""
+    state = cm.load_json(STATE_FILE, {}) or {}
+    stamps = list((state.get("sent") or {}).values())
+    return max(stamps) if stamps else None
+
+
 def remember_sent(kind, session_id):
     state = cm.load_json(STATE_FILE, {}) or {}
     state.setdefault("sent", {})["%s:%s" % (session_id, kind)] = time.time()
@@ -582,12 +592,48 @@ def cmd_test():
     return 0
 
 
+def cmd_heartbeat(force=False):
+    """整段時間都沒通知過才送一則「通道還活著」。
+
+    通知系統最糟的壞法是安靜地壞掉 —— 你不會收到通知，也不會收到「壞了」的通知。
+    這則心跳只在真的安靜太久時出現，忙碌的日子一則都不會多。
+    """
+    cfg = load_config()
+    hours = cfg.get("heartbeat_hours") or 0
+    if not hours and not force:
+        log("心跳已關閉")
+        return 0
+    last = last_sent_ts()
+    quiet_for = (time.time() - last) if last else None
+    if not force and last and quiet_for < hours * 3600:
+        log("心跳跳過：%.1f 小時前才通知過" % (quiet_for / 3600.0))
+        return 0
+
+    if quiet_for is None:
+        gap = "還沒送過任何通知"
+    else:
+        gap = "已經 %s 沒有任何通知" % human_duration(quiet_for)
+    lines = ["🟢 <b>通道正常</b>",
+             esc("%s，這則是確認 Claude → Telegram 還通著。" % gap),
+             ""]
+    lines.extend(esc_usage_lines(plan_usage(), {}))
+    try:
+        send_message(cfg, "\n".join(lines))
+    except Exception as exc:  # noqa: BLE001
+        log("心跳送不出去：%r" % (exc,))
+        return 1
+    remember_sent("heartbeat", "-")
+    log("已送出心跳")
+    return 0
+
+
 USAGE_TEXT = """用法：
   claude_notify.py                     hook 模式（從 stdin 讀事件 JSON）
   claude_notify.py --dry-run           hook 模式但只印出訊息，不發送
   claude_notify.py configure --token T [--chat C]
   claude_notify.py test                送一則測試訊息
   claude_notify.py show                顯示目前設定（token 會遮起來）
+  claude_notify.py heartbeat [--force] 安靜太久才送「通道正常」；--force 一定送
 """
 
 
@@ -602,6 +648,9 @@ def cmd_show():
     print("  min_tool_calls   : %s  （工具次數少於這個也不通知）" % cfg["min_tool_calls"])
     print("  idle_only_minutes: %s  （0 = 一律通知；>0 = 只在你離開這麼久才通知）" % cfg["idle_only_minutes"])
     print("  dedup_seconds    : %s" % cfg["dedup_seconds"])
+    print("  heartbeat_hours  : %s  （安靜這麼久才送「通道正常」；0 = 關閉）" % cfg["heartbeat_hours"])
+    last = last_sent_ts()
+    print("最後一次通知：%s" % (local_clock(cm.iso_ms(last * 1000)) if last else "（還沒有）"))
     usage = plan_usage()
     print("方案用量：%s" % (usage if usage else "讀不到"))
     return 0
@@ -615,6 +664,8 @@ def main(argv):
         return cmd_test()
     if args and args[0] == "show":
         return cmd_show()
+    if args and args[0] == "heartbeat":
+        return cmd_heartbeat(force="--force" in args)
     if args and args[0] in ("-h", "--help", "help"):
         print(USAGE_TEXT)
         return 0

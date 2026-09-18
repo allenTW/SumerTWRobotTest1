@@ -36,10 +36,37 @@ token 已經知道、也知道 chat_id 的話，可以一次給完跳過互動�
 **token 存在 `~/.claude-monitor/telegram.json`，權限 0600，不在這個 repo 裡** ——
 這個 repo 是公開的，token 進來就等於公開。
 
+## 安裝到家目錄（重要，不是可選的）
+
+執行用的副本放在 `~/.claude-monitor/bin/`，**不是**直接用這個 repo 裡的檔案：
+
+```bash
+./install-notify.sh          # 複製程式到家目錄 + 裝上心跳排程
+./install-notify.sh status   # 看排程與日誌
+```
+
+**為什麼**：這個 repo 在外接 USB 碟上。碟沒掛載時 hook 會安靜地失敗 ——
+收不到通知，**也收不到「通知壞了」的通知**。對一個「你不在電腦前才有用」的
+系統，這是最糟的壞法。家目錄不會消失。
+
+代價是有兩份檔案。**改完 repo 裡的程式後要重跑 `./install-notify.sh` 才會生效。**
+repo 是原始碼與版本控制的地方，家目錄那份是跑的那份。
+
+## 靜默心跳
+
+安靜超過 24 小時（`heartbeat_hours`）才送一則「🟢 通道正常」。
+
+**不是每日定時訊息** —— 有在通知的日子一則都不會多。它只回答一個問題：
+「今天沒收到通知，是因為 Claude 沒事做，還是因為通知壞了？」
+
+排程由 launchd 每小時檢查一次，但只有真的安靜夠久才送。排程跑在家目錄，
+所以不需要任何磁碟授權（`claude-status.html` 那個看板當初就是卡在這裡）。
+不想要就把 `heartbeat_hours` 設成 0。
+
 ## 它怎麼被觸發
 
-`~/.claude/settings.json` 裡註冊了兩個 hook，Mac mini 上**所有** Claude Code
-工作階段都會走到（不分目錄）：
+`~/.claude/settings.json` 裡註冊了兩個 hook，指向家目錄的副本，Mac mini 上
+**所有** Claude Code 工作階段都會走到（不分目錄）：
 
 ```json
 "hooks": {
@@ -93,6 +120,7 @@ CLI 的逐字稿裡沒有任何 rate-limit 欄位，`claude` 也沒有印用量�
 | `min_tool_calls` | 5 | 工具次數少於這麼多也不通知（和上面是「且」的關係） |
 | `idle_only_minutes` | 0 | 設成 >0 就只在你離開電腦這麼久之後才通知；0 = 一律通知 |
 | `dedup_seconds` | 45 | 同一階段這麼多秒內不重複發同類型通知 |
+| `heartbeat_hours` | 24 | 安靜這麼久才送「通道正常」；0 = 關閉 |
 
 「需要你決策」不受 `min_seconds` / `min_tool_calls` 限制 —— 等你回應的事一律通知。
 
@@ -105,6 +133,16 @@ CLI 的逐字稿裡沒有任何 rate-limit 欄位，`claude` 也沒有印用量�
 ```bash
 echo '{"hook_event_name":"Stop","session_id":"<某個 session id>"}' | ./claude_notify.py --dry-run
 ```
+
+想確認 hook 有沒有載入：看日誌有沒有在回合結束時出現新的一行。**有行就代表
+hook 有跑**，不管它最後決定通知還是靜音。
+
+### 已知的限制
+
+工作階段如果是用 `--permission-mode bypassPermissions` 跑的（Remote Control
+預設就是），Claude 不會跳權限確認，所以「⏳ 需要你決策」的主要觸發來源不存在，
+只剩「閒置等輸入」那類通知。Claude 問你問題時會結束回合，所以你會收到
+「✅ 任務完成」，問題在摘要裡。
 
 ## 和 Claude 看板的關係
 
