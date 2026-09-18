@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>唐1 幣本位覆蓋層 · 回測報告</title>
+<script>
+  // 存取控制：必須先在工具中心（index.html）輸入正確密碼解鎖，
+  // 才會核發這個 token；沒有 token 就直接導回工具中心，不渲染任何內容。
+  (function () {
+    var token = sessionStorage.getItem('hub_token');
+    if (token !== '36a71a5bca2513f92fc85544531b1605c3515ee5f6039882db0b17b05082652f') {
+      location.replace('index.html');
+      throw new Error('unauthorized');
+    }
+  })();
+</script>
+<style>
+  :root {
+    --bg:#0f1117; --surface:#171a23; --surface-2:#1f2330;
+    --text:#e8e9ee; --text-dim:#9aa0b4; --text-muted:#6b7185;
+    --accent:#d97757; --accent-soft:rgba(217,119,87,0.15); --border:#2a2e3c;
+    --code-bg:#11141c; --grid:#232735;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --neg:#d03b3b; --warn:#fab219;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);line-height:1.7;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Microsoft JhengHei",sans-serif}
+  a{color:var(--accent)}
+  header{padding:40px 24px 30px;text-align:center;border-bottom:1px solid var(--border);
+    background:radial-gradient(ellipse at top,var(--accent-soft),transparent 60%)}
+  .crumb{max-width:1000px;margin:0 auto 22px;text-align:left;font-size:.9rem}
+  .crumb a{text-decoration:none;color:var(--text-dim)}
+  .crumb a:hover{color:var(--accent)}
+  .crumb .sep{color:var(--text-muted);margin:0 8px}
+  .crumb .here{color:var(--text-muted)}
+  header h1{font-size:2.1rem;margin:0 0 6px}
+  header .tagline{color:var(--text-dim);font-size:1.02rem;margin:0 auto;max-width:660px}
+  .meta-bar{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:18px}
+  .badge{display:inline-flex;align-items:center;gap:6px;background:var(--surface);
+    border:1px solid var(--border);border-radius:999px;padding:5px 14px;font-size:.85rem;color:var(--text-dim)}
+  .badge b{color:var(--accent);font-weight:600}
+  .badge.live{border-color:rgba(57,135,229,.4)}
+  .badge.live b{color:var(--s1)}
+
+  main{max-width:1000px;margin:0 auto;padding:36px 24px 80px}
+  section{margin-bottom:50px}
+  h2{font-size:1.42rem;border-left:4px solid var(--accent);padding-left:12px;margin:0 0 8px}
+  h3.sub{font-size:1rem;margin:22px 0 8px;color:var(--text)}
+  .section-note{color:var(--text-dim);font-size:.92rem;margin:0 0 18px}
+  p{color:var(--text-dim)}
+  .body-note{font-size:.9rem;margin-top:14px}
+  .body-note b{color:var(--text)}
+
+  .callout{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--warn);
+    border-radius:10px;padding:18px 22px;margin-bottom:20px;font-size:.92rem;color:var(--text-dim)}
+  .callout h3{margin:0 0 8px;font-size:1rem;color:var(--text)}
+  .callout b{color:var(--text)}
+  .callout ul{margin:10px 0 0;padding-left:20px}
+  .callout li{margin-bottom:8px}
+  .callout.good{border-left-color:var(--s1)}
+  .callout.bad{border-left-color:var(--neg)}
+
+  .range-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+    padding:26px 22px;text-align:center;margin-bottom:20px}
+  .range-box .lead{color:var(--text-muted);font-size:.85rem;margin-bottom:10px}
+  .range-box .nums{font-size:2rem;font-weight:600;color:var(--s1);letter-spacing:.5px}
+  .range-box .nums small{color:var(--text-muted);font-size:.5em;font-weight:400;margin:0 8px}
+  .range-box .why{color:var(--text-dim);font-size:.88rem;margin-top:12px;max-width:660px;
+    margin-left:auto;margin-right:auto}
+
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
+  .stat .label{color:var(--text-muted);font-size:.8rem;margin-bottom:4px}
+  .stat .value{font-size:1.55rem;font-weight:600;line-height:1.2}
+  .stat .sub{color:var(--text-muted);font-size:.78rem;margin-top:4px}
+  .value.pos{color:var(--s1)} .value.neg{color:var(--neg)} .value.warn{color:var(--warn)}
+
+  .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+    padding:20px 18px 12px;position:relative}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:8px;padding-left:4px}
+  .legend .item{display:inline-flex;align-items:center;gap:7px;font-size:.85rem;color:var(--text-dim)}
+  .legend .swatch{width:14px;height:3px;border-radius:2px;display:inline-block}
+  .legend .swatch.block{height:11px;width:11px;border-radius:3px}
+  .chart-title{font-size:.8rem;color:var(--text-muted);padding-left:4px;margin:10px 0 2px}
+  svg{display:block;width:100%;overflow:visible}
+  .tip{position:absolute;pointer-events:none;opacity:0;background:var(--surface-2);
+    border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:.82rem;
+    box-shadow:0 6px 20px rgba(0,0,0,.45);transition:opacity .1s;z-index:5;white-space:nowrap}
+  .tip .d{color:var(--text-muted);margin-bottom:5px;font-size:.76rem}
+  .tip .row{display:flex;align-items:center;gap:8px}
+  .tip .row .sw{width:8px;height:8px;border-radius:2px}
+  .tip .row .nm{color:var(--text-dim);min-width:74px}
+  .tip .row .vl{color:var(--text);font-weight:600;margin-left:auto}
+
+  .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+    padding:6px 16px 4px;overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:.9rem}
+  th,td{text-align:right;padding:9px 10px;border-bottom:1px solid var(--border)}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--text-muted);font-weight:500;font-size:.82rem}
+  td{color:var(--text-dim)} td.name{color:var(--text)}
+  tr.best td{background:rgba(57,135,229,.07)}
+  tr.best td.name{color:var(--s1);font-weight:600}
+  tr.bad td.name{color:var(--neg)}
+  tr.plateau td{background:rgba(57,135,229,.07)}
+  td.pos{color:var(--s1)} td.negv{color:var(--neg)}
+  caption{caption-side:top;text-align:left;color:var(--text-muted);font-size:.82rem;padding:8px 10px 2px}
+
+  .engine{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px}
+  .engine dl{margin:0}
+  .engine dt{color:var(--text);font-size:.85rem;font-weight:600;margin-top:12px}
+  .engine dt:first-child{margin-top:0}
+  .engine dd{margin:2px 0 0;color:var(--text-dim);font-size:.87rem}
+  .engine dd code{background:var(--code-bg);padding:1px 5px;border-radius:4px;font-size:.85em;color:var(--accent)}
+
+  ul.limits{padding-left:0;list-style:none;margin:0}
+  ul.limits li{background:var(--surface);border:1px solid var(--border);border-radius:10px;
+    padding:14px 18px;margin-bottom:10px;color:var(--text-dim);font-size:.92rem}
+  ul.limits li b{color:var(--text)}
+
+  footer{border-top:1px solid var(--border);padding:28px 24px 48px;text-align:center;
+    color:var(--text-muted);font-size:.85rem}
+  @media(max-width:640px){header h1{font-size:1.6rem}.stat .value{font-size:1.3rem}.range-box .nums{font-size:1.4rem}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="crumb">
+    <a href="index.html">工具中心</a><span class="sep">›</span><a href="crypto-reports.html">加密貨幣報告</a><span class="sep">›</span><span class="here">唐1 幣本位覆蓋層</span>
+  </div>
+  <h1>唐1 幣本位覆蓋層</h1>
+  <p class="tagline">已經持有 BTC 的人，能不能用唐1 的訊號在低倍率下多累積一點幣 — 以「保護本金」為首要目標的評估</p>
+  <div class="meta-bar">
+    <span class="badge">標的 <b id="b-symbol">—</b></span>
+    <span class="badge">合約 <b>COIN-M 反向</b></span>
+    <span class="badge">週期 <b id="b-interval">—</b></span>
+    <span class="badge">區間 <b id="b-period">—</b></span>
+    <span class="badge">計價 <b>BTC</b></span>
+    <span class="badge live">狀態 <b>評估中</b></span>
+  </div>
+</header>
+
+<main>
+
+  <section id="question">
+    <h2>這份報告在回答什麼</h2>
+    <p class="section-note">
+      前提是一個已經持有 BTC、相信長期上漲、願意開低倍率槓桿的人。
+      他要的優先順序很明確：<b>先保住幣，再談多賺一點</b>。
+    </p>
+    <div class="callout">
+      <h3>所以計價單位是 BTC，不是美金</h3>
+      <p style="margin:0">
+        這跟本站其他報告不同。在這裡，<b>單純持有就是永遠 1.0000 顆</b>，那是對照基準；
+        唯一的問題是覆蓋層能不能把這個數字變大，以及過程中會不會變小。
+        美金報酬完全不看——那是持有本身帶來的，不是策略的功勞。
+      </p>
+    </div>
+    <div class="range-box">
+      <div class="lead">參考倍率 <span id="ref-lev">—</span>×：24 個起始季的最終幣數中位數</div>
+      <div class="nums"><span id="r-median">—</span><small>顆</small></div>
+      <div class="why" id="r-why">—</div>
+    </div>
+  </section>
+
+  <section id="mechanics">
+    <h2>幣本位的損益結構</h2>
+    <p class="section-note">
+      反向合約的損益用 USD 計算，結算時<b>依當時價格換算成 BTC</b>。
+      這句話是對的，而且不對稱正是從它推導出來的。
+    </p>
+    <div class="engine">
+      <dl>
+        <dt>USD 損益</dt>
+        <dd><code>V × (r − 1)</code>　　V = 進場名目，r = 出場價 ÷ 進場價</dd>
+        <dt>換算成 BTC</dt>
+        <dd><code>V × (r − 1) ÷ P_出場</code>　＝　<code>(V ÷ P_進場) × (1 − 1/r)</code></dd>
+      </dl>
+    </div>
+    <p class="body-note">
+      兩行是同一件事。第二行讓不對稱現形：<b>賺的時候用變貴後的價格換，換到的幣少；
+      賠的時候用變便宜後的價格換，要吐出的幣多。</b>
+    </p>
+    <div class="table-wrap">
+      <table id="convexity-table">
+        <caption>做多 1× 名目時，價格變動對 BTC 數量的影響</caption>
+        <thead><tr><th>價格變動</th><th>做多的 BTC 變動</th><th>做空的 BTC 變動</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="body-note">
+      結果是<b>做多的 BTC 獲利有上限（漲再多最多 +100%），虧損沒有下限</b>。
+      而且幣本位的保證金就是 BTC：價格下跌時部位在虧、抵押品同時縮水，兩邊一起惡化。
+    </p>
+  </section>
+
+  <section id="model">
+    <h2>模型：固定口數</h2>
+    <p class="section-note">唐1 進場時開一筆，出場才平掉，中間不動。</p>
+    <div class="callout bad">
+      <h3>這一版修正了前一版的兩個錯誤</h3>
+      <ul>
+        <li><b>原本每根 K 棒把名目重新調整成固定倍率</b>（常數槓桿）。對一個一年只進出
+            四到六次的規則，那會收取一筆它根本不會付的再平衡波動耗損，而那個耗損
+            ——不是合約結構——製造出「永遠做多會虧掉 BTC」的錯誤結論。</li>
+        <li><b>原本只在平倉時檢查清算。</b>一筆一度虧超過全部本金、後來又漲回來的部位，
+            會被記成獲利交易。改成用<b>盤中低點逐根檢查</b>之後，
+            「永遠做多 1×」從「最後 1.86 顆」變成「<b id="liq-date">—</b> 清算歸零」。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="results">
+    <h2>主結果</h2>
+    <p class="section-note">起點 1 顆 BTC，扣除手續費、滑價與資金費率。
+      期間 BTC 價格變化 <span id="price-change">—</span>。</p>
+    <div class="table-wrap">
+      <table id="levels-table">
+        <thead><tr><th>策略</th><th>最終 BTC</th><th>BTC 年化</th><th>BTC 回撤</th>
+          <th>最低曾到</th><th>低於本金</th><th>最差單筆</th><th>保證金峰值</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="body-note">
+      <b>保證金峰值</b>＝盤中最深未實現虧損佔本金的比例，100% 就是本金歸零。
+      交易所實際在維持保證金就會強平，比 100% 更早，所以這是樂觀的下界。
+    </p>
+    <div class="callout good">
+      <h3>唯一真正穩固的發現：不擇時會死</h3>
+      <p style="margin:0" id="control-note">—</p>
+      <div class="table-wrap" style="margin-top:14px">
+        <table id="crash-table">
+          <caption>唐1 在三次大崩盤的在場比例</caption>
+          <thead><tr><th>事件</th><th>價格變動</th><th>唐1 在場比例</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p style="margin:12px 0 0">
+        通道跌破會先於崩盤發生，這是突破系統的設計行為，不是巧合。
+        <b>唐1 在幣本位的價值不是放大獲利，是它讓你在崩盤時沒有部位。</b>
+        但這仍然是樣本內的證據。
+      </p>
+    </div>
+  </section>
+
+  <section id="equity">
+    <h2>BTC 數量的變化</h2>
+    <p class="section-note">縱軸是持有的 BTC 顆數（含未實現損益）。
+      水平的 1.0 線就是單純持有。</p>
+    <div class="chart-card">
+      <div class="legend" id="legend"></div>
+      <svg id="chart-btc" height="300"></svg>
+      <div class="tip" id="tip"></div>
+    </div>
+    <p class="body-note" id="equity-note">—</p>
+  </section>
+
+  <section id="dial">
+    <h2>倍率是一根純粹的風險刻度</h2>
+    <p class="section-note">0.20× 到 0.50× 之間，所有指標幾乎完美線性。沒有甜蜜點可找。</p>
+    <div class="chart-card">
+      <div class="legend">
+        <span class="item"><span class="swatch block" style="background:var(--s1)"></span>最終 BTC（七年）</span>
+        <span class="item"><span class="swatch block" style="background:var(--neg)"></span>BTC 最大回撤</span>
+      </div>
+      <svg id="chart-dial" height="220"></svg>
+      <div class="tip" id="tip-dial"></div>
+    </div>
+    <div class="callout">
+      <h3>但有一件事降倍率救不了</h3>
+      <p style="margin:0">
+        <b>「最後幣數少於起始」的起點數，在每一個倍率都是 <span id="losing-count">—</span>。</b>
+        從 0.20× 到 0.50× 完全不變。降倍率縮小傷害，<b>不改變機率</b>——
+        那個比例由訊號決定，不由部位大小決定。要動它只能換策略，不能調倉位。
+      </p>
+    </div>
+  </section>
+
+  <section id="distribution">
+    <h2>分布：七年期的數字是一條沒人會走到的路徑</h2>
+    <p class="section-note">
+      把同一個覆蓋層放到 24 個不同的起始季，各自做到期末。
+      這才是你實際會遇到的結果範圍。
+    </p>
+    <div class="table-wrap">
+      <table id="dist-table">
+        <thead><tr><th>倍率</th><th>最差</th><th>10 分位</th><th>25 分位</th><th>中位數</th>
+          <th>75 分位</th><th>最佳</th><th>中位數年化</th><th>最差回撤</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="callout bad">
+      <h3>中位數起點的年化只有 1% 上下，不是 8%</h3>
+      <p style="margin:0" id="dist-note">—</p>
+      <p style="margin:10px 0 0">
+        再加上樣本內折扣——20 天這個參數是看過全部歷史後定的，
+        <a href="crypto-tang1-report.html">唐1 的巢狀 walk-forward</a> 顯示乾淨估計約是凍結參數的六成
+        ——中位數期望值大約是<b>年化 0.6% ~ 1%</b>。
+      </p>
+    </div>
+    <h3 class="sub">逐季起點明細（<span id="cohort-lev">—</span>×）</h3>
+    <div class="table-wrap">
+      <table id="cohort-table">
+        <thead><tr><th>起始季</th><th>年數</th><th>最終 BTC</th><th>BTC 年化</th>
+          <th>最低曾到</th><th>BTC 回撤</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="body-note">
+      這些起點<b>不是獨立觀測</b>——持有期大量重疊，相鄰兩季幾乎是同一個證據。
+      24 個起點實際上遠遠不到 24 筆獨立資訊。
+    </p>
+  </section>
+
+  <section id="trades">
+    <h2>逐筆交易（<span id="trade-lev">—</span>×）</h2>
+    <p class="section-note">28 筆交易，勝率 50%。獲利極度集中。</p>
+    <div class="table-wrap">
+      <table id="trade-table">
+        <thead><tr><th>進場</th><th>出場</th><th>持有天</th><th>價格變動</th>
+          <th>BTC 損益</th><th>保證金峰值</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="body-note" id="trade-note">—</p>
+    <h3 class="sub">逐年</h3>
+    <div class="table-wrap">
+      <table id="yearly-table">
+        <thead><tr><th>年</th><th>BTC 數量</th><th>當年變化</th><th>BTC 價格變化</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="liquidation">
+    <h2>清算距離</h2>
+    <p class="section-note">在低倍率下，清算實質上不是風險——這是這個結構少數令人安心的地方。</p>
+    <div class="table-wrap">
+      <table id="liq-table">
+        <thead><tr><th>做多倍率</th><th>連同現貨的總曝險</th><th>本金歸零需要的跌幅</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="body-note" id="liq-note">—</p>
+  </section>
+
+  <section id="verdict">
+    <h2>結論</h2>
+    <ul class="limits" id="verdict-list"></ul>
+  </section>
+
+  <section id="limits">
+    <h2>已知限制</h2>
+    <ul class="limits" id="limits-list"></ul>
+  </section>
+
+  <section id="next">
+    <h2>下一步：對沖方向尚未驗證</h2>
+    <div class="callout">
+      <p style="margin:0">
+        以「保護本金」為首要目標來看，<b>加做多單這件事方向就是錯的</b>——
+        它是在既有的 BTC 曝險上再加曝險，只是加得少，而中位數年化 1% 買不到任何保護。
+      </p>
+      <p style="margin:10px 0 0">
+        方向正確的做法是反過來：<b>用唐1 的出場訊號做空對沖</b>，
+        在 BTC 真正受威脅的時候賺幣。上表的凸性也支持這個方向——
+        做空在幣本位是正凸性：漲一倍才損失 50%，跌到四分之一則增加 300%。
+      </p>
+      <p style="margin:10px 0 0">
+        <b>但這還沒有用正確的模型測過。</b>更早的一版對沖數字是用已知有誤的
+        常數槓桿模型算出來的，不予採信，也不列在本頁。驗證完成後會另行發布。
+      </p>
+    </div>
+  </section>
+
+  <section id="related">
+    <h2>相關紀錄</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>報告</th><th>內容</th></tr></thead>
+        <tbody>
+          <tr><td class="name"><a href="crypto-tang1-report.html">唐1 · TANG-1</a></td>
+            <td style="text-align:left">策略本體：巢狀 walk-forward、擇時與 beta 的拆解、
+              參數平台的解析度更正，以及不同進場時間的績效分布。本頁的所有折扣都源自那份驗證。</td></tr>
+          <tr><td class="name"><a href="crypto-te1-report.html">趨勢引擎 TE-1</a></td>
+            <td style="text-align:left">六個覆蓋層的版本，樣本外輸給唐1。</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  本頁所有數據由回測程式直接產生（<code>tools/export_coinm_report.py</code>），非人工抄錄。<br>
+  回測結果不代表未來表現，也不構成投資建議。
+</footer>
+
+<script id="report-data" type="application/json">{"symbol":"BTCUSDT","period":{"start":"2019-09-08","end":"2026-09-17","years":7.03,"interval":"4h"},"costs":{"fee":0.0005,"slippage":0.0007},"spec":{"entry_lookback_days":20,"exit_lookback_days":20,"long_only":true},"reference_leverage":0.3,"price_change":6.3507,"levels":[{"label":"唐1 做多 0.2×","final_btc":1.2858,"btc_cagr":0.0364,"btc_mdd":-0.1372,"trades":28,"win_rate":0.5,"worst_trade":-0.0516,"peak_margin":0.0527,"min_btc":0.9716,"time_below_start":0.06,"funding_btc":0.0581,"liquidated":false,"liquidation_date":null},{"label":"唐1 做多 0.25×","final_btc":1.3595,"btc_cagr":0.0446,"btc_mdd":-0.1688,"trades":28,"win_rate":0.5,"worst_trade":-0.0645,"peak_margin":0.0658,"min_btc":0.9645,"time_below_start":0.0601,"funding_btc":0.0751,"liquidated":false,"liquidation_date":null},{"label":"唐1 做多 0.3×","final_btc":1.4336,"btc_cagr":0.0526,"btc_mdd":-0.1995,"trades":28,"win_rate":0.5,"worst_trade":-0.0774,"peak_margin":0.079,"min_btc":0.9573,"time_below_start":0.0601,"funding_btc":0.093,"liquidated":false,"liquidation_date":null},{"label":"唐1 做多 0.35×","final_btc":1.5079,"btc_cagr":0.0602,"btc_mdd":-0.2292,"trades":28,"win_rate":0.5,"worst_trade":-0.0903,"peak_margin":0.0922,"min_btc":0.9502,"time_below_start":0.0601,"funding_btc":0.112,"liquidated":false,"liquidation_date":null},{"label":"唐1 做多 0.4×","final_btc":1.5821,"btc_cagr":0.0674,"btc_mdd":-0.258,"trades":28,"win_rate":0.5,"worst_trade":-0.1031,"peak_margin":0.1054,"min_btc":0.9431,"time_below_start":0.0602,"funding_btc":0.132,"liquidated":false,"liquidation_date":null},{"label":"唐1 做多 0.45×","final_btc":1.6559,"btc_cagr":0.0744,"btc_mdd":-0.2859,"trades":28,"win_rate":0.5,"worst_trade":-0.116,"peak_margin":0.1185,"min_btc":0.9357,"time_below_start":0.0602,"funding_btc":0.153,"liquidated":false,"liquidation_date":null},{"label":"唐1 做多 0.5×","final_btc":1.729,"btc_cagr":0.081,"btc_mdd":-0.3129,"trades":28,"win_rate":0.5,"worst_trade":-0.1289,"peak_margin":0.1317,"min_btc":0.9283,"time_below_start":0.0602,"funding_btc":0.1751,"liquidated":false,"liquidation_date":null},{"label":"唐1 做多 0.75×","final_btc":2.0739,"btc_cagr":0.1093,"btc_mdd":-0.4357,"trades":28,"win_rate":0.5,"worst_trade":-0.1934,"peak_margin":0.1975,"min_btc":0.8905,"time_below_start":0.0607,"funding_btc":0.3011,"liquidated":false,"liquidation_date":null},{"label":"唐1 做多 1×","final_btc":2.3584,"btc_cagr":0.1298,"btc_mdd":-0.5402,"trades":28,"win_rate":0.5,"worst_trade":-0.2579,"peak_margin":0.2634,"min_btc":0.8516,"time_below_start":0.0613,"funding_btc":0.4512,"liquidated":false,"liquidation_date":null}],"controls":[{"label":"永遠做多 0.5×（不擇時）","final_btc":1.432,"btc_cagr":0.0524,"btc_mdd":-0.6415,"trades":1,"win_rate":1.0,"worst_trade":0.3319,"peak_margin":0.9346,"min_btc":0.3589,"time_below_start":0.1292,"funding_btc":0.0994,"liquidated":false,"liquidation_date":null},{"label":"永遠做多 1×（不擇時）","final_btc":0.0,"btc_cagr":-1.0,"btc_mdd":-1.0,"trades":1,"win_rate":0.0,"worst_trade":-1.0,"peak_margin":1.3905,"min_btc":0.0,"time_below_start":0.9997,"funding_btc":0.0,"liquidated":true,"liquidation_date":"2020-03-12"}],"distribution":[{"leverage":0.2,"percentiles":{"0":0.9074,"10":0.9676,"25":0.9896,"50":1.0404,"75":1.1133,"100":1.3232},"median_cagr":0.0092,"worst_mdd":-0.148,"losing_starts":8,"total_starts":24},{"leverage":0.25,"percentiles":{"0":0.8843,"10":0.9591,"25":0.9856,"50":1.0486,"75":1.1405,"100":1.4094},"median_cagr":0.011,"worst_mdd":-0.1825,"losing_starts":8,"total_starts":24},{"leverage":0.3,"percentiles":{"0":0.8613,"10":0.9505,"25":0.9815,"50":1.0559,"75":1.167,"100":1.4972},"median_cagr":0.0125,"worst_mdd":-0.2161,"losing_starts":8,"total_starts":24},{"leverage":0.35,"percentiles":{"0":0.8384,"10":0.9418,"25":0.9769,"50":1.0623,"75":1.1929,"100":1.5865},"median_cagr":0.0138,"worst_mdd":-0.2487,"losing_starts":8,"total_starts":24},{"leverage":0.4,"percentiles":{"0":0.8157,"10":0.9329,"25":0.972,"50":1.0665,"75":1.2181,"100":1.6771},"median_cagr":0.0149,"worst_mdd":-0.2804,"losing_starts":8,"total_starts":24},{"leverage":0.45,"percentiles":{"0":0.793,"10":0.9234,"25":0.9667,"50":1.0696,"75":1.2425,"100":1.7685},"median_cagr":0.0158,"worst_mdd":-0.311,"losing_starts":8,"total_starts":24},{"leverage":0.5,"percentiles":{"0":0.7705,"10":0.9136,"25":0.9611,"50":1.0714,"75":1.2659,"100":1.8606},"median_cagr":0.0165,"worst_mdd":-0.3408,"losing_starts":8,"total_starts":24}],"cohorts":{"0.3":[{"label":"2019Q4","years":6.97,"final_btc":1.4336,"btc_cagr":0.053,"min_btc":0.9573,"btc_mdd":-0.1995,"peak_margin":0.079},{"label":"2020Q1","years":6.72,"final_btc":1.4972,"btc_cagr":0.0619,"min_btc":0.9998,"btc_mdd":-0.1995,"peak_margin":0.079},{"label":"2020Q2","years":6.47,"final_btc":1.4489,"btc_cagr":0.059,"min_btc":0.9679,"btc_mdd":-0.1995,"peak_margin":0.079},{"label":"2020Q3","years":6.22,"final_btc":1.3829,"btc_cagr":0.0535,"min_btc":0.9964,"btc_mdd":-0.1995,"peak_margin":0.079},{"label":"2020Q4","years":5.97,"final_btc":1.3366,"btc_cagr":0.0498,"min_btc":0.9955,"btc_mdd":-0.1995,"peak_margin":0.079},{"label":"2021Q1","years":5.72,"final_btc":1.2216,"btc_cagr":0.0356,"min_btc":0.9974,"btc_mdd":-0.1995,"peak_margin":0.079},{"label":"2021Q2","years":5.47,"final_btc":1.0579,"btc_cagr":0.0103,"min_btc":0.915,"btc_mdd":-0.1995,"peak_margin":0.079},{"label":"2021Q3","years":5.22,"final_btc":1.0895,"btc_cagr":0.0166,"min_btc":0.9423,"btc_mdd":-0.1995,"peak_margin":0.079},{"label":"2021Q4","years":4.97,"final_btc":1.0492,"btc_cagr":0.0097,"min_btc":0.9075,"btc_mdd":-0.1995,"peak_margin":0.079},{"label":"2022Q1","years":4.72,"final_btc":0.9784,"btc_cagr":-0.0046,"min_btc":0.8462,"btc_mdd":-0.1995,"peak_margin":0.079},{"label":"2022Q2","years":4.47,"final_btc":1.0557,"btc_cagr":0.0122,"min_btc":0.9131,"btc_mdd":-0.1995,"peak_margin":0.0671},{"label":"2022Q3","years":4.22,"final_btc":1.0848,"btc_cagr":0.0195,"min_btc":0.9383,"btc_mdd":-0.1995,"peak_margin":0.0671},{"label":"2022Q4","years":3.97,"final_btc":1.0898,"btc_cagr":0.0219,"min_btc":0.9427,"btc_mdd":-0.1995,"peak_margin":0.0671},{"label":"2023Q1","years":3.72,"final_btc":1.1488,"btc_cagr":0.0381,"min_btc":0.9998,"btc_mdd":-0.1995,"peak_margin":0.0546},{"label":"2023Q2","years":3.47,"final_btc":1.0425,"btc_cagr":0.0121,"min_btc":0.9559,"btc_mdd":-0.1995,"peak_margin":0.0546},{"label":"2023Q3","years":3.22,"final_btc":1.0419,"btc_cagr":0.0128,"min_btc":0.9553,"btc_mdd":-0.1995,"peak_margin":0.0546},{"label":"2023Q4","years":2.97,"final_btc":1.0561,"btc_cagr":0.0186,"min_btc":0.9684,"btc_mdd":-0.1995,"peak_margin":0.0546},{"label":"2024Q1","years":2.72,"final_btc":0.9552,"btc_cagr":-0.0168,"min_btc":0.8758,"btc_mdd":-0.1995,"peak_margin":0.0546},{"label":"2024Q2","years":2.47,"final_btc":0.8613,"btc_cagr":-0.0587,"min_btc":0.7898,"btc_mdd":-0.2161,"peak_margin":0.0583},{"label":"2024Q3","years":2.22,"final_btc":0.9211,"btc_cagr":-0.0364,"min_btc":0.8446,"btc_mdd":-0.1728,"peak_margin":0.0546},{"label":"2024Q4","years":1.96,"final_btc":0.9943,"btc_cagr":-0.0029,"min_btc":0.9117,"btc_mdd":-0.1585,"peak_margin":0.0503},{"label":"2025Q1","years":1.71,"final_btc":0.9495,"btc_cagr":-0.0298,"min_btc":0.8707,"btc_mdd":-0.1534,"peak_margin":0.0503},{"label":"2025Q2","years":1.47,"final_btc":0.9825,"btc_cagr":-0.012,"min_btc":0.9009,"btc_mdd":-0.1534,"peak_margin":0.0503},{"label":"2025Q3","years":1.22,"final_btc":0.9528,"btc_cagr":-0.0389,"min_btc":0.8737,"btc_mdd":-0.1534,"peak_margin":0.0503}],"0.5":[{"label":"2019Q4","years":6.97,"final_btc":1.729,"btc_cagr":0.0817,"min_btc":0.9283,"btc_mdd":-0.3129,"peak_margin":0.1317},{"label":"2020Q1","years":6.72,"final_btc":1.8606,"btc_cagr":0.0968,"min_btc":0.999,"btc_mdd":-0.3129,"peak_margin":0.1317},{"label":"2020Q2","years":6.47,"final_btc":1.7628,"btc_cagr":0.0916,"min_btc":0.9464,"btc_mdd":-0.3129,"peak_margin":0.1317},{"label":"2020Q3","years":6.22,"final_btc":1.6355,"btc_cagr":0.0823,"min_btc":0.9939,"btc_mdd":-0.3129,"peak_margin":0.1317},{"label":"2020Q4","years":5.97,"final_btc":1.5462,"btc_cagr":0.0758,"min_btc":0.9926,"btc_mdd":-0.3129,"peak_margin":0.1317},{"label":"2021Q1","years":5.72,"final_btc":1.3488,"btc_cagr":0.0538,"min_btc":0.9956,"btc_mdd":-0.3129,"peak_margin":0.1317},{"label":"2021Q2","years":5.47,"final_btc":1.0678,"btc_cagr":0.0121,"min_btc":0.8524,"btc_mdd":-0.3129,"peak_margin":0.1317},{"label":"2021Q3","years":5.22,"final_btc":1.122,"btc_cagr":0.0223,"min_btc":0.8956,"btc_mdd":-0.3129,"peak_margin":0.1317},{"label":"2021Q4","years":4.97,"final_btc":1.0573,"btc_cagr":0.0113,"min_btc":0.844,"btc_mdd":-0.3129,"peak_margin":0.1317},{"label":"2022Q1","years":4.72,"final_btc":0.9435,"btc_cagr":-0.0123,"min_btc":0.7531,"btc_mdd":-0.3129,"peak_margin":0.1317},{"label":"2022Q2","years":4.47,"final_btc":1.075,"btc_cagr":0.0163,"min_btc":0.8581,"btc_mdd":-0.3129,"peak_margin":0.1119},{"label":"2022Q3","years":4.22,"final_btc":1.1252,"btc_cagr":0.0284,"min_btc":0.8982,"btc_mdd":-0.3129,"peak_margin":0.1119},{"label":"2022Q4","years":3.97,"final_btc":1.134,"btc_cagr":0.0322,"min_btc":0.9052,"btc_mdd":-0.3129,"peak_margin":0.1119},{"label":"2023Q1","years":3.72,"final_btc":1.2383,"btc_cagr":0.0592,"min_btc":0.9997,"btc_mdd":-0.3129,"peak_margin":0.0911},{"label":"2023Q2","years":3.47,"final_btc":1.0555,"btc_cagr":0.0157,"min_btc":0.9143,"btc_mdd":-0.3129,"peak_margin":0.0911},{"label":"2023Q3","years":3.22,"final_btc":1.0547,"btc_cagr":0.0167,"min_btc":0.9137,"btc_mdd":-0.3129,"peak_margin":0.0911},{"label":"2023Q4","years":2.97,"final_btc":1.0789,"btc_cagr":0.0259,"min_btc":0.9346,"btc_mdd":-0.3129,"peak_margin":0.0911},{"label":"2024Q1","years":2.72,"final_btc":0.9153,"btc_cagr":-0.0321,"min_btc":0.7929,"btc_mdd":-0.3129,"peak_margin":0.0911},{"label":"2024Q2","years":2.47,"final_btc":0.7705,"btc_cagr":-0.1003,"min_btc":0.6675,"btc_mdd":-0.3408,"peak_margin":0.0972},{"label":"2024Q3","years":2.22,"final_btc":0.8636,"btc_cagr":-0.064,"min_btc":0.7481,"btc_mdd":-0.2772,"peak_margin":0.0911},{"label":"2024Q4","years":1.96,"final_btc":0.9832,"btc_cagr":-0.0086,"min_btc":0.8517,"btc_mdd":-0.2507,"peak_margin":0.0839},{"label":"2025Q1","years":1.71,"final_btc":0.9129,"btc_cagr":-0.0518,"min_btc":0.7908,"btc_mdd":-0.244,"peak_margin":0.0839},{"label":"2025Q2","years":1.47,"final_btc":0.967,"btc_cagr":-0.0227,"min_btc":0.8377,"btc_mdd":-0.244,"peak_margin":0.0839},{"label":"2025Q3","years":1.22,"final_btc":0.9193,"btc_cagr":-0.0668,"min_btc":0.7964,"btc_mdd":-0.244,"peak_margin":0.0839}]},"trades":[{"entry":"2019-10-26","exit":"2019-11-15","bars":123,"price_move":-0.1136,"btc_pnl":-0.0425,"btc_pnl_pct":-0.0425,"margin_used":0.0424,"funding":0.0032},{"entry":"2020-01-06","exit":"2020-02-26","bars":301,"price_move":0.1832,"btc_pnl":0.0319,"btc_pnl_pct":0.0333,"margin_used":0.0034,"funding":0.012},{"entry":"2020-04-06","exit":"2020-09-03","bars":898,"price_move":0.4584,"btc_pnl":0.0831,"btc_pnl_pct":0.084,"margin_used":0.0399,"funding":0.0095},{"entry":"2020-10-10","exit":"2021-04-18","bars":1140,"price_move":3.8058,"btc_pnl":0.2433,"btc_pnl_pct":0.2269,"margin_used":0.0069,"funding":0.011},{"entry":"2021-07-25","exit":"2021-11-18","bars":694,"price_move":0.6438,"btc_pnl":0.1494,"btc_pnl_pct":0.1135,"margin_used":0.0016,"funding":0.0045},{"entry":"2022-02-07","exit":"2022-02-24","bars":99,"price_move":-0.2031,"btc_pnl":-0.1134,"btc_pnl_pct":-0.0774,"margin_used":0.079,"funding":0.0001},{"entry":"2022-03-24","exit":"2022-04-11","bars":107,"price_move":-0.0662,"btc_pnl":-0.0304,"btc_pnl_pct":-0.0225,"margin_used":0.0222,"funding":0.0006},{"entry":"2022-07-08","exit":"2022-08-19","bars":253,"price_move":-0.0103,"btc_pnl":-0.0061,"btc_pnl_pct":-0.0046,"margin_used":0.0511,"funding":0.0011},{"entry":"2022-10-26","exit":"2022-11-08","bars":80,"price_move":-0.1145,"btc_pnl":-0.0522,"btc_pnl_pct":-0.0397,"margin_used":0.0671,"funding":0.0002},{"entry":"2022-12-13","exit":"2023-03-08","bars":513,"price_move":0.2442,"btc_pnl":0.0717,"btc_pnl_pct":0.0568,"margin_used":0.0227,"funding":0.0019},{"entry":"2023-03-14","exit":"2023-05-12","bars":351,"price_move":0.0256,"btc_pnl":0.0082,"btc_pnl_pct":0.0061,"margin_used":0.0254,"funding":0.0009},{"entry":"2023-06-20","exit":"2023-07-24","bars":202,"price_move":0.046,"btc_pnl":0.0144,"btc_pnl_pct":0.0107,"margin_used":0.0013,"funding":0.0024},{"entry":"2023-10-01","exit":"2024-01-22","bars":677,"price_move":0.4228,"btc_pnl":0.1102,"btc_pnl_pct":0.0812,"margin_used":0.0165,"funding":0.01},{"entry":"2024-02-07","exit":"2024-04-30","bars":497,"price_move":0.3373,"btc_pnl":0.0964,"btc_pnl_pct":0.0657,"margin_used":0.0001,"funding":0.0138},{"entry":"2024-05-15","exit":"2024-06-14","bars":180,"price_move":-0.0067,"btc_pnl":-0.0077,"btc_pnl_pct":-0.0049,"margin_used":0.0065,"funding":0.0034},{"entry":"2024-07-15","exit":"2024-08-04","bars":118,"price_move":-0.0867,"btc_pnl":-0.0469,"btc_pnl_pct":-0.0301,"margin_used":0.0293,"funding":0.0014},{"entry":"2024-08-23","exit":"2024-09-06","bars":83,"price_move":-0.1503,"btc_pnl":-0.0816,"btc_pnl_pct":-0.054,"margin_used":0.0546,"funding":0.0003},{"entry":"2024-09-18","exit":"2024-10-10","bars":131,"price_move":-0.033,"btc_pnl":-0.0168,"btc_pnl_pct":-0.0118,"margin_used":0.0144,"funding":0.0011},{"entry":"2024-10-18","exit":"2024-12-30","bars":438,"price_move":0.3401,"btc_pnl":0.0987,"btc_pnl_pct":0.0699,"margin_used":0.016,"funding":0.0079},{"entry":"2025-01-17","exit":"2025-02-03","bars":99,"price_move":-0.0957,"btc_pnl":-0.0507,"btc_pnl_pct":-0.0336,"margin_used":0.0422,"funding":0.0016},{"entry":"2025-04-22","exit":"2025-06-05","bars":265,"price_move":0.1209,"btc_pnl":0.0454,"btc_pnl_pct":0.0311,"margin_used":0.0011,"funding":0.0008},{"entry":"2025-07-02","exit":"2025-08-01","bars":180,"price_move":0.0334,"btc_pnl":0.0121,"btc_pnl_pct":0.008,"margin_used":0.0068,"funding":0.0014},{"entry":"2025-08-11","exit":"2025-08-25","bars":89,"price_move":-0.0956,"btc_pnl":-0.0499,"btc_pnl_pct":-0.0329,"margin_used":0.0343,"funding":0.0006},{"entry":"2025-09-12","exit":"2025-09-25","bars":78,"price_move":-0.0621,"btc_pnl":-0.0306,"btc_pnl_pct":-0.0208,"margin_used":0.0221,"funding":0.0003},{"entry":"2025-10-01","exit":"2025-11-04","bars":202,"price_move":-0.1299,"btc_pnl":-0.0662,"btc_pnl_pct":-0.0461,"margin_used":0.0503,"funding":0.0008},{"entry":"2026-01-04","exit":"2026-01-25","bars":130,"price_move":-0.0519,"btc_pnl":-0.024,"btc_pnl_pct":-0.0175,"margin_used":0.0177,"funding":0.0004},{"entry":"2026-03-04","exit":"2026-05-22","bars":476,"price_move":0.0667,"btc_pnl":0.0248,"btc_pnl_pct":0.0184,"margin_used":0.0285,"funding":-0.0004},{"entry":"2026-07-14","exit":"2026-09-17","bars":392,"price_move":0.1801,"btc_pnl":0.0595,"btc_pnl_pct":0.0434,"margin_used":0.012,"funding":0.0024}],"bars_per_day":6.0,"yearly":{"2019":{"btc":0.9575,"btc_change":-0.0425,"price_change":-0.3082},"2020":{"btc":1.2675,"btc_change":0.3237,"price_change":3.0272},"2021":{"btc":1.4653,"btc_change":0.1561,"price_change":0.5961},"2022":{"btc":1.2426,"btc_change":-0.152,"price_change":-0.6421},"2023":{"btc":1.4955,"btc_change":0.2035,"price_change":1.5587},"2024":{"btc":1.5098,"btc_change":0.0096,"price_change":1.2108},"2025":{"btc":1.3701,"btc_change":-0.0926,"price_change":-0.0635},"2026":{"btc":1.4336,"btc_change":0.0464,"price_change":-0.1281}},"crashes":[{"label":"2020-03 崩盤","price_move":-0.4321,"exposure":0.0},{"label":"2021-05 崩盤","price_move":-0.1344,"exposure":0.0},{"label":"2022-06 崩盤","price_move":-0.2287,"exposure":0.0}],"equity":{"start_date":"2019-09-08","tang1_0.25":[1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.991,0.9992,0.9906,0.9961,0.9892,0.9887,0.991,0.9926,0.9901,0.9955,0.9933,0.9941,0.9907,0.9775,0.9787,0.9856,0.9761,0.9788,0.9775,0.9734,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9646,0.9763,0.9737,0.9665,0.9778,0.9725,0.9773,0.9752,0.9938,0.9938,0.9914,0.996,0.9962,0.9909,0.9895,0.9918,0.9904,0.9833,0.9842,0.9816,0.9885,0.9959,1.0067,1.0049,1.0094,1.006,1.0066,1.0054,1.0046,1.0024,1.0115,1.0144,1.0153,1.0169,1.0218,1.0161,1.0229,1.0248,1.0231,1.0251,1.0171,1.0172,1.0132,1.0219,1.0108,1.0109,1.0125,1.0121,1.0176,1.0122,1.0052,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9914,0.9868,0.9925,0.9898,0.9745,0.9751,0.9761,0.9736,0.9747,0.9648,0.9834,0.9807,0.9885,0.9842,0.9732,0.9737,0.9842,0.9966,0.9973,0.9982,1.0033,1.0057,1.0045,1.0325,1.0287,1.0336,1.0369,1.0352,1.0346,1.038,1.0408,1.0576,1.0541,1.0491,1.031,1.0272,1.0331,1.0441,1.0537,1.0442,1.0456,1.0516,1.0527,1.0535,1.0483,1.0388,1.0412,1.0414,1.0308,1.0351,1.0338,1.0418,1.0495,1.0465,1.052,1.047,1.0618,1.0484,1.0514,1.0537,1.0504,1.0514,1.0529,1.0536,1.0534,1.0556,1.0435,1.0473,1.0475,1.0448,1.0465,1.0485,1.0473,1.0457,1.0442,1.0451,1.0439,1.0518,1.0507,1.044,1.0429,1.041,1.0377,1.04,1.0417,1.0406,1.0426,1.0394,1.0388,1.0405,1.0391,1.0448,1.0431,1.0468,1.0427,1.0438,1.0426,1.044,1.0428,1.043,1.0418,1.0404,1.0408,1.0413,1.0421,1.041,1.0458,1.0485,1.0502,1.0489,1.0521,1.0566,1.0749,1.073,1.0759,1.0758,1.0792,1.0855,1.0754,1.0775,1.0771,1.0847,1.085,1.0827,1.0849,1.0839,1.0866,1.0799,1.0823,1.0852,1.0849,1.0861,1.0869,1.0916,1.0874,1.0849,1.0861,1.0819,1.0837,1.0834,1.0848,1.0789,1.0809,1.0791,1.0817,1.0809,1.0842,1.0835,1.087,1.0799,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.0608,1.058,1.0598,1.0635,1.061,1.0609,1.0629,1.0586,1.0595,1.0628,1.0683,1.0717,1.0895,1.0926,1.0919,1.0952,1.0936,1.094,1.1039,1.0977,1.1009,1.1026,1.1064,1.1059,1.1025,1.1101,1.1119,1.132,1.1319,1.1218,1.1304,1.1286,1.1281,1.1331,1.1402,1.1406,1.1376,1.1363,1.1449,1.1547,1.1559,1.1561,1.1639,1.1643,1.1618,1.1614,1.1682,1.1645,1.1496,1.1495,1.1552,1.1595,1.1725,1.1648,1.1684,1.1703,1.1638,1.1679,1.1698,1.1682,1.1608,1.1627,1.1602,1.1582,1.165,1.1682,1.169,1.1702,1.1842,1.1934,1.1951,1.1991,1.1971,1.1929,1.199,1.1958,1.1985,1.2036,1.2118,1.211,1.2143,1.2156,1.2213,1.2215,1.2228,1.232,1.2345,1.2315,1.237,1.2438,1.2494,1.2515,1.2506,1.2468,1.2405,1.2371,1.2451,1.2487,1.2437,1.242,1.2416,1.2435,1.2417,1.2408,1.228,1.2343,1.2317,1.2322,1.2322,1.2328,1.2264,1.2354,1.2377,1.2378,1.2347,1.2358,1.2408,1.2456,1.2442,1.2471,1.2489,1.2481,1.2609,1.2609,1.2585,1.263,1.2621,1.2619,1.2638,1.2629,1.2645,1.268,1.2674,1.272,1.2719,1.2734,1.2701,1.2642,1.2651,1.2617,1.2607,1.2604,1.259,1.265,1.2636,1.2659,1.2635,1.264,1.2641,1.2667,1.2683,1.2709,1.2719,1.2737,1.2732,1.2766,1.2748,1.2716,1.2729,1.2747,1.2736,1.2739,1.274,1.2733,1.2701,1.2704,1.2682,1.267,1.271,1.2718,1.2718,1.2735,1.2745,1.2746,1.2745,1.2747,1.273,1.274,1.2749,1.2739,1.272,1.2739,1.274,1.2754,1.2757,1.2755,1.2785,1.278,1.2782,1.2767,1.2757,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.2614,1.277,1.2939,1.2979,1.298,1.3124,1.3076,1.2968,1.2918,1.2848,1.296,1.3039,1.3163,1.3266,1.322,1.3356,1.3321,1.3317,1.3254,1.3433,1.3398,1.3394,1.3338,1.3272,1.3273,1.3382,1.3506,1.3484,1.3503,1.3515,1.343,1.3491,1.3387,1.3495,1.3488,1.3481,1.3395,1.3402,1.3484,1.3505,1.3538,1.3534,1.3614,1.365,1.3387,1.3346,1.3364,1.3281,1.3299,1.3345,1.3287,1.3398,1.3449,1.3431,1.3409,1.3457,1.3407,1.3175,1.3028,1.3204,1.3279,1.3161,1.3152,1.3182,1.3119,1.3047,1.3079,1.322,1.3449,1.3425,1.3452,1.35,1.3599,1.3751,1.3695,1.3701,1.3738,1.3728,1.3827,1.3776,1.3824,1.3823,1.3959,1.3936,1.3956,1.3969,1.4033,1.4079,1.3976,1.3931,1.3948,1.3936,1.4,1.3919,1.3859,1.3927,1.3977,1.3965,1.3949,1.3937,1.4004,1.3995,1.3952,1.3939,1.3954,1.4006,1.4117,1.4103,1.4049,1.4047,1.4029,1.4036,1.4066,1.4015,1.3911,1.3919,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3807,1.3809,1.3824,1.385,1.3781,1.369,1.3676,1.3662,1.3703,1.3863,1.3811,1.3525,1.3476,1.3484,1.3318,1.3171,1.3302,1.3197,1.2917,1.2917,1.2917,1.2917,1.2917,1.2917,1.2917,1.2917,1.2917,1.2917,1.2917,1.2917,1.2917,1.2917,1.2917,1.2917,1.2917,1.2917,1.2917,1.2917,1.2917,1.2917,1.2917,1.2917,1.2917,1.2917,1.2917,1.2917,1.2917,1.2941,1.2955,1.3114,1.3133,1.3152,1.3129,1.3026,1.3077,1.3046,1.3086,1.3098,1.3024,1.2857,1.2876,1.2784,1.2823,1.2777,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2675,1.2597,1.2596,1.2483,1.2331,1.2216,1.2377,1.2438,1.2478,1.2535,1.2473,1.2718,1.2847,1.2825,1.2815,1.2753,1.272,1.2738,1.2553,1.2544,1.2789,1.2903,1.2895,1.2878,1.2834,1.283,1.2793,1.277,1.2744,1.2835,1.2789,1.2818,1.2899,1.2815,1.2916,1.2913,1.297,1.2975,1.2959,1.2934,1.2904,1.284,1.2821,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2626,1.2651,1.2578,1.2624,1.2657,1.2629,1.2608,1.2607,1.2555,1.2564,1.2707,1.2729,1.2672,1.2623,1.2209,1.2209,1.2209,1.2209,1.2209,1.2209,1.2209,1.2209,1.2209,1.2209,1.2209,1.2209,1.2209,1.2209,1.2209,1.2209,1.2209,1.2209,1.2209,1.2209,1.2209,1.2209,1.2209,1.2209,1.2209,1.2209,1.2209,1.2209,1.2209,1.2209,1.2209,1.2209,1.2209,1.2209,1.2209,1.2267,1.2272,1.2194,1.2059,1.2087,1.208,1.2021,1.2109,1.2097,1.2096,1.2088,1.2098,1.2098,1.2114,1.2074,1.2043,1.2061,1.2055,1.2043,1.2057,1.2067,1.2068,1.2101,1.2097,1.212,1.2118,1.2153,1.2161,1.2207,1.2294,1.2436,1.259,1.2722,1.2712,1.2749,1.2742,1.2687,1.2735,1.2912,1.2925,1.2917,1.2938,1.2909,1.2953,1.2947,1.2954,1.2948,1.3019,1.2929,1.2959,1.3018,1.2995,1.2989,1.2979,1.294,1.2922,1.297,1.2942,1.2819,1.2799,1.2825,1.2816,1.2816,1.2862,1.3074,1.2999,1.3096,1.3101,1.3068,1.3119,1.3084,1.3059,1.3037,1.2964,1.2962,1.3,1.2994,1.296,1.3008,1.2992,1.2879,1.2878,1.2887,1.2885,1.2862,1.2808,1.2786,1.2786,1.2786,1.2786,1.2786,1.2627,1.2573,1.2668,1.2958,1.2905,1.302,1.2993,1.3034,1.2941,1.3054,1.2964,1.2965,1.302,1.2928,1.2943,1.306,1.3026,1.3072,1.3071,1.3042,1.3002,1.3041,1.3041,1.3027,1.3013,1.3017,1.3057,1.3187,1.3239,1.321,1.3255,1.3263,1.3247,1.3248,1.3167,1.3255,1.3106,1.3049,1.2944,1.3004,1.2979,1.2971,1.3055,1.3066,1.3171,1.3156,1.3147,1.3148,1.303,1.3092,1.3129,1.3109,1.3174,1.3111,1.3068,1.2988,1.2983,1.298,1.291,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2851,1.2887,1.3067,1.3056,1.3134,1.312,1.3113,1.3094,1.3135,1.3075,1.3112,1.3114,1.3125,1.3128,1.3179,1.3142,1.3116,1.3056,1.3101,1.3095,1.3083,1.3108,1.3128,1.3105,1.3206,1.3097,1.3096,1.309,1.3081,1.3053,1.3058,1.3047,1.3058,1.3047,1.3075,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2966,1.2907,1.2899,1.294,1.2897,1.2959,1.2962,1.2957,1.2919,1.2895,1.2831,1.2816,1.283,1.2828,1.2866,1.3024,1.3012,1.3003,1.3047,1.3149,1.3174,1.3182,1.3465,1.3533,1.3578,1.3552,1.3532,1.3547,1.3581,1.3577,1.359,1.3648,1.3612,1.3594,1.3621,1.3618,1.362,1.3646,1.3662,1.3738,1.3778,1.3767,1.3762,1.3722,1.3657,1.3814,1.37,1.3731,1.3728,1.3781,1.3787,1.367,1.3783,1.3776,1.3802,1.3806,1.3785,1.3772,1.3809,1.381,1.3803,1.3862,1.3908,1.3939,1.4048,1.415,1.4136,1.4113,1.4156,1.4134,1.4137,1.401,1.4023,1.4092,1.41,1.4046,1.4063,1.4017,1.4082,1.4063,1.4133,1.4141,1.4146,1.4133,1.4099,1.4128,1.4075,1.412,1.4079,1.4053,1.4057,1.4064,1.4157,1.4191,1.4091,1.4153,1.4153,1.4144,1.4142,1.4277,1.4241,1.4264,1.425,1.4088,1.4091,1.4034,1.4074,1.4105,1.4088,1.4013,1.4031,1.4032,1.4026,1.3843,1.3843,1.3843,1.3843,1.3843,1.3843,1.3843,1.3843,1.3843,1.3843,1.3843,1.3843,1.3843,1.3843,1.3843,1.3843,1.3843,1.3915,1.4048,1.409,1.4128,1.4233,1.4217,1.4344,1.4348,1.4363,1.4336,1.4364,1.4344,1.4371,1.4347,1.4315,1.4283,1.4331,1.4341,1.449,1.4616,1.4849,1.4798,1.4847,1.4832,1.4876,1.5058,1.4898,1.4984,1.501,1.5054,1.506,1.5081,1.5178,1.5159,1.5206,1.5157,1.5099,1.4957,1.5063,1.5037,1.4829,1.5044,1.4964,1.4901,1.4908,1.5023,1.511,1.5114,1.5098,1.5139,1.511,1.5101,1.5155,1.5103,1.4962,1.4979,1.5064,1.5042,1.5078,1.5093,1.5164,1.5087,1.5134,1.5114,1.5019,1.4905,1.4966,1.4884,1.4898,1.48,1.4886,1.4899,1.494,1.4941,1.5007,1.4993,1.4917,1.4925,1.4898,1.4885,1.4873,1.4901,1.4601,1.4601,1.4601,1.4601,1.4601,1.4601,1.4601,1.4601,1.4601,1.4601,1.4601,1.4601,1.4601,1.4601,1.4601,1.4613,1.4559,1.4656,1.4651,1.4616,1.4882,1.482,1.4773,1.471,1.474,1.4777,1.4737,1.4785,1.4733,1.4694,1.4731,1.4688,1.47,1.47,1.4754,1.484,1.4866,1.4852,1.4781,1.4779,1.4795,1.479,1.4675,1.4724,1.4646,1.4541,1.4541,1.4541,1.4541,1.4541,1.4541,1.4541,1.4541,1.4541,1.4541,1.4541,1.4541,1.4541,1.4541,1.4541,1.4541,1.4541,1.4541,1.4541,1.4541,1.4541,1.4541,1.4541,1.4541,1.4541,1.4541,1.4541,1.4541,1.4541,1.4541,1.4541,1.4541,1.4559,1.4506,1.45,1.4647,1.4672,1.4726,1.4693,1.4609,1.4578,1.4601,1.4713,1.4712,1.4729,1.4654,1.4622,1.4537,1.4577,1.4352,1.4302,1.4176,1.4176,1.4176,1.4176,1.4176,1.4176,1.4176,1.4176,1.4176,1.4176,1.4176,1.4176,1.4176,1.4176,1.4176,1.4176,1.4176,1.4176,1.4176,1.4201,1.4206,1.421,1.4133,1.3926,1.3902,1.3922,1.3907,1.3897,1.3786,1.3908,1.3798,1.3832,1.3707,1.3538,1.3538,1.3538,1.3538,1.3538,1.3538,1.3538,1.3538,1.3538,1.3538,1.3538,1.3538,1.3538,1.3602,1.3615,1.3623,1.3635,1.3622,1.367,1.3612,1.3715,1.3744,1.3748,1.3736,1.3622,1.3484,1.3476,1.3482,1.3555,1.3553,1.3595,1.3563,1.3559,1.3475,1.3405,1.3405,1.3405,1.3405,1.3405,1.3405,1.3405,1.3405,1.339,1.3388,1.342,1.3338,1.334,1.3301,1.3379,1.3302,1.3323,1.337,1.3464,1.3591,1.3574,1.3482,1.3443,1.3437,1.3408,1.3362,1.3436,1.371,1.3721,1.3746,1.3753,1.3893,1.4161,1.4139,1.4209,1.4121,1.4228,1.4216,1.4195,1.4212,1.4262,1.4314,1.4415,1.4428,1.44,1.4406,1.4282,1.4254,1.4355,1.435,1.4395,1.4369,1.4389,1.4355,1.4355,1.4423,1.4382,1.4449,1.4451,1.4481,1.4391,1.4373,1.4479,1.4453,1.4485,1.4485,1.4552,1.4584,1.4585,1.4458,1.4393,1.4401,1.4389,1.4336,1.4329,1.4422,1.4439,1.4351,1.4313,1.4339,1.4299,1.4186,1.4186,1.4186,1.4186,1.4186,1.4186,1.4186,1.4186,1.4186,1.4186,1.4186,1.4186,1.4186,1.4186,1.4186,1.4186,1.4186,1.4186,1.4189,1.4206,1.4094,1.4127,1.4258,1.4176,1.4183,1.4215,1.4212,1.4138,1.4119,1.4093,1.4177,1.4211,1.4132,1.4068,1.3958,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3789,1.3882,1.3891,1.3901,1.3925,1.3924,1.3893,1.3938,1.3911,1.3908,1.3987,1.4001,1.3966,1.3912,1.3928,1.4,1.4006,1.4202,1.4193,1.4247,1.4226,1.4187,1.4227,1.4208,1.4216,1.4207,1.4197,1.4292,1.4268,1.4303,1.4378,1.4431,1.4316,1.4328,1.4361,1.4373,1.4359,1.4328,1.4268,1.4223,1.424,1.4269,1.4276,1.4262,1.4243,1.4147,1.4147,1.4147,1.4147,1.4147,1.4147,1.4147,1.4147,1.4147,1.4147,1.4147,1.4147,1.4147,1.4147,1.4147,1.4147,1.4147,1.4147,1.4147,1.4147,1.4147,1.4147,1.4147,1.4147,1.4147,1.4147,1.4147,1.412,1.4144,1.4092,1.4099,1.4131,1.4101,1.4123,1.4197,1.4341,1.4384,1.4381,1.4427,1.4448,1.4391,1.4414,1.443,1.4395,1.4393,1.4376,1.4379,1.4453,1.4418,1.4406,1.4386,1.4395,1.4437,1.4399,1.4395,1.4392,1.4333,1.4242,1.4242,1.4242,1.4242,1.4242,1.4242,1.4242,1.4242,1.4242,1.4242,1.415,1.4194,1.4288,1.4137,1.4107,1.4109,1.411,1.4072,1.3961,1.4008,1.3949,1.4095,1.4046,1.3983,1.3865,1.3851,1.3851,1.3851,1.3851,1.3851,1.3851,1.3851,1.3851,1.3851,1.3851,1.3851,1.3851,1.3851,1.3851,1.3851,1.3851,1.3851,1.3834,1.383,1.3811,1.3813,1.3857,1.3847,1.3865,1.3822,1.3823,1.381,1.373,1.3709,1.375,1.3611,1.3611,1.3611,1.3611,1.3611,1.3611,1.3611,1.3665,1.3712,1.3716,1.3745,1.3777,1.3688,1.374,1.3696,1.3435,1.3365,1.3503,1.3509,1.3443,1.3369,1.3283,1.3221,1.3248,1.3299,1.3362,1.3287,1.3262,1.3347,1.3378,1.3399,1.349,1.3477,1.3438,1.3346,1.3287,1.3331,1.3348,1.3363,1.3227,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3088,1.3099,1.318,1.3176,1.3093,1.3083,1.3067,1.3062,1.308,1.309,1.3232,1.3281,1.3238,1.3236,1.3223,1.3173,1.3138,1.2984,1.3023,1.3027,1.3029,1.3014,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2898,1.2967,1.2887,1.2755,1.2713,1.2646,1.2771,1.2843,1.2855,1.287,1.2889,1.2902,1.2973,1.306,1.3019,1.2903,1.2842,1.287,1.2794,1.2743,1.2888,1.2872,1.2907,1.279,1.2668,1.2667,1.2648,1.2689,1.2763,1.2756,1.2694,1.2697,1.2715,1.28,1.2791,1.2934,1.2896,1.2928,1.2979,1.2983,1.2881,1.3041,1.3029,1.3057,1.307,1.3146,1.3092,1.3014,1.3098,1.3118,1.3189,1.3192,1.3161,1.3168,1.3206,1.3158,1.3118,1.3096,1.3118,1.3191,1.3208,1.3203,1.3251,1.3287,1.3306,1.3256,1.3262,1.3279,1.3333,1.3317,1.3273,1.3231,1.3294,1.3223,1.3187,1.3162,1.3144,1.3138,1.3165,1.3168,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.3095,1.311,1.3095,1.3048,1.3053,1.3099,1.3094,1.312,1.3184,1.3162,1.3112,1.3064,1.3075,1.3128,1.3044,1.3053,1.3056,1.3096,1.2998,1.2994,1.3035,1.3032,1.3062,1.309,1.3073,1.3103,1.3105,1.3102,1.3055,1.3036,1.303,1.303,1.3006,1.3008,1.2999,1.3084,1.3094,1.3312,1.3466,1.3663,1.362,1.3642,1.3685,1.367,1.3686,1.3727,1.3646,1.3659,1.364,1.3671,1.3631,1.3628,1.376,1.3707,1.3713,1.373,1.3689,1.3667,1.3661,1.36,1.3624,1.3626,1.361,1.3658,1.3566,1.3587,1.3595],"tang1_0.3":[1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.9892,0.9991,0.9887,0.9953,0.987,0.9865,0.9892,0.9911,0.9881,0.9946,0.992,0.993,0.9888,0.9731,0.9744,0.9827,0.9713,0.9746,0.973,0.968,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9575,0.9715,0.9683,0.9598,0.9733,0.967,0.9726,0.9701,0.9923,0.9923,0.9894,0.9949,0.9951,0.9888,0.9872,0.9899,0.9882,0.9798,0.9808,0.9778,0.986,0.9948,1.0077,1.0055,1.0109,1.0068,1.0075,1.0062,1.0052,1.0025,1.0134,1.0169,1.0179,1.0199,1.0256,1.0189,1.0269,1.0293,1.0272,1.0296,1.02,1.0202,1.0154,1.0258,1.0125,1.0127,1.0146,1.0141,1.0207,1.0142,1.0059,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.9894,0.984,0.9907,0.9875,0.9692,0.9699,0.9711,0.9681,0.9695,0.9576,0.9799,0.9766,0.986,0.9808,0.9677,0.9683,0.9809,0.9957,0.9965,0.9976,1.0036,1.0065,1.0052,1.0387,1.0341,1.04,1.044,1.0419,1.0412,1.0453,1.0486,1.0687,1.0645,1.0586,1.0369,1.0323,1.0394,1.0526,1.0641,1.0527,1.0543,1.0616,1.0628,1.0638,1.0576,1.0463,1.049,1.0493,1.0366,1.0418,1.0402,1.0498,1.059,1.0555,1.062,1.0561,1.0738,1.0577,1.0612,1.0641,1.0602,1.0613,1.0631,1.0639,1.0637,1.0663,1.0519,1.0564,1.0566,1.0534,1.0555,1.0578,1.0564,1.0545,1.0526,1.0538,1.0523,1.0618,1.0605,1.0524,1.0511,1.0489,1.0449,1.0477,1.0496,1.0483,1.0508,1.047,1.0462,1.0483,1.0466,1.0534,1.0514,1.0558,1.0508,1.0522,1.0508,1.0525,1.051,1.0513,1.0498,1.0481,1.0487,1.0492,1.0502,1.0489,1.0546,1.0578,1.0599,1.0583,1.0621,1.0675,1.0894,1.0871,1.0906,1.0906,1.0946,1.1022,1.09,1.0926,1.0921,1.1012,1.1015,1.0987,1.1014,1.1002,1.1035,1.0954,1.0983,1.1018,1.1015,1.1029,1.1039,1.1094,1.1045,1.1014,1.1029,1.0978,1.0999,1.0997,1.1013,1.0943,1.0966,1.0944,1.0976,1.0966,1.1006,1.0997,1.104,1.0955,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0726,1.0692,1.0713,1.0758,1.0728,1.0727,1.0751,1.0699,1.071,1.075,1.0817,1.0857,1.1074,1.1112,1.1102,1.1142,1.1124,1.1129,1.1249,1.1173,1.1212,1.1233,1.1279,1.1273,1.1231,1.1323,1.1345,1.1589,1.1588,1.1466,1.157,1.1548,1.1542,1.1603,1.1689,1.1693,1.1657,1.1641,1.1745,1.1865,1.1879,1.1882,1.1976,1.1982,1.1951,1.1946,1.2029,1.1984,1.1803,1.1801,1.1871,1.1924,1.2081,1.1987,1.2032,1.2054,1.1976,1.2026,1.2048,1.2028,1.1939,1.1962,1.1932,1.1907,1.199,1.2028,1.2038,1.2053,1.2223,1.2334,1.2355,1.2404,1.2379,1.2328,1.2402,1.2363,1.2396,1.2459,1.2558,1.2547,1.2589,1.2603,1.2673,1.2675,1.2692,1.2803,1.2833,1.2797,1.2863,1.2946,1.3014,1.304,1.3029,1.2983,1.2906,1.2865,1.2962,1.3006,1.2944,1.2924,1.292,1.2943,1.292,1.2909,1.2754,1.283,1.2799,1.2806,1.2805,1.2813,1.2735,1.2844,1.2872,1.2873,1.2835,1.2849,1.2909,1.2968,1.295,1.2986,1.3008,1.2998,1.3153,1.3154,1.3125,1.3179,1.3168,1.3166,1.3189,1.3178,1.3197,1.324,1.3232,1.3288,1.3287,1.3305,1.3265,1.3193,1.3205,1.3164,1.3151,1.3147,1.313,1.3203,1.3186,1.3215,1.3185,1.3191,1.3193,1.3223,1.3243,1.3275,1.3287,1.3309,1.3303,1.3344,1.3322,1.3284,1.3299,1.3321,1.3307,1.3311,1.3312,1.3304,1.3265,1.3268,1.3242,1.3228,1.3276,1.3286,1.3285,1.3307,1.3319,1.3319,1.3319,1.3321,1.3301,1.3313,1.3324,1.3311,1.3288,1.3312,1.3312,1.333,1.3332,1.3331,1.3367,1.3361,1.3363,1.3346,1.3332,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3159,1.3355,1.3567,1.3616,1.3617,1.3798,1.3738,1.3603,1.354,1.3452,1.3592,1.3691,1.3846,1.3976,1.3918,1.4088,1.4044,1.404,1.3961,1.4185,1.4141,1.4136,1.4066,1.3983,1.3984,1.4121,1.4276,1.4248,1.4273,1.4287,1.4181,1.4257,1.4127,1.4262,1.4253,1.4245,1.4138,1.4145,1.4248,1.4275,1.4316,1.4311,1.4411,1.4456,1.4127,1.4075,1.4098,1.3994,1.4017,1.4074,1.4002,1.4141,1.4204,1.4182,1.4155,1.4215,1.4152,1.3862,1.3678,1.3898,1.3992,1.3844,1.3833,1.3871,1.3792,1.3702,1.3742,1.3919,1.4205,1.4175,1.4209,1.4269,1.4393,1.4583,1.4512,1.452,1.4566,1.4554,1.4678,1.4614,1.4674,1.4673,1.4844,1.4815,1.4839,1.4856,1.4936,1.4993,1.4864,1.4808,1.483,1.4814,1.4895,1.4793,1.4718,1.4804,1.4866,1.4851,1.4831,1.4816,1.49,1.4889,1.4834,1.4818,1.4837,1.4902,1.5042,1.5023,1.4956,1.4953,1.493,1.494,1.4977,1.4913,1.4784,1.4794,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4653,1.4656,1.4675,1.4708,1.4619,1.4504,1.4486,1.4469,1.4521,1.4725,1.4659,1.4293,1.4231,1.4241,1.403,1.3843,1.401,1.3876,1.352,1.352,1.352,1.352,1.352,1.352,1.352,1.352,1.352,1.352,1.352,1.352,1.352,1.352,1.352,1.352,1.352,1.352,1.352,1.352,1.352,1.352,1.352,1.352,1.352,1.352,1.352,1.352,1.352,1.3549,1.3567,1.3767,1.3791,1.3815,1.3786,1.3657,1.3721,1.3681,1.3732,1.3747,1.3654,1.3444,1.3468,1.3353,1.3402,1.3344,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3216,1.3118,1.3117,1.2975,1.2786,1.2642,1.2843,1.2919,1.2969,1.3041,1.2963,1.327,1.343,1.3404,1.3391,1.3313,1.3272,1.3295,1.3063,1.3052,1.3358,1.3501,1.3491,1.3469,1.3415,1.341,1.3363,1.3334,1.3302,1.3416,1.3358,1.3395,1.3496,1.3391,1.3517,1.3514,1.3584,1.3591,1.3571,1.3539,1.3502,1.3422,1.3398,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3154,1.3185,1.3094,1.3152,1.3192,1.3158,1.3132,1.3131,1.3065,1.3077,1.3256,1.3283,1.3212,1.3151,1.2633,1.2633,1.2633,1.2633,1.2633,1.2633,1.2633,1.2633,1.2633,1.2633,1.2633,1.2633,1.2633,1.2633,1.2633,1.2633,1.2633,1.2633,1.2633,1.2633,1.2633,1.2633,1.2633,1.2633,1.2633,1.2633,1.2633,1.2633,1.2633,1.2633,1.2633,1.2633,1.2633,1.2633,1.2633,1.2705,1.2711,1.2614,1.2447,1.2481,1.2472,1.24,1.2509,1.2493,1.2492,1.2483,1.2496,1.2495,1.2515,1.2465,1.2427,1.2449,1.2442,1.2426,1.2444,1.2457,1.2458,1.2499,1.2494,1.2522,1.2521,1.2563,1.2574,1.2631,1.2738,1.2914,1.3106,1.327,1.3258,1.3304,1.3295,1.3227,1.3286,1.3506,1.3522,1.3512,1.3538,1.3502,1.3557,1.3549,1.3558,1.3551,1.3639,1.3527,1.3564,1.3638,1.3609,1.3601,1.3589,1.354,1.3519,1.3578,1.3544,1.339,1.3366,1.3398,1.3387,1.3386,1.3444,1.3707,1.3613,1.3734,1.374,1.3699,1.3763,1.3719,1.3688,1.3661,1.3571,1.3567,1.3616,1.3608,1.3565,1.3625,1.3605,1.3465,1.3464,1.3475,1.3472,1.3444,1.3376,1.335,1.335,1.335,1.335,1.335,1.315,1.3082,1.3202,1.3565,1.3498,1.3643,1.3609,1.366,1.3544,1.3686,1.3573,1.3574,1.3642,1.3527,1.3546,1.3693,1.365,1.3708,1.3706,1.367,1.362,1.3669,1.3669,1.3651,1.3634,1.3638,1.3689,1.3852,1.3917,1.3881,1.3937,1.3947,1.3928,1.3928,1.3827,1.3937,1.3751,1.3679,1.3547,1.3623,1.3591,1.3581,1.3686,1.37,1.3832,1.3813,1.3802,1.3804,1.3656,1.3733,1.3779,1.3755,1.3836,1.3756,1.3703,1.3603,1.3596,1.3592,1.3505,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3431,1.3476,1.3702,1.3688,1.3786,1.3768,1.376,1.3736,1.3787,1.3712,1.3758,1.376,1.3774,1.3779,1.3842,1.3796,1.3764,1.3688,1.3744,1.3737,1.3722,1.3753,1.3778,1.3749,1.3876,1.374,1.3738,1.373,1.3719,1.3684,1.369,1.3677,1.369,1.3676,1.3712,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3575,1.3501,1.3491,1.3543,1.3489,1.3566,1.357,1.3564,1.3516,1.3486,1.3406,1.3387,1.3404,1.3401,1.3449,1.3647,1.3633,1.3622,1.3677,1.3805,1.3836,1.3847,1.4202,1.4288,1.4344,1.4311,1.4286,1.4305,1.4347,1.4343,1.4359,1.4432,1.4386,1.4364,1.4398,1.4394,1.4397,1.4429,1.4449,1.4544,1.4595,1.4581,1.4575,1.4525,1.4443,1.464,1.4498,1.4536,1.4533,1.4599,1.4606,1.4459,1.4602,1.4592,1.4626,1.463,1.4604,1.4587,1.4634,1.4636,1.4626,1.47,1.4758,1.4797,1.4934,1.5063,1.5045,1.5016,1.507,1.5042,1.5047,1.4887,1.4903,1.499,1.5,1.4932,1.4953,1.4895,1.4977,1.4954,1.5041,1.5052,1.5058,1.5042,1.4998,1.5035,1.4969,1.5025,1.4973,1.4941,1.4946,1.4955,1.5071,1.5114,1.4988,1.5066,1.5066,1.5055,1.5053,1.5222,1.5177,1.5206,1.5189,1.4985,1.4988,1.4917,1.4967,1.5006,1.4984,1.489,1.4913,1.4915,1.4907,1.4677,1.4677,1.4677,1.4677,1.4677,1.4677,1.4677,1.4677,1.4677,1.4677,1.4677,1.4677,1.4677,1.4677,1.4677,1.4677,1.4677,1.4769,1.4938,1.4992,1.504,1.5173,1.5153,1.5314,1.532,1.5338,1.5304,1.534,1.5314,1.5349,1.5318,1.5277,1.5236,1.5298,1.531,1.55,1.5661,1.5957,1.5892,1.5954,1.5935,1.5991,1.6223,1.6019,1.6129,1.6162,1.6218,1.6225,1.6252,1.6376,1.6351,1.6412,1.6349,1.6274,1.6094,1.6229,1.6196,1.5931,1.6205,1.6103,1.6023,1.6032,1.6179,1.6289,1.6294,1.6274,1.6325,1.6289,1.6278,1.6346,1.628,1.6101,1.6122,1.6231,1.6203,1.6248,1.6267,1.6358,1.626,1.6319,1.6295,1.6173,1.6028,1.6106,1.6002,1.602,1.5894,1.6004,1.6021,1.6073,1.6074,1.6158,1.6141,1.6043,1.6054,1.6019,1.6003,1.5987,1.6023,1.5641,1.5641,1.5641,1.5641,1.5641,1.5641,1.5641,1.5641,1.5641,1.5641,1.5641,1.5641,1.5641,1.5641,1.5641,1.5656,1.5588,1.5712,1.5706,1.5661,1.6003,1.5922,1.5862,1.5782,1.5821,1.5868,1.5817,1.5878,1.5811,1.5761,1.5809,1.5753,1.5768,1.5769,1.5838,1.5948,1.5982,1.5964,1.5872,1.587,1.5891,1.5884,1.5736,1.58,1.5699,1.5564,1.5564,1.5564,1.5564,1.5564,1.5564,1.5564,1.5564,1.5564,1.5564,1.5564,1.5564,1.5564,1.5564,1.5564,1.5564,1.5564,1.5564,1.5564,1.5564,1.5564,1.5564,1.5564,1.5564,1.5564,1.5564,1.5564,1.5564,1.5564,1.5564,1.5564,1.5564,1.5588,1.5519,1.5512,1.5701,1.5732,1.5801,1.5759,1.5652,1.5612,1.5642,1.5784,1.5784,1.5806,1.5709,1.5669,1.5559,1.5611,1.5321,1.5257,1.5095,1.5095,1.5095,1.5095,1.5095,1.5095,1.5095,1.5095,1.5095,1.5095,1.5095,1.5095,1.5095,1.5095,1.5095,1.5095,1.5095,1.5095,1.5095,1.5127,1.5133,1.5139,1.504,1.4776,1.4745,1.4771,1.4752,1.4739,1.4596,1.4753,1.4613,1.4655,1.4496,1.428,1.428,1.428,1.428,1.428,1.428,1.428,1.428,1.428,1.428,1.428,1.428,1.428,1.4361,1.4378,1.4387,1.4403,1.4386,1.4447,1.4374,1.4504,1.4541,1.4546,1.453,1.4386,1.4212,1.4201,1.4209,1.4302,1.43,1.4352,1.4311,1.4307,1.42,1.4112,1.4112,1.4112,1.4112,1.4112,1.4112,1.4112,1.4112,1.4093,1.409,1.4131,1.4027,1.403,1.3981,1.4078,1.3982,1.4008,1.4067,1.4186,1.4346,1.4325,1.4209,1.416,1.4152,1.4115,1.4057,1.4151,1.4497,1.4511,1.4542,1.4552,1.4728,1.5067,1.5039,1.5128,1.5016,1.5151,1.5136,1.511,1.5131,1.5195,1.526,1.5388,1.5405,1.5369,1.5376,1.522,1.5184,1.5312,1.5306,1.5362,1.533,1.5355,1.5312,1.5312,1.5397,1.5346,1.5431,1.5433,1.5471,1.5357,1.5334,1.5468,1.5436,1.5476,1.5476,1.5561,1.5602,1.5603,1.5442,1.536,1.537,1.5355,1.5288,1.5279,1.5396,1.5418,1.5307,1.5259,1.5292,1.5241,1.5098,1.5098,1.5098,1.5098,1.5098,1.5098,1.5098,1.5098,1.5098,1.5098,1.5098,1.5098,1.5098,1.5098,1.5098,1.5098,1.5098,1.5098,1.5102,1.5123,1.498,1.5023,1.5191,1.5086,1.5095,1.5136,1.5131,1.5037,1.5013,1.4979,1.5087,1.513,1.5029,1.4948,1.4807,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.4592,1.471,1.472,1.4734,1.4763,1.4763,1.4723,1.478,1.4746,1.4743,1.4843,1.4861,1.4817,1.4747,1.4768,1.4859,1.4867,1.5115,1.5105,1.5173,1.5147,1.5097,1.5147,1.5124,1.5133,1.5122,1.511,1.523,1.5199,1.5244,1.534,1.5406,1.5261,1.5275,1.5318,1.5332,1.5316,1.5276,1.52,1.5142,1.5164,1.5201,1.521,1.5192,1.5167,1.5046,1.5046,1.5046,1.5046,1.5046,1.5046,1.5046,1.5046,1.5046,1.5046,1.5046,1.5046,1.5046,1.5046,1.5046,1.5046,1.5046,1.5046,1.5046,1.5046,1.5046,1.5046,1.5046,1.5046,1.5046,1.5046,1.5046,1.5012,1.5043,1.4975,1.4984,1.5026,1.4987,1.5015,1.511,1.5293,1.5348,1.5344,1.5403,1.543,1.5357,1.5387,1.5408,1.5363,1.536,1.5338,1.5342,1.5436,1.5391,1.5377,1.5351,1.5362,1.5416,1.5368,1.5363,1.5358,1.5283,1.5167,1.5167,1.5167,1.5167,1.5167,1.5167,1.5167,1.5167,1.5167,1.5167,1.5049,1.5105,1.5226,1.5034,1.4995,1.4997,1.4998,1.4951,1.4809,1.4869,1.4793,1.498,1.4917,1.4836,1.4686,1.4668,1.4668,1.4668,1.4668,1.4668,1.4668,1.4668,1.4668,1.4668,1.4668,1.4668,1.4668,1.4668,1.4668,1.4668,1.4668,1.4668,1.4646,1.4641,1.4616,1.462,1.4675,1.4662,1.4685,1.463,1.4632,1.4615,1.4513,1.4487,1.4539,1.4362,1.4362,1.4362,1.4362,1.4362,1.4362,1.4362,1.4431,1.449,1.4496,1.4532,1.4572,1.4459,1.4526,1.447,1.4139,1.4052,1.4225,1.4234,1.415,1.4057,1.3947,1.3869,1.3902,1.3967,1.4047,1.3952,1.3921,1.4028,1.4068,1.4093,1.421,1.4193,1.4144,1.4027,1.3953,1.4009,1.4029,1.4048,1.3877,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3701,1.3714,1.3816,1.3811,1.3707,1.3695,1.3674,1.3668,1.369,1.3703,1.3881,1.3943,1.3889,1.3886,1.387,1.3807,1.3763,1.357,1.3619,1.3624,1.3626,1.3608,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3461,1.3548,1.3448,1.3283,1.323,1.3146,1.3302,1.3393,1.3407,1.3426,1.345,1.3466,1.3555,1.3664,1.3614,1.3468,1.3392,1.3426,1.3332,1.3267,1.3449,1.3429,1.3473,1.3326,1.3174,1.3172,1.3149,1.32,1.3293,1.3283,1.3207,1.321,1.3232,1.3339,1.3328,1.3506,1.3458,1.3499,1.3563,1.3568,1.344,1.364,1.3626,1.366,1.3677,1.3773,1.3705,1.3607,1.3712,1.3737,1.3826,1.3829,1.379,1.3799,1.3848,1.3787,1.3737,1.371,1.3737,1.3828,1.385,1.3844,1.3903,1.3949,1.3972,1.391,1.3918,1.3939,1.4006,1.3986,1.3932,1.3879,1.3958,1.3869,1.3824,1.3792,1.377,1.3762,1.3796,1.38,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3709,1.3727,1.3708,1.3649,1.3656,1.3714,1.3707,1.374,1.382,1.3793,1.373,1.3669,1.3684,1.3749,1.3644,1.3656,1.3659,1.371,1.3586,1.3582,1.3632,1.3629,1.3667,1.3703,1.3681,1.3719,1.3721,1.3718,1.3658,1.3634,1.3626,1.3626,1.3597,1.3599,1.3588,1.3694,1.3706,1.3981,1.4175,1.4422,1.4368,1.4396,1.445,1.443,1.4451,1.4502,1.44,1.4417,1.4392,1.4432,1.4382,1.4377,1.4544,1.4478,1.4485,1.4506,1.4455,1.4427,1.442,1.4343,1.4373,1.4375,1.4355,1.4415,1.43,1.4327,1.4336],"tang1_0.5":[1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.9821,0.9984,0.9812,0.9921,0.9783,0.9774,0.982,0.9852,0.9801,0.9911,0.9866,0.9883,0.9814,0.9551,0.9573,0.9711,0.9522,0.9577,0.9551,0.9467,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9292,0.9517,0.9467,0.9329,0.9547,0.9445,0.9536,0.9496,0.9854,0.9854,0.9808,0.9897,0.99,0.9798,0.9772,0.9816,0.9788,0.9653,0.9669,0.9619,0.9753,0.9895,1.0104,1.0068,1.0155,1.009,1.0101,1.0079,1.0063,1.002,1.0196,1.0252,1.0269,1.03,1.0394,1.0285,1.0415,1.0453,1.0419,1.0458,1.0303,1.0306,1.0229,1.0396,1.0182,1.0185,1.0216,1.0207,1.0314,1.0208,1.0074,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9808,0.9718,0.9829,0.9776,0.9474,0.9486,0.9506,0.9455,0.9478,0.9283,0.9651,0.9596,0.9752,0.9665,0.9449,0.9458,0.9667,0.9911,0.9925,0.9944,1.0043,1.0091,1.0068,1.0622,1.0547,1.0644,1.0709,1.0676,1.0664,1.0731,1.0785,1.1118,1.1049,1.0951,1.0592,1.0516,1.0634,1.0852,1.1041,1.0854,1.088,1.1,1.102,1.1036,1.0934,1.0747,1.0793,1.0797,1.0588,1.0674,1.0647,1.0806,1.0958,1.0899,1.1007,1.0909,1.1201,1.0936,1.0995,1.1042,1.0977,1.0995,1.1025,1.1038,1.1036,1.1078,1.084,1.0914,1.0918,1.0866,1.0899,1.0938,1.0914,1.0883,1.0852,1.0872,1.0847,1.1004,1.0982,1.0849,1.0827,1.079,1.0724,1.077,1.0803,1.0781,1.0821,1.0759,1.0746,1.078,1.0752,1.0866,1.0832,1.0905,1.0823,1.0844,1.0821,1.085,1.0825,1.083,1.0806,1.0778,1.0787,1.0795,1.0812,1.0791,1.0885,1.0938,1.0972,1.0946,1.1009,1.1098,1.146,1.1422,1.1479,1.1479,1.1545,1.1671,1.147,1.1512,1.1505,1.1655,1.166,1.1614,1.1659,1.1638,1.1692,1.1559,1.1607,1.1665,1.1659,1.1683,1.1699,1.1791,1.1709,1.1658,1.1683,1.1599,1.1634,1.163,1.1656,1.1541,1.1579,1.1543,1.1596,1.1579,1.1645,1.1631,1.1701,1.156,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1182,1.1123,1.116,1.1239,1.1185,1.1184,1.1225,1.1135,1.1154,1.1225,1.134,1.1411,1.1786,1.1853,1.1836,1.1906,1.1873,1.1882,1.2091,1.1959,1.2027,1.2063,1.2143,1.2133,1.206,1.222,1.2258,1.2682,1.268,1.2468,1.2649,1.261,1.2601,1.2706,1.2855,1.2863,1.2801,1.2773,1.2953,1.3162,1.3186,1.319,1.3354,1.3365,1.3312,1.3301,1.3446,1.3368,1.3053,1.3051,1.3171,1.3263,1.3537,1.3374,1.3451,1.3489,1.3354,1.344,1.3479,1.3445,1.329,1.3331,1.3277,1.3234,1.3379,1.3445,1.3462,1.3488,1.3784,1.3976,1.4013,1.4097,1.4054,1.3966,1.4095,1.4027,1.4085,1.4193,1.4366,1.4347,1.4418,1.4444,1.4565,1.4569,1.4598,1.4791,1.4842,1.4781,1.4896,1.504,1.5157,1.5203,1.5183,1.5103,1.4971,1.4899,1.5068,1.5144,1.5037,1.5002,1.4994,1.5034,1.4995,1.4975,1.4706,1.4838,1.4784,1.4796,1.4794,1.4808,1.4673,1.4862,1.4911,1.4912,1.4847,1.4871,1.4976,1.5078,1.5047,1.511,1.5147,1.513,1.5399,1.54,1.535,1.5445,1.5426,1.5422,1.5461,1.5443,1.5476,1.555,1.5537,1.5633,1.5632,1.5663,1.5594,1.5469,1.5489,1.5418,1.5395,1.5389,1.536,1.5486,1.5456,1.5506,1.5454,1.5464,1.5468,1.5522,1.5556,1.5611,1.5632,1.567,1.5659,1.5731,1.5692,1.5626,1.5652,1.5691,1.5667,1.5674,1.5675,1.5661,1.5594,1.56,1.5553,1.553,1.5613,1.563,1.5629,1.5667,1.5688,1.5688,1.5688,1.5692,1.5656,1.5677,1.5696,1.5674,1.5634,1.5675,1.5676,1.5706,1.5711,1.5708,1.577,1.576,1.5764,1.5734,1.5711,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.541,1.5792,1.6205,1.6302,1.6304,1.6657,1.654,1.6275,1.6153,1.5981,1.6256,1.6449,1.6751,1.7005,1.6891,1.7224,1.7137,1.7128,1.6975,1.7413,1.7327,1.7317,1.7181,1.7019,1.702,1.7288,1.7591,1.7536,1.7584,1.7612,1.7404,1.7552,1.7298,1.7563,1.7545,1.753,1.7319,1.7335,1.7535,1.7587,1.7667,1.7658,1.7854,1.7942,1.73,1.7198,1.7243,1.704,1.7085,1.7196,1.7055,1.7327,1.745,1.7407,1.7354,1.7471,1.7348,1.6781,1.6423,1.6853,1.7035,1.6747,1.6725,1.6799,1.6645,1.6469,1.6548,1.6892,1.7452,1.7393,1.7459,1.7575,1.7818,1.8189,1.8051,1.8066,1.8156,1.8133,1.8375,1.8249,1.8366,1.8365,1.8698,1.8642,1.8689,1.8722,1.8878,1.899,1.8738,1.8628,1.8671,1.864,1.8798,1.86,1.8452,1.8619,1.8741,1.8712,1.8673,1.8643,1.8807,1.8785,1.8679,1.8648,1.8684,1.8811,1.9084,1.9048,1.8917,1.8911,1.8867,1.8885,1.8958,1.8833,1.8581,1.86,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8326,1.8331,1.8371,1.844,1.8255,1.8014,1.7977,1.7941,1.805,1.8475,1.8337,1.7576,1.7446,1.7467,1.7027,1.6636,1.6985,1.6707,1.5963,1.5963,1.5963,1.5963,1.5963,1.5963,1.5963,1.5963,1.5963,1.5963,1.5963,1.5963,1.5963,1.5963,1.5963,1.5963,1.5963,1.5963,1.5963,1.5963,1.5963,1.5963,1.5963,1.5963,1.5963,1.5963,1.5963,1.5963,1.5964,1.6021,1.6057,1.6449,1.6497,1.6544,1.6487,1.6233,1.636,1.6282,1.638,1.6411,1.6228,1.5814,1.5862,1.5635,1.5732,1.5617,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5365,1.5176,1.5173,1.4899,1.4531,1.4253,1.4643,1.479,1.4887,1.5026,1.4876,1.5469,1.5781,1.573,1.5705,1.5553,1.5475,1.5519,1.507,1.5047,1.564,1.5918,1.5899,1.5856,1.5751,1.5741,1.5651,1.5595,1.5531,1.5754,1.5641,1.5713,1.5909,1.5704,1.595,1.5943,1.608,1.6091,1.6053,1.5992,1.592,1.5765,1.5718,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5246,1.5306,1.513,1.5241,1.532,1.5253,1.5204,1.52,1.5074,1.5097,1.5442,1.5495,1.5357,1.524,1.4238,1.4238,1.4238,1.4238,1.4238,1.4238,1.4238,1.4238,1.4238,1.4238,1.4238,1.4238,1.4238,1.4238,1.4238,1.4238,1.4238,1.4238,1.4238,1.4238,1.4238,1.4238,1.4238,1.4238,1.4238,1.4238,1.4238,1.4238,1.4238,1.4238,1.4238,1.4238,1.4238,1.4238,1.4238,1.4374,1.4385,1.4203,1.389,1.3954,1.3937,1.3801,1.4006,1.3977,1.3975,1.3958,1.3981,1.3979,1.4018,1.3923,1.3852,1.3893,1.388,1.3851,1.3884,1.3909,1.3909,1.3987,1.3979,1.4031,1.4028,1.4108,1.4127,1.4235,1.4436,1.4768,1.5127,1.5436,1.5413,1.5499,1.5483,1.5355,1.5465,1.5879,1.5908,1.589,1.594,1.5871,1.5974,1.596,1.5976,1.5964,1.6128,1.5917,1.5988,1.6126,1.6073,1.6058,1.6035,1.5943,1.5903,1.6014,1.595,1.5661,1.5615,1.5676,1.5655,1.5654,1.5762,1.6256,1.6081,1.6307,1.6319,1.6242,1.6362,1.6279,1.6222,1.617,1.6001,1.5994,1.6085,1.607,1.599,1.6102,1.6065,1.5801,1.58,1.582,1.5815,1.5762,1.5636,1.5585,1.5585,1.5585,1.5585,1.5585,1.5197,1.5065,1.5298,1.6004,1.5874,1.6155,1.609,1.619,1.5964,1.6239,1.6019,1.6021,1.6155,1.593,1.5968,1.6253,1.617,1.6282,1.6279,1.6208,1.6111,1.6206,1.6206,1.6173,1.6138,1.6147,1.6245,1.6562,1.6689,1.6619,1.6728,1.6748,1.671,1.6711,1.6515,1.6728,1.6366,1.6225,1.5969,1.6117,1.6056,1.6035,1.624,1.6267,1.6524,1.6487,1.6466,1.6468,1.6181,1.6332,1.642,1.6373,1.6531,1.6376,1.6273,1.6078,1.6065,1.6058,1.5887,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5744,1.5832,1.6273,1.6245,1.6437,1.6402,1.6386,1.6339,1.6439,1.6292,1.6382,1.6387,1.6414,1.6423,1.6547,1.6456,1.6393,1.6245,1.6355,1.6341,1.6312,1.6372,1.6422,1.6365,1.6612,1.6347,1.6343,1.6329,1.6307,1.6238,1.625,1.6224,1.6249,1.6223,1.6293,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.6025,1.5878,1.5859,1.5961,1.5855,1.6007,1.6014,1.6002,1.5908,1.585,1.5692,1.5655,1.5688,1.5683,1.5777,1.6167,1.6138,1.6117,1.6225,1.6477,1.6538,1.656,1.7259,1.7428,1.7537,1.7473,1.7423,1.746,1.7545,1.7536,1.7568,1.7711,1.7621,1.7577,1.7645,1.7637,1.7643,1.7706,1.7745,1.7932,1.8032,1.8005,1.7992,1.7893,1.7733,1.812,1.784,1.7916,1.7909,1.8039,1.8053,1.7764,1.8045,1.8026,1.8092,1.8101,1.8049,1.8016,1.8109,1.8112,1.8094,1.8239,1.8353,1.843,1.8699,1.8952,1.8916,1.886,1.8967,1.8911,1.892,1.8605,1.8637,1.8809,1.8828,1.8696,1.8736,1.8622,1.8784,1.8737,1.8908,1.893,1.8942,1.891,1.8825,1.8897,1.8767,1.8878,1.8775,1.8712,1.8722,1.8739,1.8969,1.9053,1.8806,1.8959,1.8959,1.8937,1.8933,1.9265,1.9176,1.9233,1.9199,1.8798,1.8805,1.8666,1.8764,1.884,1.8797,1.8612,1.8656,1.866,1.8646,1.8194,1.8194,1.8194,1.8194,1.8194,1.8194,1.8194,1.8194,1.8194,1.8194,1.8194,1.8194,1.8194,1.8194,1.8194,1.8194,1.8194,1.8383,1.8732,1.8843,1.8943,1.9217,1.9177,1.951,1.9521,1.9558,1.9488,1.9562,1.9508,1.958,1.9518,1.9433,1.9349,1.9476,1.9501,1.9893,2.0226,2.0838,2.0702,2.0832,2.0791,2.0908,2.1387,2.0965,2.1193,2.1261,2.1376,2.1392,2.1447,2.1702,2.1651,2.1777,2.1648,2.1493,2.112,2.14,2.1331,2.0784,2.135,2.1138,2.0973,2.0992,2.1296,2.1524,2.1534,2.1491,2.1598,2.1522,2.1501,2.164,2.1505,2.1135,2.1178,2.1403,2.1346,2.1438,2.1477,2.1665,2.1463,2.1586,2.1535,2.1285,2.0984,2.1145,2.093,2.0967,2.0708,2.0935,2.0969,2.1077,2.1079,2.1252,2.1217,2.1015,2.1037,2.0965,2.0933,2.0899,2.0975,2.0185,2.0185,2.0185,2.0185,2.0185,2.0185,2.0185,2.0185,2.0185,2.0185,2.0185,2.0185,2.0185,2.0185,2.0185,2.0217,2.007,2.0338,2.0324,2.0227,2.0962,2.079,2.066,2.0487,2.0571,2.0673,2.0562,2.0693,2.055,2.0442,2.0545,2.0426,2.0458,2.0459,2.0608,2.0845,2.0919,2.0879,2.0682,2.0677,2.0722,2.0707,2.0389,2.0526,2.031,2.0019,2.0019,2.0019,2.0019,2.0019,2.0019,2.0019,2.0019,2.0019,2.0019,2.0019,2.0019,2.0019,2.0019,2.0019,2.0019,2.0019,2.0019,2.0019,2.0019,2.0019,2.0019,2.0019,2.0019,2.0019,2.0019,2.0019,2.0019,2.0019,2.0019,2.0019,2.0019,2.007,1.9922,1.9907,2.0312,2.038,2.0527,2.0437,2.0207,2.0122,2.0186,2.0492,2.049,2.0538,2.033,2.0243,2.0007,2.0119,1.9499,1.936,1.9014,1.9014,1.9014,1.9014,1.9014,1.9014,1.9014,1.9014,1.9014,1.9014,1.9014,1.9014,1.9014,1.9014,1.9014,1.9014,1.9014,1.9014,1.9014,1.908,1.9094,1.9105,1.8898,1.8343,1.8278,1.8333,1.8293,1.8267,1.7967,1.8296,1.8001,1.809,1.7756,1.7302,1.7302,1.7302,1.7302,1.7302,1.7302,1.7302,1.7302,1.7302,1.7302,1.7302,1.7302,1.7302,1.7466,1.7499,1.7519,1.755,1.7516,1.764,1.7492,1.7754,1.783,1.7839,1.7808,1.7517,1.7166,1.7143,1.7159,1.7347,1.7342,1.7447,1.7366,1.7357,1.7141,1.6963,1.6963,1.6963,1.6963,1.6963,1.6963,1.6963,1.6963,1.6925,1.6919,1.7001,1.6794,1.6799,1.67,1.6896,1.6702,1.6756,1.6873,1.7112,1.7433,1.7389,1.7157,1.7059,1.7043,1.6969,1.6853,1.7041,1.7734,1.7762,1.7825,1.7844,1.8197,1.8876,1.882,1.8999,1.8775,1.9045,1.9015,1.8962,1.9005,1.9133,1.9264,1.952,1.9553,1.9481,1.9495,1.9182,1.9111,1.9368,1.9354,1.9468,1.9404,1.9453,1.9367,1.9368,1.9538,1.9436,1.9605,1.9611,1.9686,1.9458,1.9412,1.9681,1.9616,1.9695,1.9696,1.9865,1.9948,1.995,1.9627,1.9463,1.9483,1.9453,1.932,1.9301,1.9535,1.958,1.9358,1.9262,1.9327,1.9225,1.8939,1.8939,1.8939,1.8939,1.8939,1.8939,1.8939,1.8939,1.8939,1.8939,1.8939,1.8939,1.8939,1.8939,1.8939,1.8939,1.8939,1.8939,1.8948,1.8992,1.8693,1.8782,1.9133,1.8913,1.8932,1.9017,1.9008,1.8811,1.8761,1.869,1.8917,1.9005,1.8794,1.8625,1.833,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.788,1.8122,1.8143,1.817,1.8231,1.8229,1.8149,1.8265,1.8195,1.8188,1.8394,1.8429,1.8339,1.8198,1.824,1.8427,1.8443,1.8949,1.8928,1.9067,1.9013,1.8912,1.9014,1.8967,1.8986,1.8963,1.8938,1.9185,1.9121,1.9213,1.9408,1.9544,1.9246,1.9276,1.9363,1.9393,1.9359,1.9278,1.9122,1.9004,1.9049,1.9125,1.9142,1.9107,1.9056,1.8807,1.8807,1.8807,1.8807,1.8807,1.8807,1.8807,1.8807,1.8807,1.8807,1.8807,1.8807,1.8807,1.8807,1.8807,1.8807,1.8807,1.8807,1.8807,1.8807,1.8807,1.8807,1.8807,1.8807,1.8807,1.8807,1.8807,1.8736,1.8801,1.8661,1.868,1.8766,1.8684,1.8743,1.8941,1.9323,1.9438,1.943,1.9551,1.9608,1.9456,1.9519,1.9561,1.9467,1.9461,1.9417,1.9425,1.962,1.9528,1.9497,1.9444,1.9467,1.9579,1.9478,1.9467,1.9458,1.9301,1.9059,1.9059,1.9059,1.9059,1.9059,1.9059,1.9059,1.9059,1.9059,1.9059,1.8813,1.8931,1.9185,1.878,1.87,1.8704,1.8706,1.8607,1.8309,1.8435,1.8276,1.8668,1.8537,1.8366,1.8052,1.8015,1.8015,1.8015,1.8015,1.8015,1.8015,1.8015,1.8015,1.8015,1.8015,1.8015,1.8015,1.8015,1.8015,1.8015,1.8015,1.8015,1.797,1.796,1.7909,1.7916,1.8029,1.8002,1.805,1.7937,1.7942,1.7907,1.7698,1.7644,1.7752,1.7389,1.7389,1.7389,1.7389,1.7389,1.7389,1.7389,1.7528,1.7648,1.7659,1.7733,1.7813,1.7585,1.772,1.7606,1.6939,1.6762,1.7112,1.7129,1.6961,1.6772,1.6551,1.6394,1.6461,1.6591,1.6753,1.6562,1.6498,1.6715,1.6795,1.6847,1.7081,1.7047,1.6948,1.6712,1.6563,1.6675,1.6717,1.6755,1.6409,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.6054,1.608,1.6279,1.6269,1.6066,1.6042,1.6002,1.599,1.6034,1.6059,1.6406,1.6527,1.6421,1.6416,1.6384,1.6261,1.6175,1.5799,1.5894,1.5904,1.5907,1.5873,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5586,1.5753,1.5561,1.5243,1.514,1.4977,1.528,1.5454,1.5482,1.5519,1.5565,1.5596,1.5768,1.5978,1.588,1.5599,1.5453,1.5519,1.5337,1.5212,1.5562,1.5524,1.5609,1.5326,1.5032,1.5028,1.4983,1.5082,1.5262,1.5243,1.5095,1.5102,1.5144,1.535,1.5329,1.5673,1.5581,1.5658,1.5782,1.5792,1.5545,1.5932,1.5904,1.5971,1.6003,1.6188,1.6057,1.5869,1.607,1.6118,1.629,1.6297,1.6222,1.6239,1.6332,1.6216,1.6119,1.6066,1.6119,1.6294,1.6336,1.6325,1.644,1.6528,1.6573,1.6452,1.6468,1.6509,1.6638,1.6599,1.6494,1.6392,1.6544,1.6374,1.6287,1.6225,1.6181,1.6166,1.6232,1.6239,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6064,1.6099,1.6063,1.5947,1.5961,1.6074,1.606,1.6125,1.628,1.6228,1.6106,1.5987,1.6015,1.6143,1.5937,1.596,1.5967,1.6067,1.5825,1.5816,1.5915,1.5908,1.5982,1.6052,1.601,1.6083,1.6089,1.6081,1.5965,1.5918,1.5903,1.5903,1.5845,1.5851,1.5827,1.6036,1.606,1.6595,1.6974,1.7457,1.7351,1.7406,1.7511,1.7473,1.7514,1.7614,1.7414,1.7448,1.7399,1.7477,1.7379,1.737,1.7696,1.7566,1.7581,1.7621,1.7521,1.7467,1.7453,1.7303,1.7361,1.7365,1.7327,1.7444,1.7219,1.7271,1.729],"always_0.5":[1.0,0.9959,0.9857,0.9886,1.0011,0.9976,0.9971,0.9957,0.9931,0.9899,0.9884,0.9929,0.9889,0.9796,0.9816,0.9645,0.8884,0.8837,0.8554,0.8645,0.866,0.8539,0.8729,0.8732,0.8779,0.8679,0.861,0.8603,0.8383,0.8653,0.8639,0.893,0.8927,0.8706,0.874,0.8721,0.8775,0.8633,0.8499,0.8561,0.8459,0.8462,0.8678,0.8665,0.8522,0.804,0.7989,0.8993,0.9372,0.955,0.9363,0.9481,0.9331,0.9322,0.9371,0.9406,0.9351,0.947,0.9421,0.9439,0.9364,0.9079,0.9103,0.9253,0.9048,0.9107,0.9079,0.8988,0.8868,0.8881,0.889,0.8651,0.861,0.8581,0.8183,0.7846,0.7888,0.7471,0.7684,0.7733,0.8078,0.7994,0.8284,0.8112,0.7967,0.7874,0.7874,0.7775,0.7964,0.8093,0.806,0.808,0.7919,0.7805,0.7789,0.7778,0.7836,0.7642,0.7697,0.7456,0.715,0.786,0.7729,0.7768,0.7714,0.8075,0.7896,0.7835,0.7785,0.7781,0.7832,0.7894,0.7963,0.7824,0.7773,0.7781,0.7537,0.7923,0.7932,0.7935,0.8302,0.8627,0.8553,0.8355,0.8669,0.8522,0.8653,0.8596,0.9112,0.9113,0.9045,0.9174,0.9178,0.9032,0.8993,0.9057,0.9017,0.8822,0.8845,0.8773,0.8966,0.9171,0.9472,0.942,0.9545,0.9452,0.9468,0.9436,0.9413,0.9351,0.9605,0.9686,0.971,0.9755,0.989,0.9733,0.9921,0.9975,0.9926,0.9983,0.976,0.9763,0.9652,0.9893,0.9584,0.9589,0.9633,0.9621,0.9774,0.9623,0.9429,0.909,0.9114,0.9028,0.891,0.8914,0.9175,0.9072,0.9067,0.9267,0.9315,0.916,0.8536,0.845,0.8421,0.8455,0.4095,0.5672,0.4944,0.5301,0.4663,0.521,0.536,0.6565,0.6625,0.6598,0.6057,0.6962,0.7293,0.7214,0.7284,0.6822,0.6661,0.6158,0.687,0.6891,0.7177,0.735,0.7279,0.7416,0.7324,0.7907,0.7776,0.7938,0.7862,0.7424,0.7442,0.747,0.7397,0.743,0.7148,0.768,0.7601,0.7826,0.77,0.7387,0.7402,0.7703,0.8057,0.8076,0.8104,0.8247,0.8316,0.8283,0.9085,0.8976,0.9116,0.9211,0.9162,0.9145,0.9241,0.932,0.9802,0.9702,0.956,0.9041,0.8931,0.9102,0.9417,0.9691,0.942,0.9458,0.9632,0.9661,0.9684,0.9535,0.9265,0.9332,0.9338,0.9036,0.9159,0.912,0.9351,0.957,0.9486,0.9641,0.95,0.9922,0.9539,0.9623,0.9692,0.9597,0.9624,0.9668,0.9687,0.9683,0.9744,0.94,0.9507,0.9513,0.9437,0.9485,0.9542,0.9507,0.9462,0.9417,0.9445,0.9409,0.9636,0.9605,0.9412,0.9381,0.9328,0.9232,0.9299,0.9346,0.9315,0.9373,0.9283,0.9264,0.9314,0.9273,0.9437,0.9388,0.9494,0.9375,0.9406,0.9373,0.9414,0.9378,0.9385,0.9351,0.931,0.9323,0.9335,0.9359,0.9328,0.9465,0.9541,0.959,0.9553,0.9644,0.9773,1.0297,1.0242,1.0325,1.0324,1.042,1.0601,1.0311,1.0372,1.0361,1.0579,1.0586,1.0519,1.0584,1.0554,1.0633,1.0439,1.0509,1.0593,1.0585,1.0619,1.0642,1.0775,1.0656,1.0583,1.0618,1.0497,1.0548,1.0542,1.0579,1.0413,1.0469,1.0416,1.0492,1.0469,1.0564,1.0543,1.0645,1.0441,0.9876,1.0027,0.989,0.9935,0.9994,0.987,0.9916,0.9973,0.9998,1.0022,0.9969,1.0128,1.0179,1.0254,1.0249,1.0245,1.0308,1.0239,1.0011,1.0063,0.9925,1.0155,1.0137,1.0156,1.0175,1.014,1.0205,1.0177,1.0104,1.0082,1.0069,1.0126,1.0182,1.0095,1.0125,1.0242,1.0298,1.04,1.043,1.0494,1.045,1.0449,1.0483,1.041,1.0425,1.0482,1.0576,1.0634,1.094,1.0994,1.098,1.1037,1.1011,1.1018,1.1188,1.108,1.1136,1.1165,1.123,1.1222,1.1163,1.1293,1.1324,1.1669,1.1667,1.1495,1.1642,1.161,1.1603,1.1689,1.181,1.1816,1.1766,1.1743,1.189,1.206,1.2079,1.2083,1.2216,1.2225,1.2182,1.2173,1.2291,1.2228,1.1971,1.1969,1.2067,1.2142,1.2365,1.2232,1.2295,1.2326,1.2216,1.2286,1.2318,1.229,1.2164,1.2197,1.2154,1.2118,1.2236,1.229,1.2304,1.2325,1.2566,1.2723,1.2753,1.2821,1.2786,1.2714,1.2819,1.2764,1.2811,1.2899,1.304,1.3025,1.3083,1.3104,1.3203,1.3205,1.3229,1.3386,1.3428,1.3378,1.3472,1.3589,1.3685,1.3721,1.3705,1.3641,1.3533,1.3474,1.3612,1.3673,1.3586,1.3558,1.3551,1.3584,1.3552,1.3536,1.3317,1.3425,1.3381,1.339,1.3389,1.34,1.329,1.3444,1.3484,1.3485,1.3432,1.3451,1.3537,1.362,1.3595,1.3646,1.3676,1.3663,1.3881,1.3882,1.3842,1.3919,1.3903,1.39,1.3932,1.3917,1.3944,1.4005,1.3993,1.4072,1.4071,1.4096,1.404,1.3938,1.3955,1.3897,1.3878,1.3873,1.385,1.3952,1.3928,1.3969,1.3926,1.3935,1.3938,1.3981,1.4009,1.4054,1.4071,1.4102,1.4093,1.4152,1.412,1.4066,1.4088,1.4119,1.41,1.4106,1.4106,1.4095,1.404,1.4045,1.4007,1.3988,1.4056,1.4069,1.4069,1.4099,1.4116,1.4116,1.4116,1.412,1.4091,1.4108,1.4123,1.4105,1.4072,1.4106,1.4107,1.4132,1.4135,1.4133,1.4184,1.4176,1.4178,1.4154,1.4135,1.4074,1.4066,1.4079,1.4034,1.3995,1.3984,1.3963,1.3941,1.4038,1.4055,1.4053,1.403,1.4099,1.4102,1.4083,1.4092,1.4025,1.4096,1.4079,1.4094,1.4118,1.4109,1.407,1.4084,1.3952,1.3955,1.3958,1.389,1.3881,1.3807,1.3788,1.3584,1.3717,1.3604,1.3612,1.3501,1.366,1.3644,1.3675,1.3651,1.3543,1.3499,1.3543,1.3605,1.3584,1.3617,1.3676,1.3589,1.3536,1.3549,1.3451,1.3443,1.361,1.3583,1.3607,1.3538,1.3668,1.3717,1.3705,1.3645,1.3635,1.3549,1.3536,1.354,1.3356,1.3401,1.3456,1.35,1.3354,1.3389,1.3502,1.3493,1.3553,1.3517,1.3449,1.3461,1.3501,1.3527,1.3457,1.3481,1.3465,1.3418,1.3463,1.3449,1.3483,1.3429,1.3412,1.3416,1.337,1.3344,1.335,1.3364,1.3314,1.3255,1.3382,1.339,1.3455,1.3482,1.3531,1.3604,1.3683,1.3701,1.3701,1.3769,1.3746,1.3696,1.3673,1.364,1.3692,1.3729,1.3787,1.3835,1.3813,1.3877,1.386,1.3859,1.3829,1.3913,1.3896,1.3895,1.3869,1.3838,1.3838,1.3889,1.3947,1.3936,1.3946,1.3951,1.3911,1.3939,1.3891,1.3941,1.3938,1.3935,1.3895,1.3898,1.3936,1.3946,1.3961,1.396,1.3997,1.4014,1.3891,1.3872,1.3881,1.3842,1.385,1.3872,1.3845,1.3897,1.392,1.3912,1.3902,1.3924,1.3901,1.3792,1.3724,1.3806,1.3841,1.3786,1.3782,1.3796,1.3767,1.3733,1.3748,1.3814,1.392,1.3909,1.3922,1.3944,1.399,1.4061,1.4035,1.4037,1.4055,1.405,1.4096,1.4072,1.4095,1.4094,1.4158,1.4147,1.4156,1.4162,1.4192,1.4214,1.4165,1.4145,1.4153,1.4147,1.4177,1.4139,1.4111,1.4143,1.4166,1.4161,1.4153,1.4147,1.4179,1.4175,1.4154,1.4148,1.4155,1.4179,1.4231,1.4225,1.42,1.4199,1.419,1.4194,1.4208,1.4184,1.4136,1.4139,1.4087,1.4105,1.413,1.4114,1.4077,1.4098,1.4091,1.4119,1.4033,1.4051,1.4093,1.4102,1.4088,1.4092,1.4081,1.4031,1.3943,1.3948,1.397,1.3973,1.397,1.3907,1.3898,1.3948,1.3962,1.3887,1.3925,1.3937,1.3909,1.3874,1.389,1.3887,1.3892,1.3937,1.393,1.3978,1.3977,1.3969,1.3977,1.3975,1.3907,1.3881,1.3897,1.3876,1.3911,1.3901,1.3881,1.3866,1.3803,1.3794,1.375,1.3754,1.3759,1.3757,1.3783,1.3816,1.3778,1.3793,1.3794,1.3793,1.3768,1.3773,1.3753,1.3722,1.3574,1.3517,1.3566,1.3582,1.3593,1.3588,1.3601,1.3622,1.3638,1.3628,1.3648,1.3657,1.3592,1.3607,1.375,1.3744,1.3773,1.3815,1.382,1.3829,1.3805,1.3774,1.3769,1.3764,1.3778,1.3833,1.3815,1.3717,1.37,1.3703,1.3646,1.3595,1.364,1.3604,1.3644,1.3675,1.3671,1.3621,1.3796,1.383,1.3816,1.3776,1.3672,1.368,1.3647,1.3631,1.3658,1.3761,1.3682,1.3658,1.3661,1.3623,1.369,1.3677,1.3736,1.373,1.3756,1.3768,1.3741,1.3732,1.3773,1.3788,1.3818,1.3827,1.3832,1.389,1.3897,1.3904,1.3896,1.3858,1.3877,1.3865,1.388,1.3885,1.3857,1.3796,1.3803,1.377,1.3784,1.3767,1.3685,1.3703,1.3737,1.3698,1.3718,1.3713,1.369,1.3726,1.3747,1.3743,1.3715,1.369,1.3682,1.3682,1.3714,1.3636,1.3675,1.3692,1.3653,1.3619,1.3648,1.3651,1.3622,1.3691,1.3578,1.3557,1.3535,1.3473,1.3271,1.3324,1.3213,1.321,1.3225,1.3273,1.3341,1.326,1.3293,1.319,1.3286,1.322,1.3234,1.3284,1.3214,1.3247,1.3241,1.322,1.3185,1.321,1.3236,1.3362,1.3366,1.3256,1.3293,1.325,1.3259,1.3263,1.3343,1.333,1.3279,1.3273,1.3213,1.3172,1.3044,1.2688,1.2651,1.2698,1.2451,1.246,1.226,1.2473,1.2474,1.2492,1.2399,1.2537,1.2553,1.2581,1.2529,1.2494,1.2437,1.2416,1.2392,1.2304,1.23,1.2309,1.2431,1.2424,1.2472,1.2596,1.2593,1.2592,1.2508,1.2396,1.2311,1.243,1.2475,1.2505,1.2547,1.2501,1.2683,1.2778,1.2762,1.2755,1.2709,1.2685,1.2698,1.2561,1.2554,1.2735,1.282,1.2814,1.2801,1.2769,1.2766,1.2739,1.2721,1.2702,1.277,1.2735,1.2757,1.2817,1.2755,1.283,1.2828,1.2869,1.2873,1.2861,1.2843,1.2821,1.2773,1.2759,1.2505,1.2541,1.2584,1.2571,1.2585,1.2567,1.2589,1.2431,1.2405,1.2342,1.2437,1.2376,1.2407,1.2418,1.2394,1.2379,1.2401,1.2374,1.2234,1.2306,1.2309,1.2567,1.2599,1.2619,1.2679,1.2423,1.243,1.2361,1.2375,1.2415,1.2322,1.2339,1.2246,1.2183,1.2321,1.2305,1.2252,1.2236,1.2296,1.2275,1.2323,1.2347,1.2323,1.2308,1.2272,1.2352,1.2445,1.2421,1.2396,1.2338,1.2323,1.2326,1.2283,1.2273,1.2286,1.2317,1.2289,1.2274,1.2301,1.2341,1.2311,1.2282,1.227,1.2287,1.2293,1.2344,1.231,1.2411,1.2497,1.2439,1.2476,1.2502,1.248,1.2463,1.2462,1.242,1.2428,1.2542,1.2559,1.2514,1.2475,1.2197,1.1733,1.2046,1.1954,1.1909,1.1817,1.1871,1.1923,1.188,1.1885,1.1887,1.1887,1.1807,1.1706,1.1797,1.1869,1.1869,1.1854,1.1841,1.1836,1.1794,1.1838,1.1971,1.1938,1.1958,1.1922,1.1961,1.1936,1.1958,1.1912,1.1982,1.1965,1.1965,1.1957,1.1979,1.2077,1.2082,1.2006,1.1875,1.1901,1.1894,1.1837,1.1923,1.1911,1.191,1.1903,1.1913,1.1912,1.1928,1.1888,1.1858,1.1876,1.187,1.1858,1.1872,1.1882,1.1883,1.1915,1.1912,1.1934,1.1932,1.1966,1.1974,1.2019,1.2103,1.2242,1.2392,1.2521,1.2512,1.2548,1.2541,1.2488,1.2534,1.2707,1.2719,1.2712,1.2732,1.2704,1.2747,1.2741,1.2748,1.2743,1.2811,1.2723,1.2753,1.281,1.2788,1.2782,1.2772,1.2734,1.2717,1.2764,1.2737,1.2616,1.2597,1.2622,1.2613,1.2613,1.2658,1.2865,1.2792,1.2886,1.2891,1.2859,1.2909,1.2874,1.285,1.2829,1.2758,1.2755,1.2793,1.2787,1.2754,1.28,1.2785,1.2675,1.2674,1.2682,1.268,1.2658,1.2605,1.2447,1.242,1.2459,1.2637,1.2846,1.2895,1.2861,1.2921,1.3103,1.3069,1.3141,1.3125,1.315,1.3092,1.3163,1.3106,1.3107,1.3141,1.3084,1.3093,1.3167,1.3145,1.3174,1.3173,1.3155,1.313,1.3155,1.3155,1.3146,1.3137,1.3139,1.3165,1.3246,1.3279,1.3261,1.3289,1.3294,1.3284,1.3284,1.3234,1.3289,1.3196,1.3159,1.3093,1.3131,1.3116,1.311,1.3163,1.317,1.3236,1.3227,1.3221,1.3222,1.3148,1.3187,1.3209,1.3198,1.3238,1.3198,1.3172,1.3122,1.3118,1.3116,1.3073,1.306,1.3059,1.3069,1.3086,1.3077,1.3103,1.3062,1.3066,1.3082,1.3056,1.3064,1.309,1.3025,1.3036,1.3053,1.3064,1.3148,1.3126,1.3123,1.309,1.3062,1.3092,1.308,1.3083,1.2979,1.3091,1.3026,1.3038,1.3037,1.2988,1.2995,1.2993,1.2995,1.2931,1.2969,1.3027,1.304,1.3027,1.3063,1.3163,1.3267,1.3261,1.3306,1.3298,1.3294,1.3283,1.3307,1.3272,1.3293,1.3294,1.3301,1.3303,1.3332,1.3311,1.3296,1.3261,1.3287,1.3283,1.3277,1.3291,1.3302,1.3289,1.3347,1.3285,1.3284,1.328,1.3275,1.3259,1.3262,1.3256,1.3262,1.3255,1.3272,1.3218,1.3222,1.3229,1.3221,1.3227,1.3229,1.3225,1.3222,1.3251,1.3219,1.3219,1.3215,1.3212,1.3213,1.3221,1.3254,1.3243,1.3235,1.3234,1.3234,1.3226,1.3234,1.322,1.3191,1.3047,1.3005,1.3008,1.3015,1.301,1.3005,1.3033,1.3014,1.3006,1.3002,1.3008,1.301,1.3124,1.3096,1.2996,1.2986,1.299,1.2999,1.2987,1.2985,1.2982,1.302,1.2994,1.2993,1.2988,1.2934,1.2988,1.3018,1.304,1.3046,1.3043,1.304,1.3058,1.3089,1.3083,1.3043,1.3044,1.3044,1.3019,1.3024,1.3018,1.3029,1.3076,1.3068,1.3072,1.3143,1.3109,1.3105,1.3128,1.3104,1.3139,1.3141,1.3138,1.3116,1.3102,1.3066,1.3057,1.3065,1.3064,1.3086,1.3176,1.3169,1.3164,1.3189,1.3248,1.3262,1.3267,1.3429,1.3468,1.3493,1.3479,1.3467,1.3476,1.3495,1.3493,1.3501,1.3534,1.3513,1.3503,1.3518,1.3517,1.3518,1.3533,1.3542,1.3585,1.3608,1.3602,1.3599,1.3576,1.3539,1.3629,1.3564,1.3581,1.358,1.361,1.3613,1.3546,1.3611,1.3607,1.3622,1.3624,1.3612,1.3605,1.3626,1.3627,1.3622,1.3656,1.3682,1.37,1.3763,1.3821,1.3813,1.38,1.3825,1.3812,1.3814,1.3741,1.3748,1.3788,1.3793,1.3762,1.3771,1.3745,1.3782,1.3772,1.3811,1.3816,1.3819,1.3812,1.3792,1.3809,1.3779,1.3804,1.378,1.3766,1.3768,1.3772,1.3825,1.3845,1.3787,1.3823,1.3823,1.3818,1.3817,1.3894,1.3873,1.3887,1.3879,1.3786,1.3787,1.3755,1.3778,1.3795,1.3786,1.3743,1.3753,1.3754,1.375,1.3687,1.3697,1.3704,1.37,1.3757,1.3766,1.3764,1.38,1.3789,1.3779,1.3794,1.3797,1.3791,1.3779,1.3783,1.3794,1.3828,1.3852,1.3897,1.3911,1.3924,1.396,1.3954,1.3997,1.3999,1.4004,1.3995,1.4004,1.3997,1.4006,1.3998,1.3988,1.3977,1.3993,1.3996,1.4047,1.409,1.4169,1.4151,1.4168,1.4163,1.4178,1.4239,1.4185,1.4214,1.4223,1.4238,1.424,1.4247,1.428,1.4273,1.4289,1.4273,1.4253,1.4205,1.4241,1.4232,1.4162,1.4235,1.4207,1.4186,1.4188,1.4228,1.4257,1.4258,1.4253,1.4267,1.4257,1.4254,1.4272,1.4255,1.4207,1.4212,1.4241,1.4234,1.4246,1.4251,1.4275,1.4249,1.4265,1.4258,1.4226,1.4187,1.4208,1.418,1.4185,1.4152,1.4181,1.4185,1.4199,1.42,1.4222,1.4217,1.4191,1.4194,1.4185,1.4181,1.4176,1.4186,1.4143,1.4109,1.412,1.4173,1.4186,1.4188,1.4177,1.4166,1.415,1.4176,1.4145,1.4146,1.4155,1.4174,1.4156,1.4215,1.4203,1.4224,1.4223,1.4216,1.4273,1.426,1.4249,1.4236,1.4242,1.425,1.4242,1.4252,1.4241,1.4232,1.424,1.4231,1.4234,1.4234,1.4245,1.4264,1.427,1.4266,1.4251,1.4251,1.4254,1.4253,1.4228,1.4239,1.4222,1.4213,1.4215,1.422,1.4218,1.4202,1.42,1.4199,1.419,1.4191,1.4178,1.4138,1.4159,1.4146,1.4158,1.414,1.4148,1.4172,1.4174,1.4164,1.4137,1.4089,1.4082,1.4107,1.4069,1.4083,1.4105,1.41,1.4093,1.4102,1.4122,1.4145,1.4197,1.4201,1.4189,1.4188,1.422,1.4226,1.4237,1.423,1.4212,1.4205,1.421,1.4235,1.4234,1.4238,1.4222,1.4215,1.4196,1.4205,1.4155,1.4144,1.4106,1.4038,1.4072,1.4057,1.4157,1.4146,1.4147,1.4115,1.4124,1.4142,1.4114,1.4097,1.4117,1.4126,1.411,1.4125,1.4119,1.415,1.4139,1.4188,1.419,1.4191,1.4173,1.4125,1.412,1.4124,1.4121,1.4118,1.4093,1.4121,1.4096,1.4103,1.4075,1.4037,1.404,1.4053,1.4089,1.4098,1.4093,1.4106,1.4141,1.4134,1.4121,1.4107,1.4138,1.4158,1.4174,1.4178,1.4179,1.4183,1.4179,1.4191,1.4177,1.4202,1.421,1.4211,1.4208,1.4179,1.4145,1.4143,1.4144,1.4163,1.4162,1.4172,1.4165,1.4164,1.4143,1.4138,1.4169,1.4178,1.4173,1.4214,1.4225,1.4231,1.4229,1.424,1.424,1.4247,1.4229,1.4229,1.422,1.4238,1.4221,1.4225,1.4236,1.4257,1.4286,1.4282,1.4261,1.4252,1.4251,1.4244,1.4234,1.4251,1.4313,1.4315,1.4321,1.4322,1.4354,1.4414,1.4409,1.4425,1.4405,1.4429,1.4427,1.4422,1.4426,1.4437,1.4449,1.4472,1.4475,1.4468,1.447,1.4442,1.4435,1.4458,1.4457,1.4467,1.4461,1.4466,1.4458,1.4458,1.4473,1.4464,1.4479,1.448,1.4487,1.4466,1.4462,1.4486,1.448,1.4487,1.4487,1.4503,1.451,1.451,1.4481,1.4467,1.4469,1.4466,1.4454,1.4452,1.4473,1.4477,1.4457,1.4449,1.4455,1.4445,1.444,1.4445,1.4451,1.4464,1.4471,1.4471,1.4472,1.4492,1.4464,1.4453,1.4438,1.4451,1.4451,1.445,1.445,1.4462,1.4483,1.448,1.4501,1.4503,1.4487,1.4492,1.451,1.4499,1.45,1.4504,1.4504,1.4493,1.4491,1.4487,1.4499,1.4504,1.4492,1.4484,1.4468,1.4487,1.4468,1.4462,1.4462,1.4461,1.4461,1.4461,1.4466,1.4457,1.4469,1.4462,1.4467,1.4467,1.4459,1.4457,1.4457,1.4462,1.4471,1.4459,1.4462,1.446,1.4432,1.4414,1.4383,1.4386,1.4384,1.4396,1.4449,1.4397,1.4404,1.4426,1.4422,1.4401,1.4397,1.4356,1.4339,1.4373,1.4379,1.4359,1.4381,1.4384,1.4371,1.4381,1.4371,1.4401,1.4383,1.4382,1.438,1.4396,1.4406,1.4405,1.4402,1.4404,1.4384,1.4371,1.4369,1.437,1.439,1.437,1.4375,1.438,1.4378,1.4337,1.4343,1.4319,1.4371,1.4347,1.4377,1.439,1.4379,1.4386,1.4379,1.4381,1.4388,1.4385,1.4389,1.439,1.4406,1.4444,1.4445,1.4447,1.4451,1.4451,1.4445,1.4453,1.4448,1.4448,1.4461,1.4463,1.4458,1.4449,1.4451,1.4463,1.4464,1.4497,1.4495,1.4504,1.4501,1.4494,1.4501,1.4498,1.4499,1.4498,1.4496,1.4512,1.4508,1.4514,1.4526,1.4535,1.4516,1.4518,1.4523,1.4525,1.4523,1.4518,1.4508,1.45,1.4503,1.4508,1.4509,1.4507,1.4503,1.4488,1.4502,1.4508,1.4508,1.4529,1.4529,1.4522,1.4508,1.451,1.4507,1.4508,1.4513,1.4503,1.4504,1.4503,1.4497,1.4491,1.4485,1.4507,1.451,1.4516,1.4514,1.4514,1.4516,1.452,1.4515,1.4508,1.4522,1.4526,1.4519,1.452,1.4524,1.452,1.4523,1.4533,1.4552,1.4558,1.4557,1.4564,1.4566,1.4559,1.4562,1.4564,1.4559,1.4559,1.4557,1.4557,1.4567,1.4562,1.4561,1.4558,1.4559,1.4565,1.456,1.4559,1.4559,1.4551,1.4541,1.4538,1.4545,1.4548,1.4545,1.4548,1.4558,1.4554,1.4554,1.4564,1.4562,1.4567,1.4579,1.4561,1.4557,1.4557,1.4557,1.4553,1.4539,1.4545,1.4538,1.4556,1.455,1.4542,1.4528,1.4535,1.4533,1.4538,1.452,1.4522,1.452,1.4524,1.4533,1.4535,1.4531,1.453,1.4528,1.4532,1.4536,1.4534,1.4544,1.455,1.4552,1.4552,1.4549,1.4549,1.4555,1.4554,1.4556,1.455,1.4551,1.4549,1.4539,1.4536,1.4541,1.4523,1.4526,1.4526,1.4537,1.4545,1.4544,1.4562,1.4569,1.4575,1.4575,1.4579,1.4583,1.4572,1.4578,1.4573,1.4539,1.453,1.4548,1.4549,1.454,1.4531,1.4519,1.4512,1.4515,1.4522,1.453,1.452,1.4517,1.4528,1.4532,1.4534,1.4546,1.4544,1.454,1.4528,1.452,1.4526,1.4528,1.453,1.4512,1.4488,1.45,1.4487,1.4497,1.4492,1.4504,1.451,1.4496,1.4489,1.4479,1.445,1.4456,1.4449,1.4436,1.4441,1.4432,1.44,1.4389,1.4386,1.4401,1.4411,1.4405,1.4425,1.4431,1.4428,1.4428,1.4425,1.4398,1.4431,1.4444,1.4435,1.4418,1.4417,1.4425,1.4427,1.4439,1.4435,1.4438,1.4424,1.4424,1.441,1.4399,1.4408,1.4397,1.4392,1.441,1.4412,1.4414,1.4413,1.4406,1.4407,1.4404,1.4405,1.4408,1.4409,1.4404,1.4413,1.4407,1.4415,1.4422,1.4426,1.4432,1.4446,1.4446,1.4431,1.4429,1.4427,1.4426,1.4429,1.4431,1.4455,1.4464,1.4456,1.4456,1.4454,1.4445,1.4439,1.4412,1.4419,1.442,1.442,1.4417,1.44,1.4412,1.4417,1.4418,1.4386,1.4383,1.434,1.4325,1.434,1.4314,1.429,1.4174,1.4263,1.425,1.4261,1.4259,1.4245,1.4225,1.4216,1.4245,1.4256,1.4245,1.4245,1.423,1.4218,1.4224,1.4236,1.4235,1.4232,1.4196,1.4189,1.4235,1.423,1.4211,1.4224,1.421,1.4245,1.4239,1.4285,1.4267,1.4237,1.4227,1.4212,1.424,1.4257,1.4259,1.4263,1.4267,1.427,1.4286,1.4306,1.4297,1.427,1.4257,1.4263,1.4246,1.4234,1.4267,1.4263,1.4271,1.4245,1.4217,1.4217,1.4212,1.4222,1.4239,1.4237,1.4223,1.4224,1.4228,1.4247,1.4245,1.4277,1.4269,1.4276,1.4287,1.4288,1.4265,1.4301,1.4299,1.4305,1.4308,1.4325,1.4313,1.4296,1.4314,1.4319,1.4335,1.4336,1.4329,1.433,1.4339,1.4328,1.4319,1.4314,1.4319,1.4336,1.4339,1.4338,1.4349,1.4357,1.4362,1.435,1.4352,1.4356,1.4368,1.4364,1.4354,1.4345,1.4359,1.4343,1.4335,1.4329,1.4325,1.4323,1.433,1.433,1.4312,1.4323,1.4325,1.4328,1.4315,1.4302,1.4294,1.4292,1.4297,1.4295,1.4272,1.4221,1.419,1.4186,1.4149,1.4146,1.4179,1.4176,1.4158,1.4155,1.4183,1.4182,1.4193,1.4209,1.4216,1.4208,1.4194,1.4174,1.4182,1.4192,1.4179,1.4188,1.4171,1.4149,1.4131,1.4135,1.4134,1.4127,1.4137,1.4113,1.4134,1.4156,1.417,1.4177,1.4183,1.4188,1.418,1.4165,1.4178,1.419,1.4185,1.4185,1.4166,1.4201,1.4197,1.4186,1.4187,1.4198,1.4197,1.4203,1.4219,1.4214,1.4201,1.419,1.4192,1.4205,1.4185,1.4187,1.4188,1.4198,1.4173,1.4173,1.4182,1.4182,1.4189,1.4196,1.4192,1.4199,1.42,1.4199,1.4187,1.4183,1.4181,1.4181,1.4175,1.4176,1.4174,1.4194,1.4197,1.425,1.4288,1.4336,1.4326,1.4331,1.4342,1.4338,1.4342,1.4352,1.4332,1.4336,1.4331,1.4339,1.4329,1.4328,1.436,1.4347,1.4349,1.4353,1.4343,1.4337,1.4336,1.4321,1.4327,1.4327,1.4324,1.4335,1.4313,1.4318,1.432],"always_1":[1.0,0.9918,0.9713,0.9772,1.0023,0.9951,0.9943,0.9913,0.9861,0.9799,0.9767,0.9857,0.9778,0.9591,0.9632,0.9289,0.7769,0.7673,0.7107,0.7291,0.732,0.7078,0.7459,0.7465,0.7558,0.7359,0.7219,0.7206,0.6767,0.7307,0.7277,0.786,0.7855,0.7413,0.748,0.7442,0.7549,0.7265,0.6998,0.7122,0.6919,0.6924,0.7355,0.733,0.7044,0.608,0.5979,0.7987,0.8744,0.91,0.8726,0.8963,0.8662,0.8643,0.8743,0.8812,0.8702,0.894,0.8842,0.8878,0.8729,0.8158,0.8206,0.8506,0.8095,0.8214,0.8157,0.7976,0.7736,0.7762,0.778,0.7301,0.7221,0.7161,0.6366,0.5692,0.5777,0.4942,0.5368,0.5466,0.6157,0.5987,0.6568,0.6223,0.5933,0.5747,0.5747,0.5549,0.5929,0.6185,0.6121,0.616,0.5838,0.5609,0.5579,0.5557,0.5673,0.5284,0.5395,0.4912,0.43,0.5721,0.5459,0.5536,0.5428,0.615,0.5792,0.5671,0.557,0.5562,0.5664,0.5787,0.5926,0.5648,0.5545,0.5562,0.5074,0.5846,0.5863,0.587,0.6604,0.7253,0.7107,0.6709,0.7338,0.7044,0.7307,0.7191,0.8225,0.8225,0.809,0.8349,0.8357,0.8064,0.7987,0.8114,0.8034,0.7643,0.7691,0.7547,0.7932,0.8342,0.8944,0.8839,0.9091,0.8903,0.8937,0.8872,0.8827,0.8703,0.9209,0.9373,0.942,0.951,0.9779,0.9467,0.9841,0.995,0.9852,0.9966,0.9519,0.9527,0.9305,0.9786,0.9168,0.9178,0.9266,0.9242,0.9549,0.9246,0.8857,0.8181,0.8229,0.8055,0.782,0.7829,0.835,0.8144,0.8133,0.8534,0.863,0.832,0.7073,0.6899,0.6842,0.691,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},"liquidation":{"thresholds":[{"leverage":0.25,"total_exposure":1.25,"required_drop":-0.8},{"leverage":0.3,"total_exposure":1.3,"required_drop":-0.7692},{"leverage":0.5,"total_exposure":1.5,"required_drop":-0.6667},{"leverage":0.75,"total_exposure":1.75,"required_drop":-0.5714},{"leverage":1.0,"total_exposure":2.0,"required_drop":-0.5},{"leverage":2.0,"total_exposure":3.0,"required_drop":-0.3333}],"worst_intrabar_4h":-0.2972,"worst_day":-0.3998},"convexity":[{"price_move":1.0,"long_btc":0.5,"short_btc":-0.5},{"price_move":0.5,"long_btc":0.3333,"short_btc":-0.3333},{"price_move":0.19999999999999996,"long_btc":0.1667,"short_btc":-0.1667},{"price_move":-0.19999999999999996,"long_btc":-0.25,"short_btc":0.25},{"price_move":-0.5,"long_btc":-1.0,"short_btc":1.0},{"price_move":-0.75,"long_btc":-3.0,"short_btc":3.0}]}</script>
+<script>
+(function () {
+  const D = JSON.parse(document.getElementById('report-data').textContent);
+  const $ = id => document.getElementById(id);
+  const pct = (v, d = 1) => (v * 100).toFixed(d) + '%';
+  const signed = (v, d = 1) => (v >= 0 ? '+' : '') + (v * 100).toFixed(d) + '%';
+  const C = { s1: '#3987e5', s2: '#d95926', s3: '#199e70', warn: '#fab219', neg: '#d03b3b',
+              muted: '#6b7185', grid: '#232735', dim: '#9aa0b4' };
+  const SVG = 'http://www.w3.org/2000/svg';
+  const el = (n, a, t) => {
+    const e = document.createElementNS(SVG, n);
+    for (const k in a) e.setAttribute(k, a[k]);
+    if (t != null) e.textContent = t;
+    return e;
+  };
+  const REF = D.reference_leverage;
+
+  $('b-symbol').textContent = D.symbol;
+  $('b-interval').textContent = D.period.interval === '4h' ? '4 小時 K' : D.period.interval;
+  $('b-period').textContent = D.period.start + ' ~ ' + D.period.end;
+  $('ref-lev').textContent = REF;
+  $('cohort-lev').textContent = REF;
+  $('trade-lev').textContent = REF;
+  $('price-change').textContent = signed(D.price_change, 0);
+
+  const refDist = D.distribution.find(d => d.leverage === REF);
+  $('r-median').textContent = refDist.percentiles['50'].toFixed(4);
+  $('r-why').innerHTML = '也就是七年後多 ' + pct(refDist.percentiles['50'] - 1)
+    + ' 的幣，年化 <b>' + pct(refDist.median_cagr, 2) + '</b>。'
+    + '但 24 個起點裡有 <b>' + refDist.losing_starts + ' 個</b>最後幣數<b>比開始時少</b>，'
+    + '最差的剩 ' + refDist.percentiles['0'].toFixed(4) + ' 顆。';
+  $('losing-count').textContent = refDist.losing_starts + '/' + refDist.total_starts;
+
+  $('convexity-table').querySelector('tbody').innerHTML = D.convexity.map(r =>
+    `<tr><td class="name">${signed(r.price_move, 0)}</td>
+      <td class="${r.long_btc > 0 ? 'pos' : 'negv'}">${signed(r.long_btc)}</td>
+      <td class="${r.short_btc > 0 ? 'pos' : 'negv'}">${signed(r.short_btc)}</td></tr>`).join('');
+
+  // ------------------------------------------------------------ main table
+  const fmtRow = (r, cls) => `<tr class="${cls || ''}"><td class="name">${r.label}</td>
+    <td class="${r.final_btc >= 1 ? 'pos' : 'negv'}">${r.final_btc.toFixed(4)}</td>
+    <td>${pct(r.btc_cagr, 2)}</td><td>${pct(r.btc_mdd)}</td>
+    <td>${r.min_btc.toFixed(4)}</td><td>${pct(r.time_below_start, 0)}</td>
+    <td>${pct(r.worst_trade)}</td>
+    <td class="${r.peak_margin > 0.5 ? 'negv' : ''}">${pct(r.peak_margin)}${
+      r.liquidated ? ' ← ' + r.liquidation_date + ' 清算' : ''}</td></tr>`;
+  const body = $('levels-table').querySelector('tbody');
+  body.innerHTML = `<tr><td class="name">單純持有 1 BTC</td><td>1.0000</td><td>0.00%</td>
+      <td>0.0%</td><td>1.0000</td><td>0%</td><td>—</td><td>—</td></tr>`
+    + D.levels.map(r => fmtRow(r, r.label.indexOf(REF + '×') >= 0 ? 'best' : '')).join('')
+    + D.controls.map(r => fmtRow(r, 'bad')).join('');
+
+  const dead = D.controls.find(c => c.liquidated);
+  $('liq-date').textContent = dead ? dead.liquidation_date : '—';
+  const alive = D.controls.find(c => !c.liquidated);
+  $('control-note').innerHTML = '同樣倍率、只是不擇時：<b>' + dead.label + '</b> 在 <b>'
+    + dead.liquidation_date + ' 被清算，BTC 歸零</b>。'
+    + '<b>' + alive.label + '</b> 活下來了，但在 2020 年 3 月低點時 <b>'
+    + pct(alive.peak_margin) + ' 的本金在水面下</b>——離全損只剩 '
+    + pct(1 - alive.peak_margin) + '。而唐1 在 ' + REF + '× 的保證金峰值只有 <b>'
+    + pct(D.levels.find(l => Math.abs(l.final_btc - 0) > 0 && l.label.indexOf(REF + '×') >= 0).peak_margin)
+    + '</b>。';
+
+  $('crash-table').querySelector('tbody').innerHTML = D.crashes.map(c =>
+    `<tr><td class="name">${c.label}</td><td class="negv">${pct(c.price_move)}</td>
+      <td class="pos">${pct(c.exposure, 0)}</td></tr>`).join('');
+
+  // ----------------------------------------------------------- btc curves
+  const E = D.equity, N = E['tang1_' + REF].length;
+  const dates = (() => {
+    const out = [], d0 = new Date(E.start_date + 'T00:00:00Z');
+    for (let i = 0; i < N; i++) out.push(new Date(d0.getTime() + i * 86400000).toISOString().slice(0, 10));
+    return out;
+  })();
+  const series = [
+    { key: 'tang1_0.5', name: '唐1 0.5×', color: C.s1 },
+    { key: 'tang1_0.3', name: '唐1 0.3×', color: C.s3 },
+    { key: 'tang1_0.25', name: '唐1 0.25×', color: C.warn },
+    { key: 'always_0.5', name: '永遠做多 0.5×', color: C.s2 },
+    { key: 'always_1', name: '永遠做多 1×', color: C.neg },
+  ].filter(s => E[s.key]);
+  $('legend').innerHTML = series.map(s =>
+    `<span class="item"><span class="swatch" style="background:${s.color}"></span>${s.name}</span>`).join('')
+    + `<span class="item"><span class="swatch" style="background:${C.muted}"></span>單純持有 1.0</span>`;
+
+  const W = 1000, padL = 50, padR = 96, padT = 12, padB = 24, H = 300;
+  const svg = $('chart-btc');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  let lo = 0, hi = 0;
+  series.forEach(s => E[s.key].forEach(v => { hi = Math.max(hi, v); }));
+  hi = Math.ceil(hi * 10) / 10;
+  const x = i => padL + i / (N - 1) * (W - padL - padR);
+  const y = v => H - padB - (v - lo) / (hi - lo) * (H - padT - padB);
+  for (let v = 0; v <= hi + 1e-9; v += 0.5) {
+    svg.appendChild(el('line', { x1: padL, x2: W - padR, y1: y(v), y2: y(v),
+      stroke: Math.abs(v - 1) < 1e-9 ? C.muted : C.grid, 'stroke-width': 1,
+      opacity: Math.abs(v - 1) < 1e-9 ? 1 : .6 }));
+    svg.appendChild(el('text', { x: padL - 8, y: y(v) + 4, fill: C.muted, 'font-size': 11,
+      'text-anchor': 'end' }, v.toFixed(1)));
+  }
+  let lastYear = '';
+  dates.forEach((d, i) => {
+    const yr = d.slice(0, 4);
+    if (yr !== lastYear) {
+      if (i > 0) {
+        svg.appendChild(el('line', { x1: x(i), x2: x(i), y1: padT, y2: H - padB, stroke: C.grid, 'stroke-width': 1 }));
+        svg.appendChild(el('text', { x: x(i), y: H - padB + 15, fill: C.muted, 'font-size': 11,
+          'text-anchor': 'middle' }, yr));
+      }
+      lastYear = yr;
+    }
+  });
+  series.forEach(s => {
+    svg.appendChild(el('polyline', {
+      points: E[s.key].map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' '),
+      fill: 'none', stroke: s.color, 'stroke-width': 2, 'stroke-linejoin': 'round' }));
+  });
+  const labels = series.map(s => ({ s, v: E[s.key][N - 1], y: y(E[s.key][N - 1]) }))
+    .sort((p, q) => p.y - q.y);
+  for (let i = 1; i < labels.length; i++) {
+    if (labels[i].y - labels[i - 1].y < 14) labels[i].y = labels[i - 1].y + 14;
+  }
+  labels.forEach(L => {
+    svg.appendChild(el('line', { x1: W - padR, x2: W - padR + 6, y1: y(L.v), y2: L.y,
+      stroke: L.s.color, 'stroke-width': 1, opacity: .6 }));
+    svg.appendChild(el('text', { x: W - padR + 9, y: L.y + 4, fill: L.s.color, 'font-size': 11 },
+      L.s.name + ' ' + L.v.toFixed(2)));
+  });
+
+  (function hover() {
+    const card = svg.parentElement, tip = $('tip');
+    const cross = el('line', { stroke: C.dim, 'stroke-width': 1, 'stroke-dasharray': '3 3', opacity: 0 });
+    svg.appendChild(cross);
+    const dots = series.map(() => {
+      const c = el('circle', { r: 4, stroke: '#171a23', 'stroke-width': 2, opacity: 0 });
+      svg.appendChild(c); return c;
+    });
+    svg.addEventListener('mousemove', ev => {
+      const r = svg.getBoundingClientRect();
+      let i = Math.round(((ev.clientX - r.left) / r.width * W - padL) / (W - padL - padR) * (N - 1));
+      i = Math.max(0, Math.min(N - 1, i));
+      cross.setAttribute('x1', x(i)); cross.setAttribute('x2', x(i));
+      cross.setAttribute('y1', padT); cross.setAttribute('y2', H - padB);
+      cross.setAttribute('opacity', 1);
+      series.forEach((s, k) => {
+        dots[k].setAttribute('cx', x(i)); dots[k].setAttribute('cy', y(E[s.key][i]));
+        dots[k].setAttribute('fill', s.color); dots[k].setAttribute('opacity', 1);
+      });
+      tip.innerHTML = `<div class="d">${dates[i]}</div>` + series.map(s =>
+        `<div class="row"><span class="sw" style="background:${s.color}"></span>
+          <span class="nm">${s.name}</span><span class="vl">${E[s.key][i].toFixed(3)} BTC</span></div>`).join('');
+      tip.style.opacity = 1;
+      const cr = card.getBoundingClientRect();
+      tip.style.left = Math.min(ev.clientX - cr.left + 14, card.clientWidth - 210) + 'px';
+      tip.style.top = (ev.clientY - cr.top + 12) + 'px';
+    });
+    svg.addEventListener('mouseleave', () => {
+      tip.style.opacity = 0; cross.setAttribute('opacity', 0);
+      dots.forEach(d => d.setAttribute('opacity', 0));
+    });
+  })();
+
+  $('equity-note').innerHTML = '三條唐1 的線在 2020~2021 幾乎全部的漲幅都來自同一段行情，'
+    + '之後就進入長期橫盤。<b>永遠做多 1×</b>（紅線）在 2020 年 3 月直接歸零並停在那裡——'
+    + '那是這張圖最重要的訊息。';
+
+  // -------------------------------------------------------------- the dial
+  (function dial() {
+    const rows = D.levels.filter(r => r.label.indexOf('唐1') === 0)
+      .map(r => ({ lev: parseFloat(r.label.match(/([\d.]+)×/)[1]), ...r }))
+      .filter(r => r.lev <= 0.5).sort((a, b) => a.lev - b.lev);
+    const svgd = $('chart-dial'), Hd = 220, pL = 54, pR = 54, pB = 38;
+    svgd.setAttribute('viewBox', `0 0 ${W} ${Hd}`);
+    const maxF = Math.max(...rows.map(r => r.final_btc));
+    const maxD = Math.abs(Math.min(...rows.map(r => r.btc_mdd)));
+    const band = (W - pL - pR) / rows.length, bw = Math.min(30, band / 2.6);
+    const yF = v => Hd - pB - v / maxF * (Hd - padT - pB);
+    const yD = v => padT + v / maxD * (Hd - padT - pB);
+    const tip = $('tip-dial'), card = svgd.parentElement;
+    svgd.appendChild(el('line', { x1: pL, x2: W - pR, y1: Hd - pB, y2: Hd - pB,
+      stroke: C.muted, 'stroke-width': 1 }));
+    rows.forEach((r, i) => {
+      const cx = pL + band * (i + 0.5);
+      [['final_btc', C.s1, -1, yF(r.final_btc), Hd - pB - yF(r.final_btc)],
+       ['btc_mdd', C.neg, 1, Hd - pB, 0]].forEach(([key, color, side]) => {
+        const isF = key === 'final_btc';
+        const h = isF ? Hd - pB - yF(r.final_btc) : yD(Math.abs(r.btc_mdd)) - padT;
+        const top = isF ? yF(r.final_btc) : Hd - pB - h;
+        const rect = el('rect', { x: cx + side * (bw / 2 + 1) - bw / 2, y: top, width: bw,
+          height: Math.max(h, 1), fill: color, rx: 3, opacity: .9 });
+        rect.addEventListener('mouseenter', ev => {
+          tip.innerHTML = `<div class="d">做多 ${r.lev}×</div>
+            <div class="row"><span class="nm">最終 BTC</span><span class="vl">${r.final_btc.toFixed(4)}</span></div>
+            <div class="row"><span class="nm">BTC 年化</span><span class="vl">${pct(r.btc_cagr, 2)}</span></div>
+            <div class="row"><span class="nm">BTC 回撤</span><span class="vl">${pct(r.btc_mdd)}</span></div>
+            <div class="row"><span class="nm">保證金峰值</span><span class="vl">${pct(r.peak_margin)}</span></div>`;
+          tip.style.opacity = 1;
+          const cr = card.getBoundingClientRect();
+          tip.style.left = Math.min(ev.clientX - cr.left + 14, card.clientWidth - 200) + 'px';
+          tip.style.top = (ev.clientY - cr.top + 12) + 'px';
+        });
+        rect.addEventListener('mouseleave', () => { tip.style.opacity = 0; });
+        svgd.appendChild(rect);
+      });
+      svgd.appendChild(el('text', { x: cx, y: Hd - pB + 17, fill: C.muted, 'font-size': 11,
+        'text-anchor': 'middle' }, r.lev + '×'));
+      svgd.appendChild(el('text', { x: cx - bw / 2 - 1, y: yF(r.final_btc) - 5, fill: C.s1,
+        'font-size': 10, 'text-anchor': 'middle' }, r.final_btc.toFixed(2)));
+      svgd.appendChild(el('text', { x: cx + bw / 2 + 1, y: Hd - pB + 30, fill: C.neg,
+        'font-size': 10, 'text-anchor': 'middle' }, pct(r.btc_mdd, 0)));
+    });
+  })();
+
+  // ---------------------------------------------------------- distribution
+  $('dist-table').querySelector('tbody').innerHTML = D.distribution.map(d =>
+    `<tr class="${d.leverage === REF ? 'best' : ''}"><td class="name">${d.leverage.toFixed(2)}×</td>`
+    + [0, 10, 25, 50, 75, 100].map(p => {
+        const v = d.percentiles[String(p)];
+        return `<td class="${p === 50 ? (v >= 1 ? 'pos' : 'negv') : (v < 1 ? 'negv' : '')}">${v.toFixed(4)}</td>`;
+      }).join('')
+    + `<td>${pct(d.median_cagr, 2)}</td><td>${pct(d.worst_mdd)}</td></tr>`).join('');
+
+  const d50 = D.distribution.find(d => d.leverage === 0.5);
+  $('dist-note').innerHTML = '七年期的 ' + pct(D.levels.find(l => l.label.indexOf('0.5×') >= 0).btc_cagr, 2)
+    + '（0.5×）把 2020-10 到 2021-04 那一筆（標的漲 380%、單筆 +37.81%）整段吃了進去。'
+    + '<b>24 個起點裡只有 5 個包含那段行情</b>，其餘 19 個都沒有。'
+    + '把分布攤開之後，0.5× 的中位數年化是 <b>' + pct(d50.median_cagr, 2)
+    + '</b>，而且 <b>25 分位在每一個倍率都低於 1.0</b>——四分之一的起點最後幣數比開始時少。';
+
+  $('cohort-table').querySelector('tbody').innerHTML = D.cohorts[String(REF)].map(r =>
+    `<tr class="${r.final_btc < 1 ? 'bad' : ''}"><td class="name">${r.label}</td>
+      <td>${r.years}</td>
+      <td class="${r.final_btc >= 1 ? 'pos' : 'negv'}">${r.final_btc.toFixed(4)}</td>
+      <td class="${r.btc_cagr > 0 ? 'pos' : 'negv'}">${pct(r.btc_cagr, 2)}</td>
+      <td>${r.min_btc.toFixed(4)}</td><td>${pct(r.btc_mdd)}</td></tr>`).join('');
+
+  // --------------------------------------------------------------- trades
+  $('trade-table').querySelector('tbody').innerHTML = D.trades.map(t =>
+    `<tr class="${t.btc_pnl_pct > 0.1 ? 'best' : (t.btc_pnl_pct < -0.05 ? 'bad' : '')}">
+      <td class="name">${t.entry}</td><td>${t.exit}</td>
+      <td>${Math.round(t.bars / D.bars_per_day)}</td>
+      <td class="${t.price_move > 0 ? 'pos' : 'negv'}">${pct(t.price_move)}</td>
+      <td class="${t.btc_pnl_pct > 0 ? 'pos' : 'negv'}">${pct(t.btc_pnl_pct, 2)}</td>
+      <td>${pct(t.margin_used)}</td></tr>`).join('');
+  const best = D.trades.reduce((a, b) => (b.btc_pnl_pct > a.btc_pnl_pct ? b : a));
+  const wins = D.trades.filter(t => t.btc_pnl_pct > 0).length;
+  $('trade-note').innerHTML = D.trades.length + ' 筆交易，勝率 '
+    + pct(wins / D.trades.length, 0) + '。但 <b>' + best.entry + ' 到 ' + best.exit
+    + '</b> 那一筆（持有 ' + Math.round(best.bars / D.bars_per_day) + ' 天，價格 '
+    + signed(best.price_move, 0) + '）單筆就 <b>' + signed(best.btc_pnl_pct, 2)
+    + '</b>。<b>扣掉 2020~2021 的三筆大的，其餘加起來接近零。</b>'
+    + '虧損的交易平均只持有兩三週——這是趨勢跟蹤的典型形狀：輸的死得快，贏的抱得久。';
+
+  $('yearly-table').querySelector('tbody').innerHTML = Object.entries(D.yearly).map(([yr, v]) =>
+    `<tr><td class="name">${yr}</td><td>${v.btc.toFixed(4)}</td>
+      <td class="${v.btc_change > 0 ? 'pos' : 'negv'}">${signed(v.btc_change, 2)}</td>
+      <td>${signed(v.price_change, 1)}</td></tr>`).join('');
+
+  // ---------------------------------------------------------- liquidation
+  const L = D.liquidation;
+  $('liq-table').querySelector('tbody').innerHTML = L.thresholds.map(t =>
+    `<tr class="${t.leverage === REF ? 'best' : (t.leverage >= 2 ? 'bad' : '')}">
+      <td class="name">${t.leverage}×</td><td>${t.total_exposure}×</td>
+      <td>${pct(t.required_drop)}</td></tr>`).join('');
+  $('liq-note').innerHTML = '歷史最深單根 4 小時盤中跌幅 <b>' + pct(L.worst_intrabar_4h)
+    + '</b>（2020-03），最差單日 <b>' + pct(L.worst_day) + '</b>。'
+    + '在 ' + REF + '× 需要跌 ' + pct(L.thresholds.find(t => t.leverage === REF).required_drop)
+    + ' 才會歸零，而實際七年間最深只用掉 <b>'
+    + pct(D.levels.find(l => l.label.indexOf(REF + '×') >= 0).peak_margin)
+    + '</b> 的本金。<b>但 2× 以上就不是這回事了</b>：總曝險 3× 時門檻是 -33.3%，'
+    + '離那天的單日 -40% 已經在門檻內。';
+
+  // -------------------------------------------------------------- verdict
+  const ref = D.levels.find(l => l.label.indexOf(REF + '×') >= 0);
+  $('verdict-list').innerHTML = [
+    ['可以做，但期望值很小',
+      '在 ' + REF + '× 買到的是：中位數七年後多 ' + pct(refDist.percentiles['50'] - 1)
+      + ' 的幣（年化 ' + pct(refDist.median_cagr, 2) + '，折扣後約 +0.8%）、'
+      + '四分之一機率幣變少、最壞剩 ' + refDist.percentiles['0'].toFixed(2) + ' 顆、'
+      + '回撤 ' + pct(refDist.worst_mdd) + '。上檔則是四分之一機率多 '
+      + pct(refDist.percentiles['75'] - 1) + ' 以上。'],
+    ['本質上是在賭一次空頭',
+      '唐1 的獲利來自崩盤時沒有部位。有空頭這張保單賠付得好（最佳起點 '
+      + refDist.percentiles['100'].toFixed(2) + ' 顆）；沒有的話就是慢慢磨損。'
+      + '<b>而這跟「長期上漲」的前提直接衝突</b>——'
+      + '在那個世界裡它就是持續付保費而領不到理賠。'],
+    ['清算不是風險，磨損才是',
+      '在 ' + REF + '× 的保證金峰值只有 ' + pct(ref.peak_margin)
+      + '，離歸零非常遠。真正會傷到你的不是某一天的暴跌，是多頭年裡一次次的小額停損。'],
+    ['以保護本金為目標的話，方向是錯的',
+      '加做多單是在既有的 BTC 曝險上<b>再加曝險</b>，只是加得少。'
+      + '中位數年化 1% 買不到任何保護。要保護本金應該看對沖方向，見下一節。'],
+  ].map(([t, d]) => `<li><b>${t}</b><br>${d}</li>`).join('');
+
+  $('limits-list').innerHTML = [
+    ['全部是樣本內',
+      '唐1 的 20 日通道是看過全部歷史後確定的。'
+      + '<a href="crypto-tang1-report.html">巢狀 walk-forward</a> 顯示乾淨估計約是凍結參數的六成，'
+      + '所以本頁所有報酬數字都應該再打折，但<b>回撤與最差起點不要打折</b>。'],
+    ['資金費率是近似值',
+      '使用 USDT 本位（fapi）的費率序列代替。COIN-M 有自己的一條序列，'
+      + '同號但幅度不同。長期持有多單時這個誤差會累積，實盤前必須用 dapi 的真實資料重測。'],
+    ['起點世代不是獨立觀測',
+      '24 個起點的持有期大量重疊，相鄰兩季幾乎共用同一段行情。'
+      + '實際的獨立資訊量遠遠不到 24 筆，所以分位數本身的信賴區間也很寬。'],
+    ['清算模型是樂觀的下界',
+      '本頁用「未實現虧損達到本金 100%」當作清算點。'
+      + '交易所在維持保證金就會強平，比這更早；'
+      + '而且極端行情下的插針、標記價格與最新成交價的落差都沒有模擬。'],
+    ['尚未做過測試網驗證',
+      '這個策略一年只進出四到六次，每一次都是關鍵。'
+      + '漏單或延遲的代價遠高於高頻策略，而下單路徑完全沒有測過。'],
+  ].map(([t, d]) => `<li><b>${t}</b><br>${d}</li>`).join('');
+})();
+</script>
+
+</body>
+</html>
