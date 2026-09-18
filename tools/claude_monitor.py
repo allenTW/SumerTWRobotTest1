@@ -504,6 +504,11 @@ def publish(payload, state):
                     pub.pop("last_push_error", None)
                     break
                 pub["last_push_error"] = clip(out, 200)
+                if "fetch first" in out or "non-fast-forward" in out or "rejected" in out:
+                    # 別的工作階段先推了。把這筆狀態 commit 疊到對方後面再試；
+                    # --autostash 是因為當下工作目錄很可能有別人編輯到一半的檔案。
+                    run(["git", "-C", str(REPO_DIR), "pull", "--rebase",
+                         "--autostash", "origin", branch], timeout=120)
                 if delay:
                     time.sleep(delay)
             else:
