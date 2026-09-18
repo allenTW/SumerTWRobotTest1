@@ -479,6 +479,18 @@ def log(text):
 
 # ---------------------------------------------------------------- 設定指令
 
+def prompt_secret(label):
+    """讀一段不該留在畫面或 shell 歷史裡的字串。"""
+    try:
+        import getpass
+        return getpass.getpass(label).strip()
+    except Exception:  # noqa: BLE001 - 沒有終端機時退回一般輸入
+        try:
+            return input(label).strip()
+        except EOFError:
+            return ""
+
+
 def cmd_configure(args):
     cfg = load_config()
     token = None
@@ -488,24 +500,56 @@ def cmd_configure(args):
             token = args[i + 1]
         elif a == "--chat" and i + 1 < len(args):
             chat = args[i + 1]
-    if token:
-        cfg["bot_token"] = token.strip()
+
+    if not token:
+        print("到 Telegram 找 @BotFather，在你的 bot 頁面按 Copy 複製 token。")
+        token = prompt_secret("貼上 token（輸入時畫面不會顯示，貼完按 Enter）：")
+    if not token:
+        print("沒有拿到 token，中止。")
+        return 1
+    cfg["bot_token"] = token.strip()
+
+    # 先確認 token 真的能用，也讓你看到接上的是不是預期的那個 bot
+    try:
+        me = telegram_call(cfg["bot_token"], "getMe", {})
+    except Exception as exc:  # noqa: BLE001
+        print("這個 token 連不上 Telegram：%s" % exc)
+        print("（token 貼完整了嗎？格式長得像 123456789:AA... 這樣）")
+        return 1
+    if not me.get("ok"):
+        print("Telegram 說這個 token 無效：%s" % me.get("description"))
+        return 1
+    bot_name = (me.get("result") or {}).get("username")
+    print("✓ token 有效，接上的 bot 是 @%s" % bot_name)
+
     if chat:
         cfg["chat_id"] = chat.strip()
-    if not cfg["bot_token"]:
-        print("需要 --token。到 Telegram 找 @BotFather，送 /newbot，把它給的 token 貼進來。")
-        return 1
-    if not cfg["chat_id"]:
-        print("沒給 --chat，改從 getUpdates 找：請先在 Telegram 對你的 bot 送任何一句話…")
-        found = discover_chat_id(cfg["bot_token"])
-        if not found:
-            print("找不到。先對 bot 說句話再跑一次，或用 --chat 直接指定。")
+    else:
+        cfg["chat_id"] = ""
+        print("")
+        print("接下來要知道「發給誰」。請在 Telegram 打開 @%s，對它說任何一句話"
+              "（例如 hi）。" % bot_name)
+        for attempt in range(1, 6):
+            try:
+                input("說完之後回到這裡按 Enter 繼續… ")
+            except EOFError:
+                break
+            found = discover_chat_id(cfg["bot_token"])
+            if found:
+                cfg["chat_id"] = found
+                print("✓ 找到你的 chat_id：%s" % found)
+                break
+            print("還是沒看到訊息（第 %d 次）。確認是對 @%s 說話，不是對 BotFather。"
+                  % (attempt, bot_name))
+        if not cfg["chat_id"]:
+            print("找不到 chat_id。之後可以用 configure --chat <id> 直接指定。")
             return 1
-        cfg["chat_id"] = found
-        print("找到 chat_id：%s" % found)
+
     save_config(cfg)
     print("已寫入 %s（權限 0600，不在 repo 裡）" % CONFIG_FILE)
-    return 0
+    print("")
+    print("送一則測試訊息…")
+    return cmd_test()
 
 
 def discover_chat_id(token):

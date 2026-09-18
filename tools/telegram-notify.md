@@ -10,20 +10,28 @@
 **不會**每問一句話就響：回合短於 60 秒**且**工具呼叫少於 5 次就安靜略過
 （門檻可調，見下面的設定）。
 
-## 設定（三步，只做一次）
+## 設定（只做一次）
 
-1. Telegram 裡找 **@BotFather**，送 `/newbot`，照它問的取名字，它會給你一串 token。
-2. 對你剛建好的 bot 說任何一句話（例如 `hi`）—— 這樣它才知道要發給誰。
-3. 在 Mac mini 上：
+1. Telegram 裡找 **@BotFather**，送 `/newbot`，照它問的取名字，拿到 token。
+2. 在 Mac mini 的終端機跑：
 
 ```bash
 cd "/Volumes/FCP 512GB/Claude/SumerTWRobotTest1/tools"
-./claude_notify.py configure --token <BotFather 給你的 token>
-./claude_notify.py test
+./claude_notify.py configure
 ```
 
-`configure` 會自己去 `getUpdates` 撈你的 chat_id。撈不到就補 `--chat <id>`。
-`test` 收得到訊息就完成了。
+它會依序帶你做完：
+
+- 要你貼上 token（**輸入時畫面不顯示**，也不會留在 shell 歷史裡）
+- 用 `getMe` 驗證 token，並印出接上的是哪個 bot，讓你確認沒貼錯
+- 要你去 Telegram 對那個 bot 說一句話，按 Enter 後自動撈出 chat_id
+- 寫入設定並直接送一則測試訊息
+
+手機收到測試訊息就完成了。
+
+token 已經知道、也知道 chat_id 的話，可以一次給完跳過互動：
+`./claude_notify.py configure --token <token> --chat <id>`
+（這樣 token 會留在 shell 歷史裡，自己斟酌。）
 
 **token 存在 `~/.claude-monitor/telegram.json`，權限 0600，不在這個 repo 裡** ——
 這個 repo 是公開的，token 進來就等於公開。
