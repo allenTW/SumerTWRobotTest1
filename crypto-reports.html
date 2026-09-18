@@ -167,10 +167,11 @@
       已經持有 BTC 的人，能不能用唐1 的訊號在低倍率下多累積一點幣。計價單位是 BTC 而不是美金，
       所以<b>單純持有就是永遠 1.0000 顆</b>。含反向合約的凸性推導、0.20×~0.50× 的完整風險刻度，
       以及一個關鍵對照：同樣倍率<b>不擇時的版本在 2020-03-12 被清算歸零</b>。
+      <b>2026-09-18 已修正</b>資金費率只計入 57% 的錯誤；做多是付費率，所以初版偏樂觀。
     </div>
     <div class="stats">
-      <div>中位數起點（0.3×）<b>1.0534 顆</b></div>
-      <div>中位數年化<b>+1.25%</b></div>
+      <div>中位數起點（0.3×）<b>1.0333 顆</b></div>
+      <div>中位數年化<b>+0.89%</b></div>
       <div>虧幣起點<b class="neg">8 / 24</b></div>
       <div>保證金峰值<b>7.9%</b></div>
     </div>
@@ -185,15 +186,16 @@
       <span class="tag live">領先候選</span>
     </div>
     <div class="desc">
-      對稱唐奇安通道突破，只做多，<b>零覆蓋層</b>——整個策略只有三個參數，樣本外卻勝過有六個元件的 TE-1。
-      含 992 點窮舉網格的巢狀 walk-forward、擇時與 beta 的拆解，以及一次<b>解析度錯誤的更正</b>：
-      先前「20 天是不可信的尖峰」是因為敏感度掃描用 5 天一格，改成 1 天一格後 19~22 天全部四折正報酬。
+      對稱唐奇安通道突破，只做多，<b>零覆蓋層</b>——整個策略只有三個參數。
+      含 992 點窮舉網格的巢狀 walk-forward、擇時與 beta 的拆解。
+      <b>2026-09-18 重大更正</b>：修掉資金費率只計 57% 與逐折在切片後的窗上算指標這兩個錯誤之後，
+      <b>平台從 19~22 天縮成 21~22 天，而唐1 指定的 20 天掉到 3/4 折</b>。
     </div>
     <div class="stats">
-      <div>年化報酬（區間）<b>8.0% ～ 13.7%</b></div>
-      <div>擇時貢獻<b>+23.7%</b></div>
+      <div>年化報酬（區間）<b>7.0% ～ 9.4%</b></div>
+      <div>擇時貢獻<b>+21.5%</b></div>
       <div>對 BTC 的 beta<b>0.47</b></div>
-      <div>最大回撤<b class="neg">-50.4%</b></div>
+      <div>最大回撤<b class="neg">-51.5%</b></div>
     </div>
   </a>
 
@@ -209,11 +211,13 @@
       比特幣永續合約的唐奇安突破趨勢策略。含巢狀 walk-forward 驗證、挑選規則比較、
       未經最佳化的樸素參數網格，以及一次<b>失敗的重新調參</b>——三個引擎重調後全部變差，
       而這個失敗本身就是結論。
+    
+      <b>2026-09-18 已修正</b>資金費率只計入 57% 的對齊錯誤，數字全面小幅下修。
     </div>
     <div class="stats">
-      <div>年化報酬（區間）<b>15% ～ 17%</b></div>
-      <div>Sharpe<b>0.79</b></div>
-      <div>最大回撤<b class="neg">-23.9%</b></div>
+      <div>年化報酬（全期）<b>14.3%</b></div>
+      <div>Sharpe<b>0.745</b></div>
+      <div>最大回撤<b class="neg">-24.1%</b></div>
       <div>持倉長度<b>15.3 天</b></div>
     </div>
   </a>
@@ -228,6 +232,8 @@
     <div class="desc">
       趨勢＋震盪雙引擎依 ADX 動態配重。曾公布年化 35.9%，稽核後證實是兩個時間切分錯誤造成的高估。
       本頁保留完整錯誤分析、震盪引擎為何失效，以及比特幣四年減半週期理論的測試為何結果是無效。
+    
+      <b>2026-09-18 已修正</b>資金費率只計入 57% 的對齊錯誤；退役的結論不變。
     </div>
     <div class="stats">
       <div>曾公布<b class="neg">35.9%</b></div>
@@ -241,6 +247,21 @@
     報告一律不覆蓋、不刪除。以下是被取代的版本，保留下來是為了讓估計值怎麼一路修正的過程可以被追溯。
   </p>
   <div class="arch-list">
+    <a class="arch-item" href="archive/2026-09-18-tang1-underfunded.html">
+      <span class="date">2026-09-18</span><b>唐1 · 首次發布</b>
+      <span class="num"> — 資金費率只計入 57%，且逐折在切片後的窗上算指標；更正後平台從 19~22 縮成 21~22，20 天掉到 3/4 折</span></a>
+    <a class="arch-item" href="archive/2026-09-18-trend-hedge-underfunded.html">
+      <span class="date">2026-09-18</span><b>慢速趨勢對沖 · 首次發布</b>
+      <span class="num"> — 資金費率只計入 57%；做空是收費率，更正後數字上修，walk-forward 從 1/4 折翻成 3/4 折</span></a>
+    <a class="arch-item" href="archive/2026-09-18-coinm-underfunded.html">
+      <span class="date">2026-09-18</span><b>唐1 幣本位覆蓋層 · 第二版</b>
+      <span class="num"> — 資金費率只計入 57%；做多是付費率，更正後數字下修（結論未變）</span></a>
+    <a class="arch-item" href="archive/2026-09-18-te1-underfunded.html">
+      <span class="date">2026-09-18</span><b>趨勢引擎 TE-1 · 4 小時 K 版</b>
+      <span class="num"> — 資金費率只計入 57%；更正後年化 15.4% → 14.3%</span></a>
+    <a class="arch-item" href="archive/2026-09-18-de1-underfunded.html">
+      <span class="date">2026-09-18</span><b>雙引擎 DE-1 · 退役紀錄</b>
+      <span class="num"> — 資金費率只計入 57%；更正後各引擎全面下修（退役結論不變）</span></a>
     <a class="arch-item" href="archive/2026-09-18-coinm-original.html">
       <span class="date">2026-09-18</span><b>唐1 幣本位覆蓋層 · 首次發布</b>
       <span class="num"> — 覆蓋層模型有兩個成本錯誤，數字已更正（結論未變）</span></a>
