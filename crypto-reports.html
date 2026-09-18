@@ -80,6 +80,17 @@
   .report-card .tag.live { color: #3987e5; border-color: rgba(57,135,229,0.45); }
   .report-card .tag.dead { color: #d03b3b; border-color: rgba(208,59,59,0.45); }
 
+  .arch-head { font-size: .82rem; letter-spacing: 1px; color: #6b7185; margin: 34px 0 6px; }
+  .arch-note { color: #6b7185; font-size: .84rem; margin: 0 0 14px; }
+  .arch-list { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .arch-item { display: block; padding: 13px 18px; text-decoration: none; color: var(--text-dim);
+    font-size: .88rem; border-bottom: 1px solid var(--border); transition: background .15s; }
+  .arch-item:last-child { border-bottom: none; }
+  .arch-item:hover { background: var(--surface); }
+  .arch-item b { color: var(--text-dim); font-weight: 600; }
+  .arch-item .date { color: #6b7185; font-size: .78rem; margin-right: 10px; font-variant-numeric: tabular-nums; }
+  .arch-item .num { color: #6b7185; }
+
   .empty {
     border: 1px dashed var(--border); border-radius: 14px;
     padding: 20px; color: var(--text-muted); font-size: 0.88rem; text-align: center;
@@ -139,7 +150,26 @@
     </div>
   </a>
 
-<div class="empty">更多報告陸續加入</div>
+<div class="arch-head">歷史版本（已封存）</div>
+  <p class="arch-note">
+    報告一律不覆蓋、不刪除。以下是被取代的版本，保留下來是為了讓估計值怎麼一路修正的過程可以被追溯。
+  </p>
+  <div class="arch-list">
+    <a class="arch-item" href="archive/2026-09-17-de1-15m-original.html">
+      <span class="date">2026-09-17</span><b>雙引擎 DE-1 · 首次發布</b>
+      <span class="num"> — 15 分 K，年化 35.9%（後證實為時間切分錯誤造成的高估）</span></a>
+    <a class="arch-item" href="archive/2026-09-17-te1-15m-corrected.html">
+      <span class="date">2026-09-17</span><b>第一次更正</b>
+      <span class="num"> — 15 分 K，年化 21.5%（參數仍帶測試集污染）</span></a>
+    <a class="arch-item" href="archive/2026-09-17-te1-15m-walkforward.html">
+      <span class="date">2026-09-17</span><b>趨勢引擎 TE-1 · 15 分 K 版</b>
+      <span class="num"> — 首次納入巢狀 walk-forward 驗證</span></a>
+    <a class="arch-item" href="archive/2026-09-17-de1-15m-retired.html">
+      <span class="date">2026-09-17</span><b>雙引擎 DE-1 · 退役紀錄 15 分 K 版</b>
+      <span class="num"> — 尚未包含重新調參失敗的證據</span></a>
+  </div>
+
+  <div class="empty">更多報告陸續加入</div>
 
   <p class="note">
     所有報告的數據皆由回測程式直接產生，非人工抄錄。回測結果不代表未來表現，也不構成投資建議。
