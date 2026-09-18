@@ -141,7 +141,7 @@
   <div id="repos"></div>
 
   <footer>
-    <p>這是唯讀看板。資料由 Mac mini 上的 <code>tools/claude_monitor.py</code> 每分鐘產生一次，寫進 <code>claude-status.json</code> 後推送到 GitHub；本頁每 60 秒自動重新讀取。</p>
+    <p>這是唯讀看板。資料由 Mac mini 上的 <code>tools/claude_monitor.py</code> 每分鐘產生一次，寫進 <code>claude-status.json</code> 後推送到 GitHub；本頁每 60 秒自動重新讀取，直接讀 commit 內容，不必等 Pages 重新建置。</p>
     <p id="meta"></p>
   </footer>
 
@@ -156,6 +156,7 @@
   var STALE_WARN_MIN = 8;   // 心跳 3 分鐘，漏兩次才示警
   var STALE_CRIT_MIN = 20;
   var data = null;
+  var source = null;        // 資料是從哪個來源讀到的，顯示在頁尾方便排錯
 
   var STATES = {
     busy:    { icon: '▶', label: '執行中' },
@@ -334,15 +335,30 @@
       '主機 ' + ((data.host && data.host.hostname) || '—') +
       '  ·  收集器 v' + (data.monitor_version || '—') +
       '  ·  詳細程度 ' + (data.detail || '—') +
-      (data.detail === 'standard' ? '（不含對話內容）' : '');
+      (data.detail === 'standard' ? '（不含對話內容）' : '') +
+      '  ·  來源 ' + (source === 0 ? 'raw.githubusercontent' : 'GitHub Pages');
   }
 
-  function load() {
-    fetch('claude-status.json?t=' + Date.now(), { cache: 'no-store' })
+  // 優先讀 raw.githubusercontent：GitHub Pages 每次推送都要重新建置，而且每小時
+  // 的建置次數有軟性上限，一分鐘推一次一定塞車；raw 讀到的是 commit 當下的內容。
+  // raw 失敗（例如 repo 改成私有）就退回 Pages 上的同名檔案。
+  var SOURCES = [
+    'https://raw.githubusercontent.com/allenTW/SumerTWRobotTest1/main/claude-status.json',
+    'claude-status.json'
+  ];
+
+  function fetchFrom(i) {
+    return fetch(SOURCES[i] + '?t=' + Date.now(), { cache: 'no-store' })
       .then(function (r) {
         if (!r.ok) throw new Error('HTTP ' + r.status);
         return r.json();
       })
+      .then(function (json) { source = i; return json; });
+  }
+
+  function load() {
+    fetchFrom(0)
+      .catch(function () { return fetchFrom(1); })
       .then(function (json) { data = json; render(); })
       .catch(function (err) {
         var banner = document.getElementById('banner');
