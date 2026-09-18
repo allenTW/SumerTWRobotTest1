@@ -62,6 +62,7 @@
   .banner.show { display: block; }
   .banner.warn { border-color: var(--warning); color: var(--warning); }
   .banner.crit { border-color: var(--critical); color: var(--critical); }
+  .banner.paused { border-color: var(--text-muted); color: var(--text-dim); }
 
   /* 數字磚 */
   .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 26px; }
@@ -141,7 +142,7 @@
   <div id="repos"></div>
 
   <footer>
-    <p>這是唯讀看板。Mac mini 上的 <code>tools/claude_monitor.py</code> 每分鐘檢查一次狀態，有變動才推送（最快 3 分鐘一次，沒變動也會每 10 分鐘送一次心跳）。本頁每 60 秒重新讀取一次，同時問 GitHub Pages 和 raw 兩個來源，用比較新的那份。</p>
+    <p>這是唯讀看板，目前已暫停。原本的運作方式：Mac mini 上的 <code>tools/claude_monitor.py</code> 由 launchd 每分鐘檢查一次狀態，有變動才推送（最快 3 分鐘一次，沒變動也會每 10 分鐘送一次心跳）；本頁每 60 秒重新讀取，同時問 GitHub Pages 和 raw 兩個來源取較新的那份。排程已卸載，現在只有手動執行收集器才會更新資料。</p>
     <p id="meta"></p>
   </footer>
 
@@ -157,6 +158,10 @@
   // 否則看板會三不五時自己喊狼來了，喊久了就沒人信。
   var STALE_WARN_MIN = 18;
   var STALE_CRIT_MIN = 40;
+
+  // 自動更新已停止（launchd 排程已卸載），所以資料當然是舊的 —— 那不是故障。
+  // 恢復排程時把這裡改回 false，過期警告就會重新生效。
+  var PAUSED = true;
   var data = null;
   var source = null;        // 資料是從哪個來源讀到的，顯示在頁尾方便排錯
 
@@ -289,7 +294,11 @@
 
     var banner = document.getElementById('banner');
     banner.className = 'banner';
-    if (ageMin >= STALE_CRIT_MIN) {
+    if (PAUSED) {
+      banner.className = 'banner show paused';
+      banner.textContent = '⏸ 這個看板已暫停自動更新。以下是最後一次執行（' +
+        clock(data.generated_at) + '）留下的狀態，不代表 Mac mini 現在的情況。';
+    } else if (ageMin >= STALE_CRIT_MIN) {
       banner.className = 'banner show crit';
       banner.textContent = '⛔ 資料已經 ' + dur(Date.now() - gen) + '沒有更新。Mac mini 上的收集器、網路或外接碟可能出了問題，畫面上的狀態不能當真。';
     } else if (ageMin >= STALE_WARN_MIN) {

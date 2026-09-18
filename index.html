@@ -86,6 +86,29 @@
   .tool-card:hover { border-color: var(--accent); }
   .tool-card .title { color: var(--accent); font-size: 1.1rem; font-weight: 600; margin-bottom: 6px; }
   .tool-card .desc { color: var(--text-dim); font-size: 0.9rem; }
+
+  /* 暫停區：還能點進去看，但一眼要看得出來它沒有在運作 */
+  .section-label {
+    color: #6b7185;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    margin: 30px 0 12px;
+  }
+  .tool-card.paused { opacity: 0.55; }
+  .tool-card.paused:hover { opacity: 0.8; border-color: #6b7185; }
+  .tool-card.paused .title { color: #9aa0b4; }
+  .tool-card .badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #fab219;
+    border: 1px solid #fab219;
+    border-radius: 999px;
+    padding: 0 8px;
+    margin-left: 8px;
+    vertical-align: 2px;
+  }
   .lock-btn {
     display: inline-block;
     margin-top: 8px;
@@ -122,9 +145,11 @@
       <div class="desc">自動化交易策略的回測結果與績效分析</div>
     </a>
 
-    <a class="tool-card" href="claude-status.html">
-      <div class="title">🖥 Claude 看板</div>
-      <div class="desc">Mac mini 上 Claude Code / Cowork 工作階段的即時狀態、程式庫進度，每分鐘更新</div>
+    <div class="section-label">⏸ 暫停區</div>
+
+    <a class="tool-card paused" href="claude-status.html">
+      <div class="title">🖥 Claude 看板<span class="badge">已暫停</span></div>
+      <div class="desc">Mac mini 上 Claude Code / Cowork 工作階段的狀態看板。自動更新的排程已停止，頁面上的資料停在最後一次手動執行的時間</div>
     </a>
 
     <span class="lock-btn" onclick="lockHub()">🔒 重新鎖定</span>
