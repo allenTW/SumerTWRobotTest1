@@ -824,15 +824,19 @@
     <p class="body-note">
       已知限制：月度封存只到 2026-08-31，所以 holdout 是 2024-01-01 ~ 2026-08-31。
     </p>
-    <div class="callout bad">
-      <h3>事後發現：這一輪的 universe 有純度缺陷</h3>
+    <div class="callout good">
+      <h3>事後發現的 universe 純度缺陷：已量化，結論未翻轉</h3>
       <p style="margin:0">
-        第五輪才發現，<b>本輪的 universe 混進了代幣化股票與商品永續</b>
-        （XAUUSDT、TSLA、NVDA、QQQ 等），holdout 期間佔 <b>2.53% 的席次</b>。
-        原因是 <code>underlyingType == EQUITY</code> 的過濾只查 live exchangeInfo，
-        已下市標的沒有標籤所以漏掉。
-        <b>上面這一整節的結論都建立在這個 universe 上，影響幅度正在第六輪量化中。</b>
-        細節見<a href="#fixed">已修掉的重大缺陷</a>。
+        第五輪發現本輪的 universe 混進了代幣化股票與商品永續
+        （XAUUSDT、TSLA、NVDA、QQQ 等）——原因是
+        <code>underlyingType == EQUITY</code> 過濾<b>一個符號都沒濾掉</b>
+        （幣安 live exchangeInfo 裡 EQUITY 標籤數量為 0，那些合約早就下市）。
+        holdout 期間佔 <b>3.74% 的席次</b>。
+      </p>
+      <p style="margin:10px 0 0">
+        第六輪已量化：<b>樣本內是 0 / 2600 席，所以選參從未被汙染</b>。
+        修正後重跑<b>沒有任何結論翻轉</b>，方向上還小幅有利
+        （SF-B 的 t 0.982 → 1.254）。細節見<a href="#fixed">已修掉的重大缺陷</a>。
       </p>
     </div>
   </section>
@@ -996,9 +1000,26 @@
       （OI、全帳戶多空比、大戶帳戶比、大戶持倉比、主動買賣量比），5 分鐘頻率，
       實際起點 2021-12-01，2022 年起三個 universe 覆蓋率 100%。
       其餘全部不可用：UM liquidationSnapshot（路徑存在但 0 檔案）、CM liquidation（僅 2023-06~2024-10）、
-      REST openInterestHist（滾動 31 天）、OKX rubik（180 天）、Bybit OI（200 天）、
+      REST openInterestHist（滾動 31 天）、
       bookDepth（2023 起，樣本內只剩 12 個月）、Glassnode 與 Coinglass（付費）。
     </p>
+    <div class="callout bad">
+      <h3>2026-09-19 已就地更正：OKX 與 Bybit 的可回溯長度被低估了</h3>
+      <p style="margin:0">
+        本節原本寫「OKX rubik（180 天）、Bybit OI（200 天）」並把兩者列為不可用，
+        <b>那是錯的</b>。第六輪實測：
+      </p>
+      <ul>
+        <li><b>OKX</b> <code>rubik/.../-contract</code> 支援 begin/end 分頁，
+          可回溯到上線日 <b>2024-02-04</b>，不是 180 天。</li>
+        <li><b>Bybit</b> <code>v5/market/account-ratio</code> 用 cursor 可以翻到
+          <b>2020-08-05</b>（BTC 共 2,236 根日線），不是 200 天。</li>
+      </ul>
+      <p style="margin:10px 0 0">
+        這個更正不只是補一個數字——<b>第七輪的整個設計就建立在「Bybit 有長歷史」這件事上</b>
+        （見<a href="#crossex">第六輪</a>與最後一節）。
+      </p>
+    </div>
 
     <h3 class="sub">metrics 歸檔有 5 分鐘前視——修正後測試變得更嚴格</h3>
     <p class="body-note" style="margin-top:0">
@@ -1027,10 +1048,11 @@
         但真實 Sharpe 0.6~0.9 對上「需要 1.84」的門檻，<b>這個 holdout 長度證不了它</b>。
       </p>
       <p style="margin:10px 0 0">
-        <b>第六輪已經啟動</b>，而且刻意不碰參數（三層秩相關已經證明調參是浪費）：
-        在<b>樣本內</b>發展效應量放大的假設（拉長持有期／降低換手、剔除低浮動彩票腿、波動中性化），
-        <b>只鎖定一個配置</b>，然後用 <b>OKX／Bybit 的跨交易所資料做一次真正乾淨的檢定</b>——
-        因為<b>現有的 holdout 已經燒掉了</b>，第四輪與第五輪各讀過一次。
+        <b>第六輪照這個方向做了，結果已經交回</b>：刻意不碰參數
+        （三層秩相關已經證明調參是浪費），在樣本內發展效應量放大的假設，只鎖定一個配置。
+        <b>結論是放大徹底失敗——三條途徑全部被證偽</b>，
+        但同一個效應<b>在 OKX 與 Bybit 上複製成功</b>。
+        詳見<a href="#crossex">第六輪</a>。
       </p>
     </div>
     <p class="body-note">
@@ -1039,6 +1061,201 @@
       <b>但這些都是新假設，必須重新預登記，不能在現有 holdout 上試。</b>
       本輪的預登記文件與 A1–A5 五次具時間戳的修訂都已隨程式碼保存。
     </p>
+  </section>
+
+  <section id="crossex">
+    <h2>第六輪：效應量放大失敗，但效應在別的交易所複製成功</h2>
+    <p class="section-note">
+      這一輪同時有一個明確的失敗與一個明確的正面結果。順序很重要：失敗的那個是<b>預登記</b>的，
+      正面的那個是<b>探索性</b>的。
+    </p>
+
+    <div class="callout bad">
+      <h3>頭條：預登記的鎖定組兩項門檻全部不及格</h3>
+      <p style="margin:0">
+        唯一一個事先鎖定的配置，<b>G-MAIN（t &gt; 3）FAIL、G-REPL（季度 6/11 &lt; 60%）FAIL</b>。
+        三個資料源的鎖定組結果是 Binance CPL3 +0.339（t 0.54）、
+        OKX-gla +0.396（t 0.63）、Bybit-gla +0.165（t 0.26），四個鏡像全負。
+        <b>效應量放大徹底失敗。</b>
+      </p>
+    </div>
+
+    <div class="callout bad">
+      <h3>工程師自己設下的兩句限制，原樣照錄</h3>
+      <p style="margin:0;font-size:1.02rem">
+        <b>「本輪沒有任何一個 t 值是乾淨的首次讀取。」</b><br>
+        <b>「被正經檢定的那個配置失敗了，這點不打折。」</b>
+      </p>
+      <p style="margin:10px 0 0">
+        下面會出現一個 <b>t = 3.029</b>。<b>它不是頭條，也不該被當成通過門檻。</b>
+        它是探索性的、是在鎖定組失敗<b>之後</b>才決定跑的第二次看，
+        而且和前幾輪共用同一段已經燒掉的日曆。放它出來是因為它有資訊價值，
+        不是因為它證明了什麼。
+      </p>
+    </div>
+
+    <h3 class="sub">效應量放大失敗，而且失敗得有教育價值</h3>
+    <div class="table-wrap">
+      <table>
+        <caption>放大前 vs 放大後：樣本內越好，樣本外越差</caption>
+        <thead><tr><th></th><th>樣本內</th><th>樣本外</th></tr></thead>
+        <tbody>
+          <tr class="best"><td class="name">BASE（週頻／不過濾／等權）</td><td>+1.088</td>
+            <td class="pos"><b>+1.141</b>　幾乎完美轉移</td></tr>
+          <tr class="bad"><td class="name">鎖定組（月頻＋遲滯＋上市 180 天＋波動上限 80%＋反波動加權）</td>
+            <td class="pos">+2.507</td><td class="negv"><b>+0.059</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout bad">
+      <p style="margin:0">
+        <b>IS/OOS 秩相關 = −0.5485</b>——這正是第五輪<b>價格汙染對照組</b>的簽名（−0.503）。
+        換句話說，<b>「挑放大手法」這個動作本身，行為模式跟當初那個已知有問題的對照組一樣。</b>
+        更直接的證據：樣本內最佳 10 組 → 樣本外只有 +0.150；
+        而<b>樣本內最差 10 組 → 樣本外 +1.179，而且 10/10 全為正</b>。
+      </p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <caption>三條放大途徑逐條證偽</caption>
+        <thead><tr><th>途徑</th><th>樣本內</th><th>樣本外</th></tr></thead>
+        <tbody>
+          <tr class="bad"><td class="name">降低換手（1w / 2w / 4w）</td><td>1.28 / 1.49 / 1.80</td>
+            <td class="wrap negv"><b>0.93 / 0.83 / 0.15</b>　成本省了，訊號衰減更快</td></tr>
+          <tr class="bad"><td class="name">剔除彩票腿（volcap vs none）</td><td>1.78 vs 1.17</td>
+            <td class="wrap negv"><b>0.42 vs 0.78</b>　唯一樣本外微正的是 age180（0.78→0.90），仍在雜訊內</td></tr>
+          <tr class="bad"><td class="name">波動中性化（雙腿波動配平）</td><td class="negv">1.13</td>
+            <td class="wrap negv"><b>0.61</b>　樣本內與樣本外<b>都最差</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout good">
+      <p style="margin:0">
+        <b>但底層效應本身是真的</b>：72 組的樣本外平均是 <b>+0.639</b>，<b>65 / 72 為正</b>。
+        <b>核心教訓：效應是真的，但每一次想放大它，都把它弄壞了。</b>
+      </p>
+    </div>
+
+    <h3 class="sub">時間戳驗證：OKX 藏了一個整天級的前視</h3>
+    <p class="body-note" style="margin-top:0">
+      每接一個新資料源就要重新做一次時間戳稽核，<b>不能假設不同交易所的慣例一致</b>——
+      這一輪就證明了為什麼。
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>來源</th><th>驗證結果</th><th>處置</th></tr></thead>
+        <tbody>
+          <tr class="best"><td class="name">Bybit</td>
+            <td class="wrap pos"><code>1d[T]==1h[T]</code>（8/8、9/9）、<code>1h[T]==5min[T]</code>（41/41），
+              且<b>不</b>等於期間平均（0/41）</td>
+            <td class="wrap pos">標籤 = 快照瞬間，對齊正確</td></tr>
+          <tr class="bad"><td class="name">OKX</td>
+            <td class="wrap negv"><code>1D[T]==1H[T+23h]</code>、<code>1H[T]==5m[T+55m]</code>——
+              標籤是期間<b>起點</b>、數值是期間<b>最後一筆</b>，
+              照字面用就是<b>整整一天的前視</b>（比幣安那 5 分鐘嚴重得多）。
+              <code>1D</code> 還是 UTC+8 對齊</td>
+            <td class="wrap pos">改用 <code>1Dutc</code>，與幣安歸檔 <code>T 23:55</code> 是同一瞬間</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="body-note">
+      另外做了跨交易所的領先落後實證對帳：Bybit 峰值 lag 0（+0.472）確認對齊；
+      OKX 峰值 lag −1（+0.361），代表 OKX 的標籤 T 承載的是 T−1 的內容——
+      <b>方向是保守的（更安全），所以不做向前修正</b>。
+    </p>
+
+    <h3 class="sub">拒絕硬湊：只有 gla 這一條能用</h3>
+    <div class="callout good">
+      <p style="margin:0">
+        <b>gla 可比</b>：交易宇宙內的截面 Spearman 中位數 Bybit <b>+0.609</b>、OKX <b>+0.627</b>。
+        但 OKX 的 <b>tta（+0.14）與 ttp（−0.23）不可比，直接宣告不用、不硬湊</b>：
+        OKX ttp 的截面 <code>sd(log)</code> 只有 0.135（幣安是 0.376），
+        幾乎沒有截面資訊，而且方向還是負的；
+        OKX tta 中位數 0.92 vs 幣安 2.09——<b>根本不是同一群人</b>。
+        （Bybit 沒有大戶端點。）
+      </p>
+      <p style="margin:10px 0 0">
+        <b>所以複製只能做在 gla 這一條上——這是資料逼出來的，不是事後挑的。</b>
+      </p>
+    </div>
+
+    <h3 class="sub">跨交易所複製結果<span class="pill hyp">全部探索性、非預登記</span></h3>
+    <div class="table-wrap wide">
+      <table>
+        <caption>BASE 構造套三個資料源，2024-02-11 ~ 2026-08-31、132 週。
+          <b>下列每一個 t 值都是探索性的、非預登記、第二次看</b></caption>
+        <thead><tr><th>來源</th><th>Sharpe</th><th>t<br><span style="color:var(--warn);font-size:.9em">探索性</span></th><th>幣數比</th><th>季度+</th><th>鏡像</th></tr></thead>
+        <tbody>
+          <tr><td class="name">Binance gla</td><td>+1.150</td><td class="wrap">1.83<span class="d">探索性</span></td><td>2.498</td><td>8/11</td><td class="negv">−1.407</td></tr>
+          <tr class="best"><td class="name">OKX gla</td><td class="pos">+1.482</td><td class="wrap">2.36<span class="d">探索性</span></td><td>1.866</td><td>7/11</td><td class="negv">−1.964</td></tr>
+          <tr class="best"><td class="name">Bybit gla</td><td class="pos">+1.785</td><td class="wrap">2.84<span class="d">探索性</span></td><td>2.164</td><td>8/11</td><td class="negv">−2.169</td></tr>
+          <tr class="best"><td class="name">三源 1/N（無自由參數）</td><td class="pos">+1.901</td><td class="wrap">3.029<span class="d">探索性</span></td><td>—</td><td>9/11</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="body-note">
+      再說一次：<b>那個 3.029 不是通過門檻</b>。門檻是給預登記的鎖定組用的，而鎖定組失敗了。
+    </p>
+    <ul class="limits">
+      <li><b>三源不是同一批交易</b> —— 週報酬相關只有 0.165~0.466，多空腿名單重疊 48~51%。</li>
+      <li><b>安慰劑檢定</b> —— 各 60 次日內跨名稱洗牌，真實值落在
+        <b>98.3 / 100.0 / 100.0 百分位</b>（安慰劑均值 −0.26／−0.54／−0.54，
+        代表隨機多空書在這個宇宙裡是虧錢的）。</li>
+      <li><b>集中度與第五輪完全相反</b> —— 前 5 大週 |PnL| 佔比只有 0.25 / 0.19 / <b>0.16</b>；
+        <b>Bybit 拿掉最好那一週，t 反而升到 +3.42</b>，拿掉最好三週是 +3.59。
+        對比第五輪那個 <code>tta0</code> n=3 佔比 0.72、拿掉就崩——<b>這一次不是彩票</b>。</li>
+      <li><b>共同支撐</b> —— 三源限制在同一批名單時，Binance 掉到 +0.280，而 OKX +1.273、Bybit +1.765。
+        <b>OKX/Bybit 的優勢不是來自交易不同名單</b>，存活者偏誤不是解釋。</li>
+      <li><b>Bybit 時期穩定性</b> —— 2021H2 +0.87、2022–23 +1.30、2024 +1.96、2025 +1.55、2026 +1.29，
+        <b>五個子期間全正</b>。</li>
+      <li><b>成本 3×3 九格全部 &gt; 1.0。</b></li>
+    </ul>
+
+    <div class="callout good">
+      <h3>最有意思的反面發現：幣安版本一直被少數極端費率週撐著</h3>
+      <p style="margin:0">
+        先確認訊號<b>不是</b>資金費率的代理（與前 7 日費率的截面 rho 只有 +0.01~+0.03）。
+        但把資金費整個關掉之後：
+        <b>幣安版掉 −0.441</b>（1.150 → 0.710，其資金費損益有 <b>66.5% 來自 5 週</b>），
+        而 <b>OKX 只掉 0.039、Bybit 只掉 0.019</b>。
+      </p>
+      <p style="margin:10px 0 0">
+        <b>→ 幣安版本一直被少數極端費率週撐著；OKX／Bybit 版本才是乾淨的價格效應</b>
+        （空頭腿貢獻約 70% 淨利）。
+        <b>這正是誠信紀錄第六項那個陷阱</b>（等權平均被極端費率幣主導）
+        <b>換一個面貌再出現一次</b>——見<a href="#fixed">已修掉的重大缺陷</a>。
+        同一個結構性問題，這是第三次用不同形式現身。
+      </p>
+    </div>
+
+    <h3 class="sub">工程師自揭：一個門檻的文字歧義</h3>
+    <div class="callout">
+      <p style="margin:0">
+        <b>G-COMP 的門檻文字有歧義</b>：用「全符號」讀法，gla 只有 68~70%（<b>FAIL</b>）；
+        用「交易宇宙」讀法是 91~93%（<b>PASS</b>）。
+        <b>而這個取捨是在看到兩個數字之後才做的。</b>
+        工程師已自我標明 <b>G-COMP 只能當參考，不算乾淨的預先通過</b>。
+      </p>
+      <p style="margin:10px 0 0">
+        其餘自揭限制：資料來源不對等（幣安用有日期的 S3 不可變歸檔，OKX／Bybit 是今天從 live REST 讀的——
+        時間戳稽核能證明<b>標籤</b>正確，<b>證明不了數值從未被回溯修訂</b>）；
+        OKX／Bybit 只發佈在架合約清單，席次覆蓋 86.7% / 88.5%。
+      </p>
+    </div>
+
+    <div class="callout">
+      <h3>所以這一節的結論</h3>
+      <p style="margin:0">
+        <b>預登記的部分失敗了，而且失敗得乾脆：效應量放大的三條途徑全部被證偽。</b>
+        探索性的部分則給了一個值得追的線索——<b>同一個效應在兩個獨立交易所的資料上複製成功，
+        而且比幣安版本更乾淨</b>（不依賴極端費率週）。
+      </p>
+      <p style="margin:10px 0 0">
+        但<b>這一輪沒有產生任何一個可以拿來宣稱的 t 值</b>，因為所有結果都落在已經燒掉的日曆上。
+        要得到一個乾淨的數字，必須找到一段從來沒有被任何一輪看過的期間——<b>而那段期間存在</b>，
+        見最後一節。
+      </p>
+    </div>
   </section>
 
   <section id="drawdown">
@@ -1340,15 +1557,21 @@
         改成誠實的現金緩衝模型（總投入完全相同、未投入餘額建模為現金、期末結清）之後，
         <b>15 組全部為負、傾斜越大越差、完全單調</b>（−2% ~ −9%）。
         從 <b>+7.3% 翻成 −9.0%</b>，唯一的差別是現金的會計處理。</li>
-      <li><b>universe 純度缺陷：代幣化股票混進幣圈橫斷面（2026-09-19，<span style="color:var(--warn)">影響已發布的結論</span>）</b> ——
-        holdout 期間有 <b>2.53% 的席次</b>被<b>代幣化股票／商品永續</b>佔據
-        （XAUUSDT 25 次、XAGUSDT 21、CRCLUSDT 13、INTC 11、EWY 7、QQQ 6，以及 MSTR／NVDA／TSLA）。
-        原因是 <code>underlyingType == EQUITY</code> 這個過濾<b>只查 live exchangeInfo</b>，
-        <b>已下市的標的沒有標籤，因此整批漏掉</b>。
-        <b>這一項與其他項不同：它承襲自第四輪，而第四輪的結論就建立在同一個 universe 上</b>
-        （見<a href="#basket">多空永續籃子</a>）。
-        缺陷是第五輪才發現的，<b>影響幅度正在第六輪量化中</b>。
-        放在這裡是因為報告的自我修正紀錄不該有例外。</li>
+      <li><b>universe 純度缺陷：代幣化股票混進幣圈橫斷面（2026-09-19，<span style="color:var(--s1)">已量化，未翻轉任何結論</span>）</b> ——
+        原因比原先以為的更荒謬：<code>underlyingType == EQUITY</code> 這個過濾
+        <b>一個符號都沒有濾掉</b>——因為今天幣安 live exchangeInfo 裡
+        <b>EQUITY 標籤的數量是 0</b>，所有代幣化股票／ETF／金屬／能源合約<b>早就全部下市</b>，
+        所以 100% 漏網。
+        holdout 期間 <b>130 / 3475 席（3.74%）</b>被非加密標的佔據
+        （XAU 25、XAG 21、CRCL 13、INTC 11、CL 9…）。
+        <b>但樣本內是 0 / 2600 席</b>——<b>第五輪的選參從未被汙染。</b>
+        修正後重跑：SF-B 0.603 → <b>0.770</b>（t 0.982 → 1.254、幣數比 1.2385 → <b>1.3108</b>）、
+        SF-A −0.827 → −0.676（仍失敗）、<code>tta0</code> n=3 的 t 2.784 → 2.672（幣數比 6.245 → 6.197）。
+        <b>沒有任何結論翻轉，方向上還小幅有利</b>；順帶證實那個 6.24 的幣數比
+        <b>不是</b>代幣化股票造成的。
+        <b>另一個誠實的結論</b>：沒有純機械的即時篩選能在不誤殺 BTC 的前提下分出代幣化股票——
+        篩選器只抓到 17 個中的 10 個，而且會在 104 個樣本內週四中<b>誤殺 BTC 九次</b>。
+        <b>人工清單無可避免</b>（已建 173 個符號的 <code>nonstd_symbols.json</code>）。</li>
       <li><b><code>_safelog</code> 的 clip 讓 98.7% 的 OI 數值飽和（2026-09-19，鎖定參數前抓到）</b> ——
         clip 範圍設在 <code>[1e-4, 1e4]</code>，但 <b>98.7% 的 OI 幣數值超過 1e4</b>，
         全部被壓成同一個數 → <code>doi*</code>／<code>doiv*</code> 的橫斷面恆為常數、
@@ -1486,7 +1709,7 @@
   <section id="ongoing">
     <h2>目前進行中的驗證</h2>
     <p class="section-note">
-      這份報告<b>不宣告結案</b>。下面前<b>五</b>條已經交回，
+      這份報告<b>不宣告結案</b>。下面前<b>六</b>條已經交回，
       後<b>四</b>條還在跑，任何一條的結果都可能再改寫上面的內容。
     </p>
     <div class="timeline">
@@ -1528,6 +1751,15 @@
         同輪正式關閉免費鏈上資料（point-in-time 違規）。詳見正交資料軸那一節。
       </div>
       <div class="ev">
+        <div class="t">已交回 · 預登記失敗，但複製成功</div>
+        <b>第六輪：效應量放大＋跨交易所複製</b>。
+        <b>預登記的鎖定組 G-MAIN / G-REPL 兩項全部不及格，效應量放大的三條途徑全部被證偽</b>
+        （IS/OOS 秩相關 −0.5485，樣本內最差 10 組反而樣本外 10/10 全正）。
+        但效應在 <b>OKX 與 Bybit 上複製成功，而且比幣安版本更乾淨</b>——
+        關掉資金費後幣安掉 −0.441，OKX 只掉 0.039、Bybit 只掉 0.019。
+        <b>本輪沒有任何一個 t 值是乾淨的首次讀取。</b>詳見第六輪那一節。
+      </div>
+      <div class="ev">
         <div class="t">進行中 · 第一條</div>
         <b>β 框架的自我紅隊檢驗</b>：這個框架已經成功推翻過自己一次（上面那條）。
         繼續找它自己的破口——如果框架再出問題，前面那些「代數上已確定」的分類也要跟著重來。
@@ -1542,12 +1774,14 @@
       </div>
       <div class="ev">
         <div class="t">進行中 · 第三條</div>
-        <b>第六輪：效應量放大，而不是調參</b>。三層秩相關已經證明調參是浪費，
-        所以這一輪<b>不碰參數</b>：在<b>樣本內</b>發展放大效應量的假設
-        （拉長持有期／降低換手、剔除低浮動彩票腿、波動中性化），
-        <b>只鎖定一個配置</b>，然後用 <b>OKX／Bybit 的跨交易所資料</b>做一次真正乾淨的檢定——
-        <b>現有 holdout 已經燒掉了</b>（第四、第五輪各讀過一次）。
-        同時量化第四輪 universe 純度缺陷的影響幅度。
+        <b>第七輪：唯一還沒燒掉的統計預算</b>。
+        Bybit 的多空比有 <b>2020-08</b> 起的歷史，而幣安 <code>metrics</code> 截面要
+        <b>2021-12</b> 才成形——所以 <b>2020-08 ~ 2021-11 這 16 個月，
+        是整個專案從來沒有任何一輪碰過的日曆</b>。
+        不是「碰過但假裝沒碰」，是<b>前面每一輪在技術上都看不到它</b>。
+        第七輪就在那段做<b>首次讀取</b>的檢定，<b>只鎖一個配置</b>。
+        它同時測一件重要的事：<b>這個效應在我們發現它的那段期間之前就存在嗎？</b>
+        如果只在 2022 之後才有，那它很可能是近期 regime 的產物。
       </div>
       <div class="ev">
         <div class="t">進行中 · 第四條</div>
@@ -1572,7 +1806,9 @@
         另外三件正面的事：<b>多空籃子的容器通過壓測</b>（帳戶總 beta 0.958）、
         <b>小資金不是瓶頸</b>（每腿 $101、被丟棄腿數 0），
         以及<b>正交資料軸首次出現真實持續性</b>
-        （跨訊號秩相關 +0.373，價格汙染對照組 −0.503，受控實驗）。
+        （跨訊號秩相關 +0.373，價格汙染對照組 −0.503，受控實驗），
+        而且該效應<b>在 OKX 與 Bybit 上複製成功、且不依賴極端費率週</b>。
+        另外<b>第四輪的 universe 純度缺陷已量化，沒有翻轉任何結論</b>（樣本內 0/2600 席）。
       </p>
       <p style="margin:10px 0 0">
         <b>不能說</b>：<b>不能說「所有路都走完了」。</b>
@@ -1580,7 +1816,8 @@
         <b>也不能說正交資料軸「沒用」</b>——那裡首次量到真實持續性，
         只是效應量（Sharpe 0.6~0.9）不足以在現有 holdout 長度上達到 t &gt; 3（需要 1.84），
         <b>「證不了」不等於「不存在」</b>；
-        而第四輪的 universe 純度缺陷<b>可能影響已發布的籃子結論</b>，量化中；
+        <b>更不能拿第六輪那個 t = 3.029 來宣稱什麼</b>——它是探索性的、第二次看、
+        而且共用已經燒掉的日曆；<b>被正經檢定的那個配置失敗了，這點不打折</b>；
         也不能說「訊號沒用」——跨資產證據顯示訊號是真的，只是<b>過不了 BTC 的 carry 門檻</b>，
         而且外推到 BTC 本身還有四個未解的風險；
         最適 β 到底在哪沒有答案（九年資料只給得出 [0.15, 2.38]）；
