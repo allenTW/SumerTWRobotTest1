@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>老六</title>
+<script>
+  // 存取控制：必須先在工具中心（index.html）輸入正確密碼解鎖，
+  // 才會核發這個 token；沒有 token 就直接導回工具中心，不渲染任何內容。
+  (function () {
+    var token = sessionStorage.getItem('hub_token');
+    if (token !== '36a71a5bca2513f92fc85544531b1605c3515ee5f6039882db0b17b05082652f') {
+      location.replace('index.html');
+      throw new Error('unauthorized');
+    }
+  })();
+</script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #171a23;
+    --surface-2: #1f2330;
+    --text: #e8e9ee;
+    --text-dim: #9aa0b4;
+    --text-muted: #6b7185;
+    --accent: #d97757;
+    --accent-soft: rgba(217, 119, 87, 0.15);
+    --border: #2a2e3c;
+    --pos: #3987e5;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+  }
+  header {
+    padding: 40px 24px 28px;
+    border-bottom: 1px solid var(--border);
+    background: radial-gradient(ellipse at top, var(--accent-soft), transparent 60%);
+  }
+  .inner { max-width: 760px; margin: 0 auto; }
+  .crumb { font-size: 0.9rem; margin-bottom: 20px; }
+  .crumb a { text-decoration: none; color: var(--text-dim); }
+  .crumb a:hover { color: var(--accent); }
+  header h1 { font-size: 1.9rem; margin: 0 0 6px; }
+  header p { color: var(--text-dim); margin: 0; font-size: 1rem; }
+
+  main { max-width: 760px; margin: 0 auto; padding: 36px 24px 72px; }
+  .count { color: var(--text-muted); font-size: 0.82rem; letter-spacing: 1px; margin-bottom: 14px; }
+
+  .report-card {
+    display: block;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    text-decoration: none;
+    color: var(--text);
+    margin-bottom: 16px;
+    transition: border-color 0.15s, transform 0.15s;
+  }
+  .report-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .report-card .top { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+  .report-card .title { color: var(--accent); font-size: 1.15rem; font-weight: 600; }
+  .report-card .tag {
+    font-size: 0.72rem; color: var(--text-muted);
+    border: 1px solid var(--border); border-radius: 999px; padding: 1px 9px;
+  }
+  .report-card .desc { color: var(--text-dim); font-size: 0.92rem; margin-bottom: 14px; }
+  .report-card .stats {
+    display: flex; gap: 18px; flex-wrap: wrap;
+    padding-top: 14px; border-top: 1px solid var(--border);
+  }
+  .report-card .stats div { font-size: 0.8rem; color: var(--text-muted); }
+  .report-card .stats b { display: block; color: var(--pos); font-size: 1.05rem; font-weight: 600; line-height: 1.4; }
+  .report-card .stats b.neg { color: #d03b3b; }
+  .report-card .tag.live { color: #3987e5; border-color: rgba(57,135,229,0.45); }
+  .report-card .tag.dead { color: #d03b3b; border-color: rgba(208,59,59,0.45); }
+
+  .arch-head { font-size: .82rem; letter-spacing: 1px; color: #6b7185; margin: 34px 0 6px; }
+  .arch-note { color: #6b7185; font-size: .84rem; margin: 0 0 14px; }
+  .arch-list { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .arch-item { display: block; padding: 13px 18px; text-decoration: none; color: var(--text-dim);
+    font-size: .88rem; border-bottom: 1px solid var(--border); transition: background .15s; }
+  .arch-item:last-child { border-bottom: none; }
+  .arch-item:hover { background: var(--surface); }
+  .arch-item b { color: var(--text-dim); font-weight: 600; }
+  .arch-item .date { color: #6b7185; font-size: .78rem; margin-right: 10px; font-variant-numeric: tabular-nums; }
+  .arch-item .num { color: #6b7185; }
+
+  .empty {
+    border: 1px dashed var(--border); border-radius: 14px;
+    padding: 20px; color: var(--text-muted); font-size: 0.88rem; text-align: center;
+  }
+  .note { color: var(--text-muted); font-size: 0.85rem; margin-top: 28px; }
+  .note b { color: var(--text-dim); font-weight: 600; }
+  code { background: #11141c; padding: 1px 5px; border-radius: 4px; font-size: .85em; color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="inner">
+    <div class="crumb"><a href="index.html">← 工具中心</a></div>
+    <h1>🎲 老六</h1>
+    <p>老六團隊的量化研究報告與稽核紀錄</p>
+  </div>
+</header>
+
+<main>
+  <div class="count">共 1 份報告</div>
+
+  <a class="report-card" href="crypto-dca-amplifier-report.html">
+    <div class="top">
+      <span class="title">DCA 放大器 · COIN-M 對沖疊加</span>
+      <span class="tag">COIN-M 反向</span>
+      <span class="tag">資金費率 + 季度基差 + 趨勢衛星倉</span>
+      <span class="tag">collat_ratio 1.3</span>
+      <span class="tag live">Phase 1 完成 · 待核准</span>
+    </div>
+    <div class="desc">
+      用合約放大既有 DCA BTC 部位的收益，本金保護優先。經過兩輪返工：先抓到方案三的高 Sharpe
+      是<b>統計口徑偏誤</b>造成的假象（3.5 修正到 0.17~0.6），後來又補進「持倉期間強平模擬」，
+      證實 <b>collat_ratio 1.0~2.0 全範圍 6 年沒發生過強平</b>，也順手推翻了風控顧問先前查無實據的
+      「連續7週侵蝕120-128%」說法（真實數字是 30%）。熊市部位自身表現突出（Sharpe 3.63），
+      但<b>帳戶總資產層級的保護目前幾乎可忽略</b>。
+    </div>
+    <div class="stats">
+      <div>熊市 Sharpe（方案一）<b>3.63</b></div>
+      <div>強平次數（collat 1.0~2.0）<b>0</b></div>
+      <div>全樣本年化<b class="neg">-46.8% → -15.2%</b></div>
+      <div>帳戶層級保護<b class="neg">-76.6% → -75.9%</b></div>
+    </div>
+  </a>
+
+<div class="arch-head">歷史版本（已封存）</div>
+  <p class="arch-note">
+    報告一律不覆蓋、不刪除。被取代的版本會移到 <code>archive/</code>，
+    以 <code>YYYY-MM-DD-&lt;slug&gt;-&lt;描述&gt;.html</code> 命名，並在這裡留下一筆說明它為什麼被取代。
+  </p>
+  <div class="empty">目前沒有被取代的版本</div>
+
+  <p class="note">
+    報告內的數字來自回測程式的輸出；目前這份 Phase 1 報告是<b>人工整理成靜態頁面</b>的，
+    尚未接上自動注入流程，數字更新時需要同步改頁面。回測結果不代表未來表現，也不構成投資建議。
+  </p>
+</main>
+
+</body>
+</html>
