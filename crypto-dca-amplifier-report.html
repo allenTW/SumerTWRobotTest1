@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DCA 放大器 · COIN-M 對沖疊加 · Phase 1 報告</title>
+<title>DCA 放大器 · 幣數對照 · 第二版</title>
 <script>
   // 存取控制：必須先在工具中心（index.html）輸入正確密碼解鎖，
   // 才會核發這個 token；沒有 token 就直接導回工具中心，不渲染任何內容。
@@ -35,13 +35,13 @@
   .crumb .sep{color:var(--text-muted);margin:0 8px}
   .crumb .here{color:var(--text-muted)}
   header h1{font-size:2.1rem;margin:0 0 6px}
-  header .tagline{color:var(--text-dim);font-size:1.02rem;margin:0 auto;max-width:680px}
+  header .tagline{color:var(--text-dim);font-size:1.02rem;margin:0 auto;max-width:700px}
   .meta-bar{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:18px}
   .badge{display:inline-flex;align-items:center;gap:6px;background:var(--surface);
     border:1px solid var(--border);border-radius:999px;padding:5px 14px;font-size:.85rem;color:var(--text-dim)}
   .badge b{color:var(--accent);font-weight:600}
-  .badge.live{border-color:rgba(57,135,229,.4)}
-  .badge.live b{color:var(--s1)}
+  .badge.live{border-color:rgba(250,178,25,.45)}
+  .badge.live b{color:var(--warn)}
 
   main{max-width:1000px;margin:0 auto;padding:36px 24px 80px}
   section{margin-bottom:50px}
@@ -51,6 +51,17 @@
   p{color:var(--text-dim)}
   .body-note{font-size:.9rem;margin-top:14px}
   .body-note b{color:var(--text)}
+  .pill{display:inline-block;font-size:.7rem;padding:2px 9px;border-radius:999px;
+    border:1px solid var(--border);color:var(--text-muted);vertical-align:middle;margin-left:8px}
+  .pill.hyp{color:var(--warn);border-color:rgba(250,178,25,.45)}
+  .pill.fact{color:var(--s1);border-color:rgba(57,135,229,.45)}
+
+  .hero{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+    padding:26px 24px;text-align:center;margin-bottom:18px}
+  .hero .lbl{color:var(--text-muted);font-size:.85rem;margin-bottom:6px}
+  .hero .big{font-size:2.6rem;font-weight:700;color:var(--s1);line-height:1.15}
+  .hero .cap{color:var(--text-dim);font-size:.92rem;margin-top:12px}
+  .hero .cap b{color:var(--text)}
 
   .callout{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--warn);
     border-radius:10px;padding:18px 22px;margin-bottom:20px;font-size:.92rem;color:var(--text-dim)}
@@ -68,24 +79,31 @@
   .stat .sub{color:var(--text-muted);font-size:.78rem;margin-top:4px}
   .value.pos{color:var(--s1)} .value.neg{color:var(--neg)} .value.warn{color:var(--warn)}
 
+  .split{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px}
+
   .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;
     padding:6px 16px 4px;overflow-x:auto;margin-bottom:14px}
-  /* width:100% alone makes the table squash to the wrapper instead of overflowing,
-     so overflow-x:auto never engages. min-width restores horizontal scroll on phones
-     for the wide numeric tables; prose tables are left to wrap normally. */
+  /* width:100% alone makes a table squash to the wrapper instead of overflowing,
+     so overflow-x:auto never engages. Add class="table-wrap wide" when a table has
+     enough columns that squashing would break it; v2's tables are all narrow enough. */
   table{width:100%;border-collapse:collapse;font-size:.88rem}
   .table-wrap.wide table{min-width:620px}
   th,td{text-align:right;padding:9px 10px;border-bottom:1px solid var(--border)}
   th:first-child,td:first-child{text-align:left}
   th{color:var(--text-muted);font-weight:500;font-size:.8rem}
   td{color:var(--text-dim)} td.name{color:var(--text)}
+  td.wrap{text-align:left;white-space:normal}
   tr.best td{background:rgba(57,135,229,.07)}
   tr.best td.name{color:var(--s1);font-weight:600}
   tr.bad td.name{color:var(--neg)}
+  tr.base td{background:rgba(217,119,87,.07)}
+  tr.base td.name{color:var(--accent);font-weight:600}
   td.pos{color:var(--s1)} td.negv{color:var(--neg)}
+  .d{color:var(--text-muted);font-size:.85em;margin-left:6px}
   caption{caption-side:top;text-align:left;color:var(--text-muted);font-size:.82rem;padding:8px 10px 2px}
 
   .engine{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:14px}
+  .engine h3{margin:0 0 10px;font-size:.95rem;color:var(--text)}
   .engine dl{margin:0}
   .engine dt{color:var(--text);font-size:.85rem;font-weight:600;margin-top:12px}
   .engine dt:first-child{margin-top:0}
@@ -106,312 +124,669 @@
 
   footer{border-top:1px solid var(--border);padding:28px 24px 48px;text-align:center;
     color:var(--text-muted);font-size:.85rem}
-  @media(max-width:640px){header h1{font-size:1.6rem}.stat .value{font-size:1.3rem}}
+  @media(max-width:640px){header h1{font-size:1.6rem}.stat .value{font-size:1.3rem}.hero .big{font-size:2rem}}
 </style>
 </head>
 <body>
 
 <header>
   <div class="crumb">
-    <a href="index.html">工具中心</a><span class="sep">›</span><a href="laoliu.html">老六</a><span class="sep">›</span><span class="here">DCA 放大器</span>
+    <a href="index.html">工具中心</a><span class="sep">›</span><a href="laoliu.html">老六研究院</a><span class="sep">›</span><span class="here">DCA 放大器</span>
   </div>
-  <h1>DCA 放大器：COIN-M 對沖疊加</h1>
-  <p class="tagline">用幣本位合約放大定期定額 BTC 部位的收益，本金保護優先於報酬 —— Phase 1 回測與風控報告</p>
+  <h1>DCA 放大器：多拿到幾顆 BTC？</h1>
+  <p class="tagline">
+    同樣每週 100 USDT、同樣六年——相較於單純定期定額買進持有，這套策略最後讓我手上多幾顆 BTC。
+    第二版改用幣數比當作唯一標準重寫。
+  </p>
   <div class="meta-bar">
     <span class="badge">標的 <b>BTC</b></span>
     <span class="badge">合約 <b>COIN-M 反向</b></span>
-    <span class="badge">槓桿 <b>&lt;1×（超額抵押）</b></span>
-    <span class="badge">區間 <b>2020-08 ~ 2026-09</b></span>
-    <span class="badge">計價 <b>BTC</b></span>
-    <span class="badge live">狀態 <b>Phase 1 完成，待核准</b></span>
+    <span class="badge">計價 <b>BTC 顆數</b></span>
+    <span class="badge">區間 <b>2020-08-11 ~ 2026-09-18</b></span>
+    <span class="badge">樣本 <b>319 週 × 100 USDT</b></span>
+    <span class="badge live">狀態 <b>研究進行中</b></span>
   </div>
 </header>
 
 <main>
 
-  <section id="verdict">
-    <h2>結論先講</h2>
+  <section id="headline">
+    <h2>六年下來，多拿到幾顆？</h2>
     <p class="section-note">
-      這份報告經過兩輪返工：第一輪回測做完後，發現方案三的高 Sharpe 是統計口徑造成的假象；
-      修正之後，又發現引擎完全沒有模擬強制平倉。以下是補完這兩輪之後、目前最誠實的結論。
+      第一版用 Sharpe、獲利因子、年化報酬回答問題，那些指標看不出這套東西到底帶來什麼。
+      這一版只問一件事：<b>同一筆錢、同一段時間，最後手上的 BTC 是變多還是變少。</b>
     </p>
-    <div class="callout good">
-      <h3>站得住腳的部分</h3>
-      <p style="margin:0">
-        方案一、二（COIN-M 空頭對沖）在真實 <b>-76.6%</b> 的 2021-2022 熊市裡，部位自身的風險調整報酬相當突出
-        （熊市 Sharpe 分別為 <b>3.63</b> 與 <b>1.27</b>）。把「持倉期間逐日強平檢查」補進引擎後重跑，
-        <b>collat_ratio 1.0~2.0 的整個範圍，6 年歷史裡沒有發生過一次強平</b>，數字經得起壓力測試。
-      </p>
-    </div>
-    <div class="callout bad">
-      <h3>要先接受的代價</h3>
-      <p style="margin:0">
-        跨牛熊的全樣本，方案一、二都是<b>淨虧損</b>（年化 -46.8%、-49.4%）——本質是保險費，熊市保護、牛市侵蝕，
-        不是套利。而且目前對沖名目是相對於現貨部位的固定快照，<b>帳戶總資產層級的保護效果目前幾乎可忽略</b>
-        （同一次熊市裡，疊加對沖後回撤只從 -76.6% 縮到 -75.9%，差不到 1 個百分點）。
-        方案三（趨勢跟蹤）修正統計偏誤後，Sharpe 從虛高的 3.5 打回 <b>0.17~0.6</b>，不建議照原規劃的 5–15% 倉位上線。
-      </p>
-    </div>
-  </section>
 
-  <section id="context">
-    <h2>專案目標與限制</h2>
-    <div class="engine">
-      <dl>
-        <dt>使用者現況</dt>
-        <dd>現貨 <code>0.0339 BTC</code>（約 $2,688），每週定期定額 <code>100 USDT</code> 買 BTC（每週四執行）</dd>
-        <dt>目標</dt>
-        <dd>用 COIN-M 合約放大 DCA 部位的 BTC 收益，獲利要能累積回 BTC 本位，不是換成 USDT</dd>
-        <dt>優先順序</dt>
-        <dd>本金保護 &gt; 穩健度 &gt; 報酬率。明確拒絕「高報酬、幾乎零風險」的聖杯思維</dd>
-        <dt>槓桿定義</dt>
-        <dd>合約名目曝險 &lt; 保證金，即 <code>collat_ratio ≥ 1.0</code>（超額抵押，比業界最低的 1× 槓桿還保守）</dd>
-        <dt>運行方式</dt>
-        <dd>全自動無人值守，異常才發 Telegram 通知，沿用既有的 Telegram 通知基礎建設</dd>
-      </dl>
+    <div class="hero">
+      <div class="lbl">每週 100 USDT × 319 週，什麼都不做，只是買進並持有</div>
+      <div class="big">0.8511 顆 BTC</div>
+      <div class="cap">這就是基準，記為 <b>1.0000</b>。底下每一個數字都是拿來跟它比的。</div>
     </div>
-    <p class="body-note">
-      另外帳戶上有一筆<b>既有的舊倉位</b>（BTCUSD/ETHUSD CM 永續多單，全倉 1×，名目約 $2,550，
-      跟這個專案的現貨基準規模相當）——目前<b>刻意排除</b>在這個保本框架的管轄範圍外，
-      風控顧問已評估過：若之後併入管理，總曝險會大約翻倍，且「全倉」模式會讓保證金池共用，
-      建議屆時先改成「逐倉」物理隔離。這件事尚未決定，先列在這裡供追蹤。
-    </p>
-  </section>
 
-  <section id="strategies">
-    <h2>三個候選策略</h2>
-    <p class="section-note">
-      三個方案都建立在 COIN-M「反向合約」的非線性特性上：以 USD 報價、BTC 結算，
-      空頭部位在 BTC 上漲時虧損換算成 BTC 會被壓縮、下跌時獲利會被放大——這個形狀對「保本」友善，
-      但代價是牛市裡持續有小額侵蝕。方案三是唯一方向性策略，凸性方向相反，對保本不利。
-    </p>
     <div class="stat-grid">
       <div class="stat">
         <div class="label">方案一・資金費率收割</div>
-        <div class="value" style="font-size:1.05rem">永續合約 · 方向中性 ~</div>
-        <div class="sub">年化資金費率持續高於門檻才開空單對沖，賺 BTC 計價的資金費用</div>
+        <div class="value neg">0.9463</div>
+        <div class="sub">少拿 5.4%</div>
       </div>
       <div class="stat">
-        <div class="label">方案二・季度基差交易</div>
-        <div class="value" style="font-size:1.05rem">季度合約 · 部分方向對沖</div>
-        <div class="sub">年化基差夠寬時放空季度合約，靠到期收斂賺錢；回測證實「方向中性」定性不成立</div>
+        <div class="label">方案二・季度基差</div>
+        <div class="value neg">0.8477</div>
+        <div class="sub">少拿 15.2%</div>
       </div>
       <div class="stat">
-        <div class="label">方案三・趨勢跟蹤</div>
-        <div class="value" style="font-size:1.05rem">永續合約 · 方向性</div>
-        <div class="sub">EMA 均線交叉 + ATR 停損，小比例衛星倉位（5–15%），唯一帶方向賭注的策略</div>
+        <div class="label">方案三・趨勢衛星倉</div>
+        <div class="value neg">0.9695</div>
+        <div class="sub">少拿 3.1%</div>
+      </div>
+      <div class="stat">
+        <div class="label">方案一＋200 日均線濾網</div>
+        <div class="value warn">1.0276</div>
+        <div class="sub">多拿 2.8%，但過不了檢驗</div>
       </div>
     </div>
+
+    <div class="callout bad">
+      <h3>一句話版本</h3>
+      <p style="margin:0">
+        四套方案裡<b>三套讓你少拿幣</b>（0.9463、0.8477、0.9695）。唯一「贏」的那套多拿 2.8%，
+        但其中 <b>+0.0654 顆來自單獨一個星期</b>（2026-01-29，BTC 當週 −25.7%），
+        拿掉那一週就變成 <b>0.9507</b>；把結算日拉回做滿五年（2025-06-30），它是 <b>0.9285</b>，輸 7%。
+      </p>
+    </div>
+
+    <p class="body-note">
+      前提條件：使用者每週四定期定額 100 USDT 買 BTC、長期持有，現貨約 <b>0.0339 BTC</b>（約 $2,688）。
+      目標是累積更多顆 BTC，本金保護優先於報酬。槓桿定義是合約名目曝險小於保證金
+      （超額抵押，<code>collat_ratio ≥ 1.0</code>）。
+    </p>
   </section>
 
-  <section id="backtest">
-    <h2>回測結果：全樣本與各市場週期</h2>
+  <section id="coin-ratio">
+    <h2>幣數比主表</h2>
     <p class="section-note">
-      真實抓取 Binance 現貨、永續、季度合約與資金費率歷史資料回測（threshold=6%，方案一對沖上限 25%、
-      方案二 35%，collat_ratio=1.2）。全樣本涵蓋一次完整熊市（-76.6%）、兩段牛市、一段盤整，
-      沒有涵蓋 2018–2019，因為 COIN-M 產品當時還不存在。
+      2020-08-11 ~ 2026-09-18，319 週、每週 100 USDT，全部方案投入完全相同的金額、在完全相同的時點。
+      世代勝率是指 20 個不同起始時點裡，有幾個最後拿到的幣比純持有多。
     </p>
-    <div class="table-wrap wide">
+    <div class="table-wrap">
       <table>
-        <caption>方案一（資金費率收割，無濾網 → 加趨勢濾網後）</caption>
-        <thead><tr><th>週期</th><th>年化報酬</th><th>Sharpe</th><th>勝率</th><th>獲利因子</th><th>進場占比</th></tr></thead>
+        <caption>幣數比（純定期定額買進持有 = 1.0000）與 20 個世代的勝率</caption>
+        <thead><tr><th>方案</th><th>幣數比</th><th>世代勝率</th></tr></thead>
         <tbody>
-          <tr><td class="name">全樣本</td><td class="negv">-46.77% → -15.23%</td><td>-0.873 → -0.310</td><td>44.7% → 42.3%</td><td>0.715 → 0.885</td><td>56.1% → 16.3%</td></tr>
-          <tr><td class="name">牛市 2020H2–2021</td><td class="negv">-153.12% → -234.23%</td><td>-2.153 → -4.367</td><td>35.4% → 28.6%</td><td>0.452 → 0.142</td><td>73.8% → 10.8%</td></tr>
-          <tr class="best"><td class="name">熊市 2021–2022</td><td class="pos">+190.87% → +168.19%</td><td class="pos">3.627 → 2.967</td><td>61.5% → 57.1%</td><td>3.581 → 3.228</td><td>24.1% → 13.0%</td></tr>
-          <tr><td class="name">復甦 2022–2024</td><td class="negv">-91.87% → -76.58%</td><td>-2.089 → -2.297</td><td>41.7% → 30.0%</td><td>0.432 → 0.407</td><td>71.6% → 14.9%</td></tr>
-          <tr><td class="name">牛市 2024–2025</td><td>+0.83% → -92.61%</td><td>0.023 → -2.739</td><td>49.0% → 30.0%</td><td>1.008 → 0.367</td><td>59.0% → 12.0%</td></tr>
-          <tr><td class="name">ATH後 2025–2026</td><td class="pos">+86.61% → +66.36%</td><td class="pos">1.657 → 1.241</td><td>57.1% → 52.6%</td><td>2.028 → 1.713</td><td>42.0% → 38.0%</td></tr>
+          <tr class="base"><td class="name">純 DCA 買進持有（基準）</td><td>1.0000<span class="d">0.8511 顆</span></td><td>—</td></tr>
+          <tr><td class="name">方案一　資金費率收割</td><td class="negv">0.9463<span class="d">−5.4%</span></td><td>11 / 20</td></tr>
+          <tr class="best"><td class="name">方案一＋200 日均線趨勢濾網</td><td class="pos">1.0276<span class="d">+2.8%</span></td><td>20 / 20</td></tr>
+          <tr><td class="name">方案二　季度基差</td><td class="negv">0.8477<span class="d">−15.2%</span></td><td>8 / 20</td></tr>
+          <tr class="bad"><td class="name">方案三　趨勢衛星倉</td><td class="negv">0.9695<span class="d">−3.1%</span></td><td class="negv">0 / 20</td></tr>
+          <tr><td class="name">對照：無訊號常態對沖 25%</td><td class="negv">0.9337<span class="d">−6.6%</span></td><td>8 / 20</td></tr>
+          <tr class="bad"><td class="name">對照：方案一反向訊號</td><td class="negv">0.9191<span class="d">−8.1%</span></td><td class="negv">0 / 20</td></tr>
         </tbody>
       </table>
     </div>
     <p class="body-note">
-      濾網（收盤價 &gt; 200日均線 且 50日均線 &gt; 200日均線 時不開空單）把牛熊進場集中度從嚴重偏牛市（3.7:1）
-      修正到平衡（1:1），<b>部位層級最大回撤從 -288.9% 大幅收斂到 -52.7%</b>，
-      但全樣本報酬只是收斂、<b>沒有轉正</b>，逆選擇問題只是換到「趨勢剛反轉、均線還沒跟上」的那幾週繼續發生。
+      兩個對照組是拿來確認「訊號本身有沒有在做事」的。
+      <b>完全不看訊號、固定對沖 25% 拿到 0.9337，比方案二的 0.8477 還高</b>——
+      也就是說方案二的季度基差訊號，表現比什麼都不判斷還差。
+      把方案一的訊號反過來用是 0.9191，比正向的 0.9463 低，訊號方向是對的，
+      但幅度不足以把成本賺回來。方案三與反向訊號都是 <b>0 / 20</b>：沒有任何一個起始時點能贏過純持有。
     </p>
+  </section>
 
-    <div class="table-wrap wide">
+  <section id="not-a-win">
+    <h2>唯一「贏」的那個為什麼不算數</h2>
+    <p class="section-note">
+      要宣稱一個方案「夠好」，光是幣數比 &gt; 1.0 不夠，還得通過四項檢驗。
+      方案一＋濾網的 1.0276 <b>四項全沒過</b>。
+    </p>
+    <div class="table-wrap">
       <table>
-        <caption>方案二（季度基差交易）</caption>
-        <thead><tr><th>週期</th><th>年化報酬</th><th>Sharpe</th><th>勝率</th><th>獲利因子</th><th>進場占比</th></tr></thead>
+        <thead><tr><th>檢驗</th><th>通過標準</th><th>實際結果</th></tr></thead>
         <tbody>
-          <tr><td class="name">全樣本</td><td class="negv">-49.05%</td><td>-0.953</td><td>43.4%</td><td>0.691</td><td>61.1%</td></tr>
-          <tr><td class="name">牛市 2020H2–2021</td><td class="negv">-112.03%</td><td>-1.592</td><td>40.0%</td><td>0.544</td><td>84.6%</td></tr>
-          <tr class="best"><td class="name">熊市 2021–2022</td><td class="pos">+64.36%</td><td class="pos">1.271</td><td>55.6%</td><td>1.543</td><td>33.3%</td></tr>
-          <tr><td class="name">復甦 2022–2024</td><td class="negv">-91.98%</td><td>-1.924</td><td>41.0%</td><td>0.582</td><td>58.2%</td></tr>
-          <tr><td class="name">牛市 2024–2025</td><td class="negv">-25.86%</td><td>-0.732</td><td>43.5%</td><td>0.771</td><td>83.1%</td></tr>
-          <tr class="best"><td class="name">ATH後 2025–2026</td><td class="pos">+127.98%</td><td class="pos">3.576</td><td>54.5%</td><td>4.221</td><td>22.0%</td></tr>
+          <tr class="bad">
+            <td class="name">單點集中度</td>
+            <td class="wrap">拿掉貢獻最大的單一交易段後仍 &gt; 1.0</td>
+            <td class="wrap negv">總獲利 +0.0235 顆裡，<b>+0.0654 顆來自 2026-01-29 那一週</b>（BTC 當週 −25.7%）。拿掉 → <b>0.9507</b></td>
+          </tr>
+          <tr class="bad">
+            <td class="name">隨機時點對照</td>
+            <td class="wrap">曝險匹配的隨機時點對照組顯著勝出</td>
+            <td class="wrap negv">真訊號只贏 15 / 20，<b>p ≈ 0.25</b>，與隨機開關無法區分</td>
+          </tr>
+          <tr class="bad">
+            <td class="name">逐年窗</td>
+            <td class="wrap">不重疊的逐年窗至少贏 4 / 6 年</td>
+            <td class="wrap negv">只贏 <b>2 / 6</b>。<b>沒有任何方案贏超過 2 / 6</b></td>
+          </tr>
+          <tr class="bad">
+            <td class="name">結束日敏感度</td>
+            <td class="wrap">不因換一個結算日就翻盤</td>
+            <td class="wrap negv">做滿五年（2025-06-30）是 <b>0.9285</b>，輸 7%。勝負全靠 2026 年那段下跌</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout bad">
+      <h3>而且它賺的不是它宣稱要賺的東西</h3>
+      <p style="margin:0">
+        「資金費率收割」這個名字名不副實。+0.0235 顆的總獲利裡，
+        <b>資金費只貢獻 +0.0096 顆，方向價差貢獻 +0.0326 顆</b>。
+        真正在推動結果的是空頭部位在下跌段的方向賭注，不是它設計要收割的資金費。
+      </p>
+    </div>
+  </section>
+
+  <section id="decomposition">
+    <h2>錢到底去哪了：損益三分拆解</h2>
+    <p class="section-note">
+      把幣數的變化拆成三塊——方向價差、資金費、交易成本——就看得出這套東西的結構。
+    </p>
+    <div class="table-wrap">
+      <table>
+        <caption>方案一＋200 日均線濾網，相對純持有的幣數變化拆解（單位：顆）</caption>
+        <thead><tr><th>組成</th><th>顆數</th><th>說明</th></tr></thead>
+        <tbody>
+          <tr><td class="name">方向價差</td><td class="pos">+0.0326</td><td class="wrap">空頭部位在下跌段的價差獲利。這是方向賭注，不是設計目標</td></tr>
+          <tr><td class="name">資金費</td><td class="pos">+0.0096</td><td class="wrap">名義上要「收割」的那一塊，不到總額的一半</td></tr>
+          <tr><td class="name">交易成本（殘差）</td><td class="negv">−0.0187</td><td class="wrap">手續費與滑價，由總額減去前兩項推得</td></tr>
+          <tr class="best"><td class="name">合計</td><td class="pos">+0.0235</td><td class="wrap">對應幣數比 1.0276</td></tr>
         </tbody>
       </table>
     </div>
     <p class="body-note">
-      原始研究報告把方案二定性為「方向中性」，回測推翻了這個判斷——裸空頭寸疊加在既有現貨多頭之上，
-      損益仍隨價格路徑波動，全樣本、牛市表現甚至比方案一更差（對沖上限更高，同方向偏誤被放大）。
+      沒有濾網的方案一拆得更乾淨：收到的資金費 <b>+0.0426 顆</b>，
+      只補回價差虧損 <b>−0.0585 顆</b> 的 <b>73%</b>，再扣掉成本，<b>在樣本內</b>必為負。
+    </p>
+
+    <div class="callout">
+      <h3>對沖是賺是賠，取決於漂移落在臨界值的哪一邊</h3>
+      <p style="margin:0">
+        這裡要先撤回一個本報告先前版本寫過、但已經被推翻的說法：
+        <b>「在上升資產上疊加空頭對沖必然虧損」是錯的，那不是結構性結論。</b>
+        正確的說法是：對沖的期望值取決於漂移 ν 與臨界值 <code>f + ½σ²</code> 的相對位置（f 為資金費率）。
+        <b>ν 高於臨界值時對沖為負，低於臨界值時對沖為正。</b>
+        以 f = 6% 計，σ = 67.6% 時臨界值是 <b>28.8%／年</b>；
+        σ = 47.2%（近三年的實現值）時只剩 <b>17.1%／年</b>。
+        樣本內的 ν 是 <b>31.45%</b>，高於所有合理的臨界值——
+        所以<b>三個方案在樣本內失敗完全可以預期，但這不代表它們在一個低漂移的未來也會失敗。</b>
+      </p>
+    </div>
+
+    <p class="body-note">
+      為了讓這個判斷可以被別人檢查，把閉式解直接放上來（已被我方實測獨立驗證）：
+    </p>
+    <div class="table-wrap">
+      <table>
+        <caption>對數成長差與最適曝險的閉式解（ν 漂移、f 資金費率、σ 年化波動、β 曝險比）</caption>
+        <thead><tr><th>式子</th><th>意義</th></tr></thead>
+        <tbody>
+          <tr><td class="name"><code>G(β) = (β−1)(ν − f) + ½σ²·β(1−β)</code></td><td class="wrap">相對純持有的年化對數成長差</td></tr>
+          <tr><td class="name"><code>β* = ½ + (ν − f)/σ²</code></td><td class="wrap">使 G 最大的曝險比</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="body-note">
+      <b>驗證</b>：把全期參數代入 β = 0.75，理論值是 <b>−1.2%／年</b>，
+      實測的「常態對沖 25%」是 <b>−1.1%／年</b>——閉式解對得上實測。
+      <b>極端對照最能說明問題</b>：若未來 ν = 0%、σ = 47%，
+      最適解會翻成<b>對沖掉 77%（β = 0.23）</b>，而且每年可以多累積 <b>6.59%</b> 的幣。
+      同一套機制，在不同的漂移環境下結論完全相反。所以這裡沒有「結構性必輸」，只有「在這段歷史的漂移水準下輸」。
+    </p>
+
+    <p class="body-note">
+      回到樣本內：方案一那個「補回 73%」仍然是被美化的數字。<b>在樣本內的漂移水準下</b>，
+      若全程 100% 開著對沖，資金費能補回的上限只有 <b>9.51 / 36.93 = 25.8%</b>；
+      能到 73% 是因為對沖大部分時間是關著的。
+      <b>但這句話的前提是漂移維持在歷史高檔</b>，而那正是下一節會說明「九年資料最估不準」的東西。
+    </p>
+
+    <h3 class="sub">而且收益那一側還在萎縮</h3>
+    <p class="body-note" style="margin-top:6px">
+      COIN-M 空方年化資金費：<b>2021 年 22.4% → 2025 年 5.1% → 2026 年 3.9%</b>，
+      2026 年 2 月與 4 月的月度值甚至為負。ETF 與機構 basis trade 把 delta-neutral 收益壓平了。
+      <b>收益側確實在縮小；至於成本側，它取決於未來的漂移，而那是九年資料最估不準的量。</b>
+      拿資金費當方向訊號也無效（n = 6,591）：負資金費區間的平均 30 日報酬是 +3.77%，
+      <b>低於</b>全樣本的 +4.34%；反而是最熱的資金費區間後續報酬最高（+8.17%）。
     </p>
   </section>
 
-  <section id="bias">
-    <h2>一次統計口徑的自我修正</h2>
+  <section id="drawdown">
+    <h2>回撤價目表：目前唯一可靠、而且可以買的東西</h2>
     <p class="section-note">
-      方案三原本樣本外 Sharpe 高達 3.5，一開始懷疑是過擬合或 COIN-M 凸性膨脹出來的。深查後發現真正原因不是這兩個。
+      前面所有方案的共通點是「想同時要幣數和回撤」，結果兩頭落空。
+      但如果只要回撤壓縮、願意用幣數去換，那是<b>可靠而且線性可買</b>的——
+      旋鈕是對沖比例，不是訊號。這張表就是價目表。
+    </p>
+    <div class="table-wrap">
+      <table>
+        <caption>固定對沖比例（無訊號、無擇時）的幣數與回撤對照</caption>
+        <thead><tr><th>對沖比例</th><th>幣數比</th><th>帳戶回撤</th><th>幣數代價</th></tr></thead>
+        <tbody>
+          <tr class="base"><td class="name">0%</td><td>1.0000</td><td class="negv">−62.9%</td><td>—</td></tr>
+          <tr><td class="name">25%</td><td>0.9337</td><td class="negv">−46.7%</td><td class="negv">−6.6%</td></tr>
+          <tr><td class="name">50%</td><td>0.8309</td><td class="negv">−27.3%</td><td class="negv">−16.9%</td></tr>
+          <tr><td class="name">75%</td><td>0.7085</td><td class="negv">−9.8%</td><td class="negv">−29.2%</td></tr>
+          <tr><td class="name">100%</td><td>0.6666</td><td class="negv">−5.8%</td><td class="negv">−33.3%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout">
+      <h3>怎麼讀這張表</h3>
+      <p style="margin:0">
+        想把最大回撤從 <b>−62.9% 壓到 −9.8%</b>，價格是<b>少拿 29% 的幣</b>。
+        這筆錢只有在一種情況下值得花：<b>你會在 −63% 的回撤裡恐慌賣出。</b>
+        它保護的是行為，不是幣數。如果確定坐得住，<b>正確的對沖比例就是 0%</b>。
+        這應該是一次問答，不是一個研究專案。
+      </p>
+    </div>
+    <p class="body-note">
+      補一個反直覺的事實：<b>真正的大空頭裡也沒有任何方案多賺到幣。</b>
+      2021-11 ~ 2022-11 那次 −76.6% 的崩盤，區段結束時最好的幣數比只有 <b>1.0038</b>（+0.38%）。
+      「熊市付保險費、崩盤時賺回來」這個敘事在這份資料裡站不住。
+      而且要注意，整個樣本裡<b>只有 2 段有效空頭</b>。
+    </p>
+  </section>
+
+  <section id="beta">
+    <h2>β 曲線：九年資料釘不住峰頂<span class="pill fact">不確定性已量化</span></h2>
+    <p class="section-note">
+      把問題一般化：以 BTC 計價，β = 平均 BTC 曝險 ÷ 現貨部位。純持有是 β = 1，
+      常態空頭對沖是 β &lt; 1，加槓桿是 β &gt; 1。整條曲線量出來長這樣。
+    </p>
+    <div class="table-wrap">
+      <table>
+        <caption>幣數比對 β 的完整曲線（全期單一路徑）。表面上的峰值在 1.10~1.25——但這個位置站不住，見下方</caption>
+        <thead><tr><th>β</th><th>幣數比</th><th>相對純持有</th></tr></thead>
+        <tbody>
+          <tr><td class="name">0.00</td><td>0.667</td><td class="negv">−33.3%</td></tr>
+          <tr><td class="name">0.25</td><td>0.709</td><td class="negv">−29.1%</td></tr>
+          <tr><td class="name">0.50</td><td>0.831</td><td class="negv">−16.9%</td></tr>
+          <tr><td class="name">0.75</td><td>0.934</td><td class="negv">−6.6%</td></tr>
+          <tr class="base"><td class="name">1.00</td><td>1.000</td><td>基準</td></tr>
+          <tr><td class="name">1.10</td><td class="pos">1.013</td><td class="pos">+1.3%</td></tr>
+          <tr><td class="name">1.25</td><td class="pos">1.015</td><td class="pos">+1.5%</td></tr>
+          <tr><td class="name">1.50</td><td>0.973</td><td class="negv">−2.7%</td></tr>
+          <tr><td class="name">1.75</td><td>0.885</td><td class="negv">−11.5%</td></tr>
+          <tr><td class="name">1.95</td><td>0.793</td><td class="negv">−20.7%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout bad">
+      <h3>峰值位置的 95% 區間是 [0.15, 2.38]，不是曲線看起來暗示的 [1.1, 1.25]</h3>
+      <p style="margin:0">
+        參數不確定性量化已經交回。先確認一件事：<b>這條幣數比曲線就是對數成長拋物線本身</b>
+        （β ≥ 0.5 的 9 個點 RMSE = <b>0.0064</b>），所以拋物線的參數不確定性可以直接搬到這條曲線上。
+        結果是：β* 的點估計 <b>1.205</b> 沒錯，但它的 <b>95% 信賴區間是 [0.15, 2.38]</b>——
+        涵蓋從「大幅持現金」一路到「兩倍槓桿」。p25 已經是 <b>0.83</b>。
+      </p>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat">
+        <div class="label">β* 點估計</div>
+        <div class="value">1.205</div>
+        <div class="sub">95% CI [0.15, 2.38]</div>
+      </div>
+      <div class="stat">
+        <div class="label">P（最適 β &lt; 1）</div>
+        <div class="value warn">≈ 35%</div>
+        <div class="sub">block bootstrap L=60、B=20,000</div>
+      </div>
+      <div class="stat">
+        <div class="label">釘到可區分 0.8 與 1.5 所需資料</div>
+        <div class="value neg">69 年</div>
+        <div class="sub">我們有 9.1 年</div>
+      </div>
+      <div class="stat">
+        <div class="label">μ 的 t 統計量</div>
+        <div class="value neg">1.44</div>
+        <div class="sub">連「漂移大於零」都不顯著</div>
+      </div>
+    </div>
+    <p class="body-note">
+      那個 35% 很穩，不是調出來的：跨 L = 1~250 的區塊長度都落在 <b>33.5% ~ 37.2%</b>，
+      五個不同隨機種子落在 <b>35.1% ~ 36.2%</b>。
+      換句話說，<b>「最適 β 其實小於 1」這件事有大約三分之一的機率是真的</b>，資料沒有能力排除它。
+    </p>
+
+    <h3 class="sub">為什麼釘不住：分母估得準，分子估不準</h3>
+    <div class="table-wrap">
+      <table>
+        <caption>β* 的兩個輸入——分子是漂移、分母是變異數——估計精度差了一個數量級</caption>
+        <thead><tr><th>參數</th><th>點估計</th><th>估計精度</th></tr></thead>
+        <tbody>
+          <tr class="bad"><td class="name">μ（年化漂移）</td><td>36.93%／年</td>
+            <td class="wrap negv">SE = <b>22.42%／年</b> · 變異係數 <b>69.6%</b> · t = <b>1.44</b></td></tr>
+          <tr><td class="name">σ（年化波動）</td><td>0.55</td>
+            <td class="wrap pos">變異係數 <b>3.67%</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="body-note">
+      <b>σ 的相對精度是 μ 的 19 倍</b>，所以 β* 的不確定性幾乎全部來自分子。
+      要把 μ 釘到 ±5%／年，需要 <b>702 年</b>的資料。
+      結構上的原因也很清楚：<b>漂移的 93% 來自 20 天</b>——最好的 10 天就佔 52.8%，最好的 20 天佔 92.9%。
+      一個由少數極端日決定的量，本來就沒辦法用九年估準。
+    </p>
+
+    <h3 class="sub">分期 β* 也不穩，而且方向不一致</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>視窗</th><th>β*</th><th></th></tr></thead>
+        <tbody>
+          <tr><td class="name">2017-2020（含 2018 熊市）</td><td>0.97</td><td class="wrap">低於 1</td></tr>
+          <tr><td class="name">2020-2023（含 2022 熊市）</td><td>1.17</td><td class="wrap">略高於 1</td></tr>
+          <tr><td class="name">2023-2026（含 2026 回檔）</td><td>2.03</td><td class="wrap">遠高於 1</td></tr>
+          <tr class="bad"><td class="name">跨度</td><td class="negv">1.06</td><td class="wrap negv">三個視窗之間沒有收斂的跡象</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout good">
+      <h3>好消息是：釘不住的代價其實很小</h3>
+      <p style="margin:0">
+        曲線在峰頂附近極度平坦。就算真實的 β* 真的是 1.2，<b>選 β = 1 每年只少 0.96% 的對數成長</b>；
+        選 β = 0.8 也只少 2.78%／年。
+        也就是說，在 [0.15, 2.38] 這個巨大的不確定性之下，實際要付的代價是個位數百分點。
+        <b>這正是「不知道答案」還能做出合理決定的原因。</b>
+      </p>
+    </div>
+
+    <div class="callout">
+      <h3>一個對我方不利的反向證據，同樣要放進來</h3>
+      <p style="margin:0">
+        <b>BTC 的波動率在結構性下降。</b>12 個月實現 σ：2018 年 <b>95.0%</b> → 2026 年 <b>44.7%</b>。
+        而 β* 的分母是 σ²，對 σ 極度敏感（臨界值 <code>f + ½σ²</code> 也是）。若未來 σ 真的穩定在 45% 左右，
+        β = 1 的損益兩平門檻只需要未來複利 <b>10.5%／年</b>——
+        在那個情境下，<b>β = 1 反而是偏低而不是偏高</b>。
+        這個方向的證據我們同樣沒有能力裁決：σ 的下降究竟是趨勢還是週期，九年資料一樣答不了。
+      </p>
+    </div>
+
+    <h3 class="sub">兩件完全不同的事，絕對不要混為一談</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th></th><th>條件式擇時降 β</th><th>無條件恆定降 β</th></tr></thead>
+        <tbody>
+          <tr><td class="name">做法</td>
+            <td class="wrap">看訊號才降（均線、資金費、基差……）</td>
+            <td class="wrap">永遠 80% 買幣、20% 留現金，不看盤</td></tr>
+          <tr><td class="name">證據狀態</td>
+            <td class="wrap negv"><b>已被回測否決</b></td>
+            <td class="wrap warn" style="color:var(--warn)"><b>資料無法裁決</b></td></tr>
+          <tr><td class="name">依據</td>
+            <td class="wrap">0 / 3 不重疊視窗，四項驗收標準全沒過</td>
+            <td class="wrap">取決於你對未來報酬率的假設與個人風險偏好，不是回測問題</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout bad">
+      <p style="margin:0">
+        這份報告否決的是<b>「條件式擇時降 β」</b>。
+        它沒有、也不能否決<b>「無條件恆定降 β」</b>——
+        後者根本不是一個回測問題，是一個偏好問題。
+        <b>請不要把前者的結論套到後者身上。</b>
+        「每週固定拿 20% 的預算留現金」跟「看到均線跌破就砍曝險」，在這份資料裡是兩件性質完全不同的事。
+      </p>
+    </div>
+
+    <h3 class="sub">押錯邊的懲罰不對稱</h3>
+    <div class="table-wrap">
+      <table>
+        <caption>選錯 β 要付的年化對數成長代價</caption>
+        <thead><tr><th>你選的 β</th><th>結果實際的 ν</th><th>年化代價</th></tr></thead>
+        <tbody>
+          <tr class="bad"><td class="name">0.5（往對沖側押）</td><td>31%</td><td class="negv">−9.94%／年</td></tr>
+          <tr><td class="name">1.25（往槓桿側押）</td><td>0%</td><td class="negv">−4.98%／年</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="body-note">
+      <b>押錯在對沖側的懲罰，是押錯在槓桿側的兩倍。</b>
+      如果非得在不確定性裡選一邊，往下壓曝險的那一邊比較貴。
+    </p>
+
+    <div class="callout good">
+      <h3>所以這一節的結論：β = 1 是 minimax 零後悔解</h3>
+      <p style="margin:0">
+        <b>β = 1 可辯護，但理由不是「它最大化期望幣數」</b>——那取決於 ν，那個說法是錯的。
+        九年資料沒辦法在 [0.15, 2.38] 裡挑出一個點，它同樣支持 0.8，也同樣支持 1.5。
+      </p>
+      <p style="margin:10px 0 0">
+        β = 1 可辯護，是因為它是<b>唯一的 minimax 零後悔解</b>：
+        β = 1 時你就是基準本身，<b>在任何 ν 之下幣數比都恰好 1.0000，變異數為零</b>。
+        後悔矩陣顯示 β = 1 的最差情況恰好是 <b>0.00%</b>，
+        而其他每一個 β 的最差情況都是負的。
+        再加上它不需要融資、不需要再平衡、沒有爆倉風險、沒有主動決策。
+        <b>任何偏離 β = 1 的選擇，都是在對 ν 下注——而 ν 正是九年資料最無能為力的那個量。</b>
+      </p>
+    </div>
+  </section>
+
+  <section id="upside">
+    <h2>還有哪些方向有幣數上檔</h2>
+    <p class="section-note">
+      「調整 BTC 曝險」這一族，在漂移維持歷史高檔的前提下沒有解。
+      那麼<b>報酬來源與 BTC 曝險正交</b>的東西長什麼樣？這一段是方向盤點，不是結論。
+    </p>
+    <div class="split">
+      <div class="engine">
+        <h3>幣本位被動收益<span class="pill hyp">待盡職調查</span></h3>
+        <dl>
+          <dt>為什麼值得看</dt>
+          <dd>這是目前唯一一種能在<b>不改變 β</b> 的前提下增加幣數的來源——收益以 BTC 計價直接入帳，與價格路徑無關。</dd>
+          <dt>量級</dt>
+          <dd>Binance Simple Earn BTC 活期約 <code>0.9% ~ 2.7% APR</code>（浮動），對 $2,744 的部位約 $25 ~ $74／年。
+            以 1.5%／年複利六年約等於幣數比 <b>1.093</b>，高於三個方案任何一個曾達到的水準，而且不承擔市場風險。</dd>
+          <dt>它不需要回測</dt>
+          <dd>契約型收益，沒有訊號、沒有樣本數問題。需要的是盡職調查，不是再跑一輪模擬。</dd>
+          <dt>風險 100% 是交易對手風險</dt>
+          <dd>而且歷史上反覆實現過（Celsius、BlockFi、Genesis、FTX）。
+            <b>關鍵判斷</b>：若 BTC 本來就放在 Binance（要做 COIN-M 就必須如此），託管風險已經在承擔了，
+            轉入 Simple Earn 增加的只是「產品層」風險（活期可贖回）。若是自我託管，性價比就不成立。</dd>
+          <dt>已否決：Babylon 等 BTC staking</dt>
+          <dd>BTC 計價收益僅約 <code>0.04%</code>；宣稱的 4~8% 是以 BABY 代幣發放，依賴代幣增發而非真實營收，
+            另外還有 slashing 永久損失原生 BTC 的風險。這不是幣本位收益。</dd>
+        </dl>
+      </div>
+      <div class="engine">
+        <h3>選擇權<span class="pill fact">代數上已否決</span></h3>
+        <dl>
+          <dt>幣本位的凸性是反的</dt>
+          <dd>持有 1 BTC、賣出履約價 K 的 call，當 S &gt; K 時須交付 <code>(S−K)/S</code> 顆幣；
+            S → ∞ 時保留下來的幣趨近於只剩權利金。BTC 是右偏分布，
+            這等於<b>在最該持有的時候把幣賣掉</b>。</dd>
+          <dt>Cash-secured put 也一樣</dt>
+          <dd>未被指派的期間 β &lt; 1，跟常態空頭對沖同構——是賺是賠一樣看漂移落在
+            <code>f + ½σ²</code> 的哪一邊。但上面那條幣數上限是代數，不受漂移影響。</dd>
+          <dt>通則</dt>
+          <dd>任何<b>美元結算</b>衍生品的幣數報酬上限都是 <code>notional / S</code>，
+            而這個上限正好在 BTC 表現最好的時候收得最緊。
+            <b>只有現貨與幣本位收入具備沒有上限的幣數上檔。</b></dd>
+          <dt>規模門檻（實測 API）</dt>
+          <dd>Deribit BTC 選擇權最小 0.1 BTC ≈ $8,090 = 現貨的 2.9 倍，不可行；
+            Binance 最小 0.01 BTC ≈ $809 = 現貨的 29%、約 8 週預算，顆粒度極差且與全自動無人值守衝突。</dd>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section id="fixed">
+    <h2>已修掉的重大缺陷</h2>
+    <p class="section-note">
+      這段是誠信紀錄，不刪。每一項都曾經讓數字往有利的方向偏，而且有幾項是在寫報告的過程中才被抓出來的。
+    </p>
+    <ul class="limits">
+      <li><b>績效統計口徑偏誤</b> —— 只看「週四決策當下」有沒有持倉來決定該週算不算數，
+        週中停損的虧損被排除在 Sharpe／勝率／獲利因子之外。方案三的樣本外 Sharpe 因此從虛高的
+        <b>3.54 修正到 0.17</b>（含滑價 −0.11）。方案一、二不受影響（沒有週中停損機制，已逐位元驗證）。</li>
+      <li><b>對沖名目綁死固定快照</b> —— <code>spot_val_base_usd=2688</code> 六年不變，
+        導致實際對沖比例從 2021 年的 9.2% 一路衰減到 2025 年的 <b>0.8%</b>。已改為動態跟隨累積部位。</li>
+      <li><b><code>capital_injected_btc</code> 無中生有灌 BTC，而且從不計入成績</b> ——
+        在比幣數的時候這是致命的。已改為雙錢包模型，抵押品只在口袋之間搬移，絕不創造。</li>
+      <li><b>缺少持倉期間強平模擬</b> —— 原本只在開倉那一刻檢查保證金。
+        已補入逐日維持保證金檢查（用當日盤中最高價，較保守）。
+        結果：<code>collat_ratio</code> 1.0~2.0 全範圍、6 年、<b>0 次強平</b>。</li>
+      <li><b>「連續 7 週侵蝕保證金 120-128%」查無實據</b> —— 風控顧問引用的這個數字無法重現，
+        真實值是 <b>30.0%</b>，疑似誤植了方案三的數字。</li>
+      <li><b>方案二 <code>front_close</code> 的 NaN fallback</b> —— 會讓整週被排除在統計之外（已修）。</li>
+      <li><b>第三次出現的同類口徑偏誤（均線傾斜 DCA）</b> ——
+        測試「低於均線多買、高於均線少買」時，用「按總投入比例縮放」做等額換算，得到 +6~7% 的改善；
+        改成誠實的現金緩衝模型（總投入完全相同、未投入餘額建模為現金、期末結清）之後，
+        <b>15 組全部為負、傾斜越大越差、完全單調</b>（−2% ~ −9%）。
+        從 <b>+7.3% 翻成 −9.0%</b>，唯一的差別是現金的會計處理。</li>
+    </ul>
+    <div class="callout bad">
+      <h3>因此定下的硬規則</h3>
+      <p style="margin:0">
+        任何涉及不同現金流時點的比較，<b>兩條路徑必須投入完全相同的金額、在完全相同的時點</b>，
+        未投入的餘額必須明確建模為現金並在期末結清。<b>禁止事後縮放做等額換算。</b>
+        順帶一提，這次也讓一件事變清楚了：<b>「逢低加碼」在數學上與「常態空頭對沖」是同一件事</b>——
+        抱著現金等回檔，就是平均 β &lt; 1。至於它是賺是賠，跟常態對沖一樣取決於漂移落在
+        <code>f + ½σ²</code> 的哪一邊；在樣本內的漂移水準下，兩者都是負的。
+      </p>
+    </div>
+  </section>
+
+  <section id="certain">
+    <h2>代數上已經確定的　vs　仍待驗證的</h2>
+    <p class="section-note">
+      這兩類的證據強度差很多，混在一起講會誤導。以下明確分開。
+    </p>
+    <div class="split">
+      <div class="engine">
+        <h3>代數上已確定<span class="pill fact">不需要更多資料</span></h3>
+        <dl>
+          <dt>全額抵押空頭不會被漲勢強平</dt>
+          <dd>反向合約 <code>h ≤ 0.95</code>（名目 &lt; 保證金）跨越 2018 年 −84%、2022 年 −77%、
+            2026 年 −53% 三次崩盤共 9 年，<b>零強平</b>。
+            <b>歸零風險不是瓶頸，期望值才是。</b></dd>
+          <dt>美元結算衍生品的幣數上限</dt>
+          <dd>上限 = <code>notional / S</code>，而且正好在 BTC 表現最好時收得最緊。
+            只有現貨與幣本位收入有沒有上限的幣數上檔。</dd>
+          <dt>「逢低加碼」＝「常態空頭對沖」</dt>
+          <dd>兩者都是平均 β &lt; 1，數學上同構。<b>同構這件事是代數；是賺是賠則取決於漂移。</b></dd>
+          <dt>對沖損益的臨界條件</dt>
+          <dd><code>ν = f + ½σ²</code>。ν 高於它對沖為負、低於它為正；
+            <code>β* = ½ + (ν − f)/σ²</code>。<b>式子是代數，不依賴樣本</b>——
+            未定的是該代哪一個 ν 進去。</dd>
+          <dt>COIN-M 離散化不是瓶頸</dt>
+          <dd>實測 <code>contractSize=100 USD</code>、<code>minQty=1</code>、<code>stepSize=1</code>。
+            現貨 $2,744 → 27 張，<b>β 可以 3.6 個百分點為級距調整</b>，每週 $100 預算恰好 1 張。</dd>
+        </dl>
+      </div>
+      <div class="engine">
+        <h3>仍待驗證<span class="pill hyp">目前只有假說強度</span></h3>
+        <dl>
+          <dt>β* 的位置（不確定性已量化）</dt>
+          <dd>倒 U 的形狀已確認（曲線就是對數成長拋物線本身，RMSE 0.0064），
+            但峰頂位置的 95% 區間是 <b>[0.15, 2.38]</b>，<b>P(β* &lt; 1) ≈ 35%</b>。
+            九年資料無法再縮窄。</dd>
+          <dt>未來的 ν 會落在臨界值哪一邊</dt>
+          <dd>這是整份報告最關鍵、也最估不準的量：SE(μ) = 22.42%／年、t = 1.44，
+            九年連「漂移大於零」都不顯著。σ 的結構性下降又會把臨界值往下拉。</dd>
+          <dt>幣本位被動收益的真實可得性</dt>
+          <dd>實際可得利率、以及交易對手風險該怎麼定價，都還沒查證。</dd>
+          <dt>樣本數的母體限制</dt>
+          <dd>BTC 可交易史只有 <b>2~3 段有效空頭</b>（2018、2022、2026 未完成），
+            重疊世代只會放大信心、不會增加資訊。
+            <b>但這只代表「不能只用 BTC 自己的歷史驗證」，不代表無法驗證</b>——見下方的撤回。</dd>
+        </dl>
+      </div>
+    </div>
+
+    <h3 class="sub">一項撤回：「報酬集中在稀有狀態的策略原則上不可驗證」</h3>
+    <div class="callout bad">
+      <p style="margin:0">
+        本報告先前版本主張：報酬集中在稀有狀態（空頭、崩盤、脫錨）的策略，
+        因為 BTC 可交易史只有 2~3 段有效空頭，<b>原則上無法被驗證</b>，因此不值得研究。
+        <b>這個主張已經撤回。</b>
+        它的實際效果是把一整類東西從待辦清單上劃掉，而那個劃掉的動作沒有正當理由。
+      </p>
+    </div>
+    <p class="body-note">
+      正確的說法是：<b>這類策略不能只用 BTC 自己的歷史來驗證，但可以拆成兩半</b>，而且兩半都可估——
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>拆成兩半</th><th>怎麼驗</th></tr></thead>
+        <tbody>
+          <tr><td class="name">訊號 alpha</td>
+            <td class="wrap">跨資產驗證。同一個訊號拿到其他資產、其他市場上測，
+              樣本數就不再被「BTC 空頭只發生過 2~3 次」綁住</td></tr>
+          <tr><td class="name">carry 成本</td>
+            <td class="wrap">在 BTC 上直接量測。資金費、基差、手續費都是可以逐筆觀測的量，
+              不需要等下一次空頭發生</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="body-note">
+      兩半都可估，所以<b>這類策略是可證偽的</b>。
+      這是一個研究設計問題，不是死路。
+    </p>
+  </section>
+
+  <section id="ongoing">
+    <h2>目前進行中的驗證</h2>
+    <p class="section-note">
+      這份報告<b>不宣告結案</b>。下面前兩條已經交回（而且都推翻了本報告先前版本的說法），
+      後三條還在跑，任何一條的結果都可能再改寫上面的內容。
     </p>
     <div class="timeline">
       <div class="ev">
-        <div class="t">發現</div>
-        <b>績效衡量口徑偏誤</b>：原始引擎只看「週四決策當下」有沒有持倉來決定這週算不算數。
-        若部位週中被停損出場、週四剛好空手，這週的虧損金額仍計入總損益，卻被排除在 Sharpe／勝率／獲利因子之外——
-        贏家的週被記錄，輸家的週被悄悄跳過。
+        <div class="t">已交回 · 推翻了先前的結論</div>
+        <b>「常態空頭對沖結構性必輸」這句話已經破了</b>：對沖的期望值取決於漂移 ν
+        與臨界值 <code>f + ½σ²</code> 的相對位置，不是方向問題。
+        樣本內失敗是因為 ν = 31.45% 高於所有合理臨界值；
+        若未來 ν = 0%、σ = 47%，最適解會翻成對沖掉 77%。詳見損益拆解那一節。
       </div>
       <div class="ev">
-        <div class="t">修正後</div>
-        方案三日線 BTC 樣本外 Sharpe 從 <b>3.54 暴跌到 0.17</b>（含滑價後 <b>-0.11</b>），
-        小時線 BTC／ETH 也只剩 <b>0.3~0.6</b>，跨資產（ETH）驗證顯示問題出在方法論本身，不是過擬合到單一資產。
+        <div class="t">已交回 · 結果是「釘不住」</div>
+        <b>μ / σ 參數不確定性量化</b>：β* 點估計 1.205，但 95% CI 是 [0.15, 2.38]，
+        P(β* &lt; 1) ≈ 35%。要釘到能區分 0.8 與 1.5 需要 69 年資料，我們有 9.1 年。詳見 β 曲線那一節。
       </div>
       <div class="ev">
-        <div class="t">覆核方案一、二</div>
-        逐項核對超過 6 組參數、6 個市場週期，<b>方案一、二的新舊數字位元級完全相同</b>——
-        因為它們的部位只在週四決策時改變，沒有方案三那種週中停損機制，偏誤的觸發條件根本不存在。
-        之前報告的數字維持有效。順手修掉一個影響 &lt;0.3% 的方案二資料缺值小 bug。
+        <div class="t">進行中 · 第一條</div>
+        <b>β 框架的自我紅隊檢驗</b>：這個框架已經成功推翻過自己一次（上面那條）。
+        繼續找它自己的破口——如果框架再出問題，前面那些「代數上已確定」的分類也要跟著重來。
+      </div>
+      <div class="ev">
+        <div class="t">進行中 · 第二條</div>
+        <b>波動率結構性下降的影響</b>：12 個月實現 σ 從 2018 年的 95.0% 降到 2026 年的 44.7%。
+        σ 出現在臨界值 <code>f + ½σ²</code> 裡，它下降會把門檻一起拉低（67.6% 時是 28.8%，47.2% 時只剩 17.1%）。
+        要判斷的是：這是可外推的趨勢，還是週期？這個問題直接決定對沖該不該重新評估。
+      </div>
+      <div class="ev">
+        <div class="t">進行中 · 第三條</div>
+        <b>與 BTC 曝險正交的報酬來源</b>：<b>這一整類完全還沒測過。</b>
+        包含幣本位被動收益的盡職調查，以及盤點市面上公開宣稱能累積幣數的做法，
+        逐一用本報告的幣數比口徑與四項驗收標準去查證，而不是看它們自己報的績效。
       </div>
     </div>
-  </section>
-
-  <section id="liquidation">
-    <h2>強平模擬：把最大的缺口補起來</h2>
-    <p class="section-note">
-      原始引擎只在「開倉那一刻」檢查保證金夠不夠，持倉期間不管虧多深都不會觸發強平——
-      這代表所有回測結果對下跌尾部風險本質上偏樂觀。已補進「持倉期間逐日（用當天盤中最高價，比收盤價更保守）
-      維持保證金檢查」，一旦觸線就真的強制平倉、影響後續模擬路徑，並用單元測試驗證機制本身會觸發。
-    </p>
-    <div class="stat-grid">
-      <div class="stat">
-        <div class="label">collat_ratio 1.0~2.0 範圍</div>
-        <div class="value pos">0 次強平</div>
-        <div class="sub">方案一、二、趨勢濾網版，6 年全樣本</div>
-      </div>
-      <div class="stat">
-        <div class="label">強平開始出現的門檻</div>
-        <div class="value warn">≤ 0.6~0.7</div>
-        <div class="sub">刻意調低到不安全水位才會發生</div>
-      </div>
-      <div class="stat">
-        <div class="label">強平發生的情境</div>
-        <div class="value" style="font-size:1.05rem">急拉軋空</div>
-        <div class="sub">2020-10~2021-03、2024年急漲段；從未發生在 2022 年陰跌熊市</div>
-      </div>
-      <div class="stat">
-        <div class="label">「連續7週侵蝕120-128%」</div>
-        <div class="value neg">查無實據</div>
-        <div class="sub">真實數字是 30.0%，約為原引用值的 1/4~1/3</div>
-      </div>
-    </div>
-    <p class="body-note">
-      風控顧問最早建議把 collat_ratio 從 1.2 上調到 1.8，理由是「歷史最差連續7週侵蝕保證金120-128%」——
-      這個數字後來想盡辦法都無法重現，最合理的推測是誤把方案三（有真實停損機制）的數字套用到方案一二身上。
-      補完強平模擬後，<b>建議把 collat_ratio 定在 1.3</b>：比原本的 1.2 多一點緩衝（歷史最壞情境的保證金比率只被侵蝕約 1.45 個百分點，
-      1.3 提供約 2 倍餘裕），但不像 1.8 那樣犧牲太多資金效率。
-      <b>這是建議值，正式採用需要使用者本人核准</b>——且歷史樣本沒有涵蓋比 2020-2021 更誇張的軋空行情，
-      MMR（維持保證金率）也還沒有用真實 API 金鑰驗證過，目前用的是 1.5% 的保守佔位假設。
-    </p>
-  </section>
-
-  <section id="stress">
-    <h2>熊市壓力測試（2021-11-08 ~ 2022-11-21，真實 -76.6% 崩盤）</h2>
-    <p class="section-note">
-      方法完整記錄，可重複執行驗證：固定現貨部位（依使用者現貨基準 $2,688 回推），對沖保證金從真正的回測起點
-      連續模擬到壓力測試窗口，兩者都用現貨價格逐日計價後加總，取窗口內峰值到谷值的最大回撤。
-    </p>
-    <div class="stat-grid">
-      <div class="stat">
-        <div class="label">純現貨（無避險）</div>
-        <div class="value neg">-76.63%</div>
-      </div>
-      <div class="stat">
-        <div class="label">現貨 + 方案一對沖</div>
-        <div class="value">-75.87%</div>
-        <div class="sub">強平感知引擎重跑，數字不變（此窗口 0 次強平）</div>
-      </div>
-      <div class="stat">
-        <div class="label">現貨 + 趨勢濾網版</div>
-        <div class="value">-75.09%</div>
-        <div class="sub">同上</div>
-      </div>
-    </div>
-    <p class="body-note">
-      <b>帳戶總資產層級的保護效果目前幾乎可忽略</b>（差不到 2 個百分點）——原因是對沖名目上限只有
-      現貨基準的 25%~35%（最多約 $672~$940），相對於整個帳戶規模太小，就算對沖本身賺錢也撐不住整體淨值。
-      這跟「策略自身的部位層級風險確實改善」（見上一節）是兩件事，不能混為一談。
-      早前引用過的「-58.8%」這個數字，整個目錄找不到計算依據，已確認無法重現，不再引用。
-    </p>
-  </section>
-
-  <section id="risk-framework">
-    <h2>風控框架草案</h2>
-    <p class="section-note">
-      三個方案的風控參數草案。collat_ratio 已依強平模擬結果校準，其餘欄位仍屬建議值，正式採用需經核准。
-    </p>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>項目</th><th>方案一</th><th>方案二</th><th>方案三</th></tr></thead>
-        <tbody>
-          <tr><td class="name">collat_ratio 建議</td><td>1.3<span style="color:var(--text-muted)">（強平模擬校準）</span></td><td>1.3</td><td>待精算，暫定較高</td></tr>
-          <tr><td class="name">單方案倉位占現貨值上限</td><td>25%</td><td>35%</td><td>5–15%（衛星倉位）</td></tr>
-          <tr><td class="name">熔斷機制</td><td colspan="2">連續 5 週結算為負，或累計虧損超過已分配保證金 30% → 暫停新開倉 + Telegram</td><td>交易所端獨立硬性 stop-market（不能只靠 ATR 軟停損）</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="body-note">
-      待驗證缺口：<b>MMR 真實值</b>需要用有簽名的 API 金鑰查證（目前用 1.5% 保守佔位，官方文件範例值為 0.4%）；
-      建議在拿到真值前，先以「產生訊號 + Telegram 通知 + 人工確認下單」的半自動模式觀察一段時間，
-      不直接開全自動。舊倉位若日後納入管轄，需要重新抓整體風險預算，並建議先改成逐倉隔離。
-    </p>
-  </section>
-
-  <section id="candidates">
-    <h2>第四支柱候選（擴大搜尋結果）</h2>
-    <p class="section-note">明確拒絕「聖杯」思維——以下每個候選都誠實列出取捨，沒有一個具備立即插隊回測佇列的強理由。</p>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>候選</th><th>結論</th></tr></thead>
-        <tbody>
-          <tr><td class="name">A・備兌看漲 / 現金擔保看跌</td><td style="text-align:left">備兌看漲規模上勉強可行，但<b>不提供下檔保護</b>，是現貨加值收益非對沖；現金擔保看跌單張擔保金遠超週 DCA 預算，不可行</td></tr>
-          <tr><td class="name">B・跨交易所資金費率套利</td><td style="text-align:left">跟方案一風險來源高度重疊，非獨立支柱；多平台對手方倒閉、資金調度延遲風險，在目前資金規模下不划算</td></tr>
-          <tr><td class="name">C・穩定幣脫錨均值回歸</td><td style="text-align:left"><b>唯一真正與 BTC 價格無關的候選</b>，但常態小偏離扣費後利潤薄，大型脫錨事件頻率低且有本金全損尾部風險——降規格列為觀察清單，非優先回測</td></tr>
-          <tr class="bad"><td class="name">D・做市 / 流動性提供</td><td style="text-align:left">幣安造市商門檻需 30 日 1000 BTC 交易量，遠超散戶等級，且與「全自動無人值守」的限制衝突，直接排除</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <section id="limits">
-    <h2>已知限制與待辦</h2>
-    <ul class="limits">
-      <li><b>MMR 真實值未驗證</b> —— 目前用 1.5% 保守佔位，上線前必須用有金鑰的 API 查證幣安真實分級表</li>
-      <li><b>歷史樣本沒有涵蓋更極端的軋空行情</b> —— 已知強平只發生在急拉軋空情境，樣本內最誇張是 2020-10~2021-03（6週+63%），無法排除更快、更猛的尾部事件</li>
-      <li><b>方案三樣本量薄弱</b> —— 4 個 walk-forward 折、77~177 個活躍週，修正後 Sharpe 0.17~0.6，不足以支撐原規劃的 5–15% 倉位</li>
-      <li><b>對沖名目是固定快照，不隨 DCA 部位成長</b> —— 這是熊市壓力測試顯示「帳戶層級保護薄弱」的主因，下一輪應該讓對沖名目動態跟隨累積部位</li>
-      <li><b>舊倉位（BTC/ETH CM 永續多單）治理未決</b> —— 目前排除在管轄範圍外，但風控顧問已警示其對總風險預算的潛在影響</li>
-    </ul>
-  </section>
-
-  <section id="next">
-    <h2>下一步</h2>
     <div class="callout">
-      <h3>等待核准的項目</h3>
-      <ul>
-        <li>collat_ratio 基準值：建議 1.3（方案一、二）</li>
-        <li>是否進入 Phase 2：風控框架正式整合 + Telegram 告警機制設計</li>
-        <li>舊倉位的處理方向：保留、調整，或先改為逐倉隔離</li>
-      </ul>
+      <h3>現在這個時點能說什麼、不能說什麼</h3>
+      <p style="margin:0">
+        <b>能說</b>：<b>「調整 BTC 曝險」這一族，在漂移維持歷史高檔的前提下沒有解</b>；
+        回撤壓縮是可靠而且可買的，價目表在上面；
+        有幾條路（美元結算選擇權、BTC staking）已經被代數擋住；
+        β = 1 是 minimax 零後悔解。
+      </p>
+      <p style="margin:10px 0 0">
+        <b>不能說</b>：<b>不能說「所有路都走完了」。</b>
+        報酬來源與 BTC 曝險正交的策略<b>完全還沒測過</b>；
+        最適 β 到底在哪沒有答案（九年資料只給得出 [0.15, 2.38]）；
+        未來的漂移會落在臨界值的哪一邊，同樣未知。
+        也不能說常態對沖「必輸」——它在低漂移環境下會贏，只是我們無法預測會不會進入那種環境。
+      </p>
     </div>
   </section>
 
 </main>
 
 <footer>
-  DCA 放大器 · Phase 1 報告 · 資料來源：Binance 公開 REST API（現貨/永續/季度K線、資金費率）+ data.binance.vision 歷史封存<br>
-  本頁為工程與研究記錄，不構成投資建議；所有風險參數最終需使用者本人核准。
+  DCA 放大器 · 第二版（幣數對照）· 區間 2020-08-11 ~ 2026-09-18，319 週 × 100 USDT<br>
+  資料來源：Binance 公開 REST API（現貨／永續／季度 K 線、資金費率）＋ data.binance.vision 歷史封存<br>
+  本頁為工程與研究記錄，不構成投資建議；<b>研究仍在進行中，結論可能隨新證據修正</b>。
 </footer>
 
 </body>

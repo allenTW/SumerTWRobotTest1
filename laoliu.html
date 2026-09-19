@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>老六</title>
+<title>老六研究院</title>
 <script>
   // 存取控制：必須先在工具中心（index.html）輸入正確密碼解鎖，
   // 才會核發這個 token；沒有 token 就直接導回工具中心，不渲染任何內容。
@@ -105,8 +105,8 @@
 <header>
   <div class="inner">
     <div class="crumb"><a href="index.html">← 工具中心</a></div>
-    <h1>🎲 老六</h1>
-    <p>老六團隊的量化研究報告與稽核紀錄</p>
+    <h1>🎲 老六研究院</h1>
+    <p>老六研究院 · 量化策略研究與稽核紀錄</p>
   </div>
 </header>
 
@@ -115,24 +115,26 @@
 
   <a class="report-card" href="crypto-dca-amplifier-report.html">
     <div class="top">
-      <span class="title">DCA 放大器 · COIN-M 對沖疊加</span>
+      <span class="title">DCA 放大器 · 多拿到幾顆 BTC？</span>
       <span class="tag">COIN-M 反向</span>
-      <span class="tag">資金費率 + 季度基差 + 趨勢衛星倉</span>
-      <span class="tag">collat_ratio 1.3</span>
-      <span class="tag live">Phase 1 完成 · 待核准</span>
+      <span class="tag">計價 BTC 顆數</span>
+      <span class="tag">319 週 × 100 USDT</span>
+      <span class="tag live">研究進行中</span>
     </div>
     <div class="desc">
-      用合約放大既有 DCA BTC 部位的收益，本金保護優先。經過兩輪返工：先抓到方案三的高 Sharpe
-      是<b>統計口徑偏誤</b>造成的假象（3.5 修正到 0.17~0.6），後來又補進「持倉期間強平模擬」，
-      證實 <b>collat_ratio 1.0~2.0 全範圍 6 年沒發生過強平</b>，也順手推翻了風控顧問先前查無實據的
-      「連續7週侵蝕120-128%」說法（真實數字是 30%）。熊市部位自身表現突出（Sharpe 3.63），
-      但<b>帳戶總資產層級的保護目前幾乎可忽略</b>。
+      只問一件事：同樣每週 100 USDT 投入六年，<b>相較於單純買進持有，最後手上多幾顆 BTC</b>。
+      純 DCA 持有拿到 0.8511 顆，記為基準 1.0000。<b>四套方案三套讓你少拿幣</b>；
+      唯一「贏」的那套多拿 2.8%，但 +0.0654 顆來自單獨一週，拿掉就剩 0.9507，
+      做滿五年時還是 0.9285——四項驗收標準全沒過。
+      目前唯一可靠可買的是回撤壓縮，而且價目公開。
+      <b>「對沖結構性必輸」的說法已在內部被推翻並撤回</b>：它取決於漂移落在 <code>f + ½σ²</code>
+      的哪一邊，而九年資料把最適 β 只能定位到 <b>[0.15, 2.38]</b>。
     </div>
     <div class="stats">
-      <div>熊市 Sharpe（方案一）<b>3.63</b></div>
-      <div>強平次數（collat 1.0~2.0）<b>0</b></div>
-      <div>全樣本年化<b class="neg">-46.8% → -15.2%</b></div>
-      <div>帳戶層級保護<b class="neg">-76.6% → -75.9%</b></div>
+      <div>純持有基準<b>1.0000</b><span style="color:#6b7185">0.8511 顆</span></div>
+      <div>方案二 季度基差<b class="neg">0.8477</b></div>
+      <div>唯一勝出者 拿掉單週後<b class="neg">0.9507</b></div>
+      <div>回撤可買：−62.9% → −9.8%<b class="neg">代價 29% 幣</b></div>
     </div>
   </a>
 
@@ -141,11 +143,16 @@
     報告一律不覆蓋、不刪除。被取代的版本會移到 <code>archive/</code>，
     以 <code>YYYY-MM-DD-&lt;slug&gt;-&lt;描述&gt;.html</code> 命名，並在這裡留下一筆說明它為什麼被取代。
   </p>
-  <div class="empty">目前沒有被取代的版本</div>
+  <div class="arch-list">
+    <a class="arch-item" href="archive/2026-09-19-dca-amplifier-metrics-only.html">
+      <span class="date">2026-09-19</span><b>DCA 放大器 · 首次發布</b>
+      <span class="num"> — 通篇只有 Sharpe、獲利因子、年化報酬這類工程指標，沒有回答「相較於單純定期定額買進持有，這套策略讓我多賺幾顆 BTC」；改用幣數比重算後結論翻轉，第二版以幣數對照重寫</span></a>
+  </div>
 
   <p class="note">
-    報告內的數字來自回測程式的輸出；目前這份 Phase 1 報告是<b>人工整理成靜態頁面</b>的，
-    尚未接上自動注入流程，數字更新時需要同步改頁面。回測結果不代表未來表現，也不構成投資建議。
+    報告內的數字來自回測程式的輸出；目前頁面是<b>人工整理成靜態 HTML</b> 的，
+    尚未接上自動注入流程，數字更新時需要同步改頁面。
+    回測結果不代表未來表現，也不構成投資建議；<b>研究仍在進行中，結論可能隨新證據修正</b>。
   </p>
 </main>
 
