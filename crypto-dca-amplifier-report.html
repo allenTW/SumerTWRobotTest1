@@ -1474,6 +1474,232 @@
     </p>
   </section>
 
+  <section id="lending">
+    <h2>幣本位被動收益盡職調查：最後一個項目死在報酬側</h2>
+    <p class="section-note">
+      這一節的性質跟前面七節都不同。前面七節都是「測策略 → 沒過門檻」；
+      <b>這一節是唯一一個從來沒被測、而且被評為有正期望值的項目</b>——
+      它死在報酬側，而且是因為<b>本專案自己轉述的前提錯了 17 倍</b>。
+    </p>
+
+    <div class="callout bad">
+      <h3>頭條</h3>
+      <p style="margin:0;font-size:1.02rem">
+        <b>1.5% 這個假設是錯的，錯 17 倍。實際是 0.0913%，年收益 $2.52，
+        六年含定投總共 $31.54，幣數比 1.00093。</b>
+      </p>
+      <p style="margin:10px 0 0;font-size:1.02rem">
+        <b>六年的全部收益，大約等於三分之一次的每週定投。</b>
+      </p>
+    </div>
+
+    <h3 class="sub">利率的真相：真實市場利率只有 0.0175%</h3>
+    <div class="table-wrap">
+      <table>
+        <caption>BTC 活期利率的兩段結構（Binance API 實測，非行銷頁）。
+          驗證式 <code>latestAnnualInterestRate = marketApr + tierRate</code> 在四個幣種都成立</caption>
+        <thead><tr><th>組成</th><th>數值</th><th>適用範圍</th></tr></thead>
+        <tbody>
+          <tr class="bad"><td class="name"><code>marketApr</code>（真實市場利率）</td>
+            <td class="negv"><b>0.0175%</b></td><td class="wrap">全部部位</td></tr>
+          <tr><td class="name">Bonus Tiered（促銷補貼）</td>
+            <td>+0.25%</td><td class="wrap negv"><b>只有前 0.01 BTC（約 $813）</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th></th><th></th></tr></thead>
+        <tbody>
+          <tr><td class="name">使用者實際混合 APR</td><td class="negv"><b>0.0913%</b></td></tr>
+          <tr><td class="name">年收益</td><td class="negv"><b>$2.52</b>（0.0000309 BTC）</td></tr>
+          <tr><td class="name">六年靜態幣數比</td><td>1.00549</td></tr>
+          <tr class="bad"><td class="name">六年含每週 DCA</td><td class="negv"><b>$31.54，幣數比 1.00093</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout bad">
+      <h3>獨立確認：這個利率在市場上根本不存在</h3>
+      <p style="margin:0">
+        這比利率本身更有說服力。在<b>完全不需要信任對手、供需自由定價</b>的 DeFi 市場上實測，
+        超過 <b>$100 億</b>的 BTC 躺著只能賺 <b>0.000% ~ 0.17%</b>：
+        Morpho Blue (Base) $30.7 億 → <b>0.000%</b>；Aave v3 (ETH) $27.2 億 → <b>0.004%</b>；
+        Compound v3 $3.92 億 → <b>0.000%</b>；Venus (BSC) 0.170%；最高的 Lombard 也只有 0.121%。
+      </p>
+      <p style="margin:10px 0 0">
+        CeFi 那邊：Bybit <b>0.1%</b>（而且用<b>一模一樣的分層誘餌結構</b>，這是獨立平台的交叉驗證）、
+        Coinbase <b>0%</b>、Kraken 宣稱的「最高 1%」是經 Babylon <b>以 BABY 通膨代幣發放</b>（非幣本位）、
+        Nexo 與 Crypto.com 的高利率<b>需要綁定自家代幣</b>（等於把幣本位收益換成代幣曝險）。
+      </p>
+      <p style="margin:14px 0 0;font-size:1.02rem">
+        <b>不是 Binance 苛扣，是市場上沒有幣本位的 BTC 借貸需求。</b>
+      </p>
+      <p style="margin:10px 0 0">
+        佐證：Binance 的 BTC 池有 107,098 BTC，但<b>只有約 7.5% 真的被借走</b>
+        （出借人只分到毛利息的 4.1%，對照 ETH 的 51.3%、USDT 的 58.3%）。
+      </p>
+    </div>
+
+    <h3 class="sub">★ 第九次口徑偏誤：破產回收率必須用幣數重算</h3>
+    <p class="body-note" style="margin-top:0">
+      這是本節最有價值的發現。<b>所有破產回收率的報導都是「破產日美元計價」</b>，
+      對一個以幣數為單位的投資人來說，換算過去是天差地別。
+    </p>
+    <div class="table-wrap wide">
+      <table>
+        <caption>同一批事故，兩種計價單位</caption>
+        <thead><tr><th>案例</th><th>美元回收率</th><th>分配時 BTC 價</th><th>幣數回收率</th></tr></thead>
+        <tbody>
+          <tr class="bad"><td class="name">Voyager</td><td>35.72%</td><td>~$95,836</td><td class="negv"><b>7.5%</b></td></tr>
+          <tr class="bad"><td class="name">Celsius</td><td>79.2%（上限）</td><td>~$95,836</td><td class="negv"><b>16.4%</b></td></tr>
+          <tr class="bad"><td class="name">FTX</td><td>96~100%</td><td>$81,306</td><td class="negv"><b>19.9~20.8%</b></td></tr>
+          <tr class="bad"><td class="name">BlockFi</td><td><b>100%</b></td><td>$81,306</td><td class="negv"><b>20.7%</b></td></tr>
+          <tr class="best"><td class="name">Gemini Earn</td><td>—</td><td>—</td><td class="pos"><b>100%（原幣返還 in kind）</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout bad">
+      <p style="margin:0;font-size:1.02rem">
+        <b>「BlockFi 回收 100%」對幣數投資人而言是 80% 的虧損。</b>
+      </p>
+      <p style="margin:10px 0 0">
+        而唯一保住幣數的 Gemini Earn，是<b>中介方自願補貼 $5,000 萬 + 原物分配</b>的結果，
+        <b>不是制度保障</b>——下一次不保證會有人這樣做。
+      </p>
+      <p style="margin:10px 0 0">
+        <b>這正是本專案自己踩過八次的同一個口徑偏誤，換到破產新聞上第九次出現</b>
+        （見<a href="#fixed">已修掉的重大缺陷</a>）。
+        同一個結構性錯誤，這次不是出現在我們的程式裡，而是出現在<b>整個產業引用數字的方式</b>裡。
+      </p>
+    </div>
+    <p class="body-note">
+      套到使用者的 0.0339 BTC：Celsius 式的損失是 0.02833 BTC（$2,303）、
+      Voyager 式的損失是 0.03137 BTC（$2,551）。
+    </p>
+
+    <h3 class="sub">法律地位：條款自己寫得很清楚</h3>
+    <ul class="limits">
+      <li><b>C.2</b> —— Simple Earn 資產「<b>與 Binance 集團自有資產混同存放於 omnibus 熱錢包與冷錢包</b>」，
+        不享有 Client Virtual Assets 的鏈上隔離。</li>
+      <li><b>C.3</b> —— 「<b>不構成 Client Virtual Assets</b>」，不受 Terms of Use 第 8.6 條限制，
+        可由 Binance <b>全權裁量且無需事前通知</b>用於營運用途。</li>
+      <li><b>C.4</b> —— 極端情況下可能「<b>無法全額或完全無法返還</b>」。
+        官方 FAQ 也寫「possible loss of principal in extreme market conditions」。</li>
+      <li><b>2026-01-05 起的 ADGM 新結構是關鍵</b> —— 現貨由 <b>Nest Clearing and Custody</b>
+        （受監管保管）持有，而 Earn 的對手方是 <b>Nest Trading Limited</b>（自營身分，只有「安排保管」權限）。
+        <b>→ 移進 Earn 就是移出受監管保管範圍。</b></li>
+      <li><b>SAFU 不涵蓋</b> —— FAQ 全文<b>未提及 Earn 一個字</b>、未提及償付能力，
+        且保留「full discretion」。「未明文涵蓋」在保險上等同「不涵蓋」，評估權重應視為 0。</li>
+      <li><b>救濟在經濟上等於不存在</b> —— 爭議須走 ADGM、ICC 規則、<b>三名仲裁員</b>，
+        且明文排除快速程序。對一個 $2,756 的標的而言，這條路不具可行性。</li>
+    </ul>
+    <p class="body-note">
+      贖回也不是無條件的：F.1 是「within 24 hours」<b>而非即時</b>；
+      F.4 允許 Binance 自訂<b>每日贖回額度上限</b>且「without prior notice」；
+      F.3 在極端波動或<b>大量用戶同時贖回</b>時可延遲。
+      <b>CYBER 事件（2023-08-29 ~ 09-05）</b>裡 Simple Earn 活期<b>實際失效過一週</b>，
+      887 名用戶被卡，Binance <b>自願</b>賠償 80 萬 USDT + 871 CYBER——
+      <b>條款上並無此義務，下次不保證會賠</b>。
+      （公平地說，BTC 與 CYBER 的結構不同：CYBER 是小市值高利用率軋空，
+      而 BTC 池利用率僅約 7.5%、有 92% 的閒置緩衝。）
+    </p>
+
+    <h3 class="sub">公平陳述：Binance 在 Celsius 警訊清單上大致乾淨</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>警訊</th><th>Celsius</th><th>今日 Binance BTC Earn</th></tr></thead>
+        <tbody>
+          <tr><td class="name">利率高於可解釋的收益來源</td><td>是</td>
+            <td class="wrap pos"><b>否</b>（0.0175% 低於借款利率 0.4252%，數學自洽）</td></tr>
+          <tr><td class="name">收益以自家代幣支付</td><td>是</td>
+            <td class="wrap pos"><b>否</b>（以 BTC 發放）</td></tr>
+          <tr><td class="name">對收益來源說明含糊</td><td>是</td>
+            <td class="wrap pos"><b>否</b>（具體且可用公開數字驗證）</td></tr>
+          <tr class="bad"><td class="name">客戶資產與自有資產混同</td><td>是</td>
+            <td class="wrap negv"><b>是——而且是條款明文</b></td></tr>
+          <tr class="bad"><td class="name">曾發生贖回中斷</td><td>是</td>
+            <td class="wrap negv"><b>是</b>（CYBER 案）</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="body-note">
+      結構差異也該公平陳述：Celsius／Voyager／BlockFi／Genesis 都是<b>純放貸機構</b>，
+      靠利差為生所以被迫追高風險；Binance 是交易所，Earn 只是附屬業務，BTC 池只借出 7.5%——
+      <b>這種保守的利用率，只有在不靠它賺錢的時候才做得到</b>。
+    </p>
+    <div class="callout bad">
+      <p style="margin:0">
+        <b>但這些保護的是「Earn 不會拖垮 Binance」，不保護「Binance 若倒，Earn 用戶排在哪裡」。</b>
+      </p>
+      <p style="margin:10px 0 0;font-size:1.02rem">
+        <b>而最重要的一條是 FTX：崩潰前一般用戶幾乎沒有可觀察的警訊。
+        如果警訊比對本身能保護你，FTX 用戶就不會賠錢。這份比對表的價值低於它看起來的樣子。</b>
+      </p>
+    </div>
+
+    <div class="callout">
+      <h3>查不到的三件事，恰好就是歷次事故的實際失敗點</h3>
+      <ul style="margin:0">
+        <li><b>關聯方往來</b> —— Celsius、BlockFi、FTX 失敗的核心，Binance 不揭露。</li>
+        <li><b>借款人集中度</b> —— 條款宣稱有上限但不給數字。
+          <b>Voyager 的致命傷正是這個（60% 集中於 3AC），而它當時也沒有公開。</b></li>
+        <li><b>Margin Insurance Fund 規模</b> —— 風險揭露把它列為核心緩衝，卻不公開規模。
+          <b>規模不明的保險基金，在風險評估上等同不存在。</b></li>
+      </ul>
+      <p style="margin:10px 0 0">
+        另外一個細節：條款寫的是「<b>majority</b> of loans are overcollateralised」，
+        用的是 majority 而不是 all，而 minority 的規模與對象未揭露。<b>這個用字是刻意的。</b>
+      </p>
+    </div>
+
+    <h3 class="sub">若仍然要做，數學上有一個乾淨的刻度</h3>
+    <div class="callout">
+      <p style="margin:0">
+        <b>投入 0.01 BTC（29.5% 的部位）就可以拿到 86% 的全部可得收益</b>（$2.17 / $2.52），
+        而只承擔 29.5% 的曝險。
+        <b>超過 0.01 BTC 的每一分錢，都是以 0.0175% 的報酬承擔 100% 的交易對手風險。</b>
+      </p>
+      <p style="margin:10px 0 0">
+        損益兩平的年事故機率是 <b>0.11%</b>（約每 876 年一次）。
+        使用者要回答的問題是「我相信 Binance 未來六年出事的機率低於 0.68% 嗎」——
+        <b>這個機率無法從任何資料推導出來，所以決定權只在他本人。</b>
+      </p>
+    </div>
+
+    <h3 class="sub">歷史利率曲線：又一個衰減中的 regime</h3>
+    <p class="body-note" style="margin-top:0">
+      官方不提供歷史利率，這條曲線是自行由 Wayback 存檔的 API 回應重建的：
+      2021-04 <b>1.2%</b> → 2021-07 0.5% → 2021-11 起<b>分層誘餌開始</b> →
+      2022 上半顯示「5%」但<b>只覆蓋前 0.01 BTC</b>（0.01~0.5 只有 0.8~1.0%，&gt;0.5 只有 0.1%）→
+      2024-09 market 0.0481% → 2025-11 <b>0.0175%（至今）</b>。
+    </p>
+    <div class="callout">
+      <p style="margin:0;font-size:1.02rem">
+        <b>又一個在 2021-2022 有效、此後持續衰減的 regime——
+        差別是這次連當年的「有效」都是誇大的。</b>
+      </p>
+      <p style="margin:10px 0 0">
+        而那個 0.25% 的補貼，其 0.01 BTC 上限<b>已經凍結兩年未動</b>，
+        且條款 E.5 明文可由 Binance <b>全權裁量隨時變更</b>。
+      </p>
+    </div>
+
+    <div class="callout bad">
+      <h3>所以這一節的結論</h3>
+      <p style="margin:0">
+        <b>這個項目應該和前七輪一起被否決，而且理由更乾脆：報酬根本不存在，不必進到風險討論。</b>
+      </p>
+      <p style="margin:10px 0 0">
+        前七輪的否決理由都是「效應與隨機無法區分」或「效應存在但證不了」，
+        還需要一整套統計論證。這一個不用——<b>六年賺 $31.54，
+        大約是三分之一次的每週定投</b>。風險那一側的所有討論
+        （條款、SAFU、破產回收率、警訊比對）在決策上都是多餘的，
+        因為報酬側先一步歸零了。
+      </p>
+    </div>
+  </section>
+
   <section id="drawdown">
     <h2>回撤價目表：目前唯一可靠、而且可以買的東西</h2>
     <p class="section-note">
@@ -1706,19 +1932,24 @@
     </p>
     <div class="split">
       <div class="engine">
-        <h3>幣本位被動收益<span class="pill hyp">待盡職調查</span></h3>
+        <h3>幣本位被動收益<span class="pill fact">盡職調查已完成，已否決</span></h3>
         <dl>
-          <dt>為什麼值得看</dt>
-          <dd>這是目前唯一一種能在<b>不改變 β</b> 的前提下增加幣數的來源——收益以 BTC 計價直接入帳，與價格路徑無關。</dd>
-          <dt>量級</dt>
-          <dd>Binance Simple Earn BTC 活期約 <code>0.9% ~ 2.7% APR</code>（浮動），對 $2,744 的部位約 $25 ~ $74／年。
-            以 1.5%／年複利六年約等於幣數比 <b>1.093</b>，高於三個方案任何一個曾達到的水準，而且不承擔市場風險。</dd>
+          <dt>為什麼曾經值得看</dt>
+          <dd>它是唯一一種能在<b>不改變 β</b> 的前提下增加幣數的來源——收益以 BTC 計價直接入帳，與價格路徑無關。</dd>
+          <dt>量級<span class="pill hyp">2026-09-20 已就地更正</span></dt>
+          <dd>本節原本寫「活期約 <code>0.9% ~ 2.7% APR</code>、以 1.5%／年複利六年約等於幣數比 1.093、
+            高於三個方案任何一個曾達到的水準」。<b>那個 1.5% 是未經查證的轉述，而且錯了 17 倍。</b>
+            實測真實值是<b>混合 APR 0.0913%</b>、年收益 <b>$2.52</b>、
+            六年含每週定投總共 <b>$31.54</b>、幣數比 <b>1.00093</b>。
+            詳見<a href="#lending">幣本位被動收益盡職調查</a>。</dd>
           <dt>它不需要回測</dt>
-          <dd>契約型收益，沒有訊號、沒有樣本數問題。需要的是盡職調查，不是再跑一輪模擬。</dd>
+          <dd>契約型收益，沒有訊號、沒有樣本數問題。需要的是盡職調查，不是再跑一輪模擬——
+            而盡職調查已經做完了，<b>結論是這個項目死在報酬側，不必進到風險討論</b>。</dd>
           <dt>風險 100% 是交易對手風險</dt>
           <dd>而且歷史上反覆實現過（Celsius、BlockFi、Genesis、FTX）。
-            <b>關鍵判斷</b>：若 BTC 本來就放在 Binance（要做 COIN-M 就必須如此），託管風險已經在承擔了，
-            轉入 Simple Earn 增加的只是「產品層」風險（活期可贖回）。若是自我託管，性價比就不成立。</dd>
+            原本的判斷是「若 BTC 本來就放在 Binance，託管風險已經在承擔，轉入 Earn 只增加產品層風險」——
+            <b>這個判斷也要修正</b>：2026-01 起現貨由受監管保管實體持有、Earn 的對手方是自營實體，
+            所以<b>移進 Earn 就是移出受監管保管範圍</b>，不是同一層風險。</dd>
           <dt>已否決：Babylon 等 BTC staking</dt>
           <dd>BTC 計價收益僅約 <code>0.04%</code>；宣稱的 4~8% 是以 BABY 代幣發放，依賴代幣增發而非真實營收，
             另外還有 slashing 永久損失原生 BTC 的風險。這不是幣本位收益。</dd>
@@ -1783,6 +2014,15 @@
         <b>未影響任何結論</b>——因為那段窗口的檢定本來就失敗了。
         列在這裡是因為<b>設計層的錯誤和計算層的錯誤一樣該被記錄</b>，
         而且它剛好示範了「執行者有權推翻派工者的前提」這件事是有用的。</li>
+      <li><b>轉述未經查證的假設，錯 17 倍（2026-09-20，<span style="color:var(--warn)">已寫進給使用者的報告</span>）</b> ——
+        本專案把「Binance Simple Earn BTC 活期約 0.9~2.7% APR、以 1.5% 計六年可達幣數比 1.093」
+        寫進報告，並告訴使用者<b>這比七輪測過的任何策略都高</b>。
+        <b>實測後真實值是混合 APR 0.0913%——錯了 17 倍</b>，六年含定投只有 $31.54。
+        <b>性質</b>：這個數字是派工端轉述的、<b>未經查證就進了已發布的報告</b>，
+        最後<b>由執行盡職調查的工程師推翻</b>——推翻的正是派工者自己寫進任務書的前提。
+        <b>這是第二次出現「執行者推翻派工者」</b>（另一次是上一項的研究設計前提）。
+        <b>這個模式本身值得記錄：如果執行者只照著前提做，這個錯誤會一路傳到使用者的實際操作上。</b>
+        已於 <a href="#upside">有幣數上檔的方向</a>就地更正，詳見<a href="#lending">盡職調查</a>那一節。</li>
       <li><b>universe 純度缺陷：代幣化股票混進幣圈橫斷面（2026-09-19，<span style="color:var(--s1)">已量化，未翻轉任何結論</span>）</b> ——
         原因比原先以為的更荒謬：<code>underlyingType == EQUITY</code> 這個過濾
         <b>一個符號都沒有濾掉</b>——因為今天幣安 live exchangeInfo 裡
@@ -1935,8 +2175,8 @@
   <section id="ongoing">
     <h2>目前進行中的驗證</h2>
     <p class="section-note">
-      這份報告<b>不宣告結案</b>。下面前<b>七</b>條已經交回，
-      後<b>三</b>條還在跑。<b>下一步要等使用者決定，所以目前沒有排定第八輪。</b>
+      這份報告<b>不宣告結案</b>。下面前<b>八</b>條已經交回，
+      後<b>三</b>條還在跑。<b>下一步要等使用者決定，所以目前沒有排定新的回測輪次。</b>
     </p>
     <div class="timeline">
       <div class="ev">
@@ -1995,6 +2235,16 @@
         <b>裁決：不部署任何東西，沒有任何結論改變。</b>詳見第七輪那一節。
       </div>
       <div class="ev">
+        <div class="t">已交回 · 死在報酬側</div>
+        <b>幣本位被動收益盡職調查</b>：唯一一個從來沒被回測、而且曾被評為有正期望值的候選。
+        <b>結論是它死在報酬側</b>——本專案轉述的 1.5% APR <b>錯了 17 倍</b>，
+        真實混合 APR 只有 <b>0.0913%</b>，六年含定投總共 <b>$31.54</b>
+        （<b>約等於三分之一次的每週定投</b>）。
+        DeFi 上百億 BTC 只能賺 0.000~0.17%，<b>不是 Binance 苛扣，是市場上沒有這個需求</b>。
+        另有一個高價值副產品：<b>破產回收率必須用幣數重算</b>——
+        「BlockFi 回收 100%」對幣數投資人是 80% 虧損。詳見盡職調查那一節。
+      </div>
+      <div class="ev">
         <div class="t">進行中 · 第一條</div>
         <b>β 框架的自我紅隊檢驗</b>：這個框架已經成功推翻過自己一次（上面那條）。
         繼續找它自己的破口——如果框架再出問題，前面那些「代數上已確定」的分類也要跟著重來。
@@ -2009,8 +2259,8 @@
       </div>
       <div class="ev">
         <div class="t">進行中 · 第三條</div>
-        <b>與 BTC 曝險正交的報酬來源</b>：<b>這一整類仍未測完。</b>
-        包含幣本位被動收益的盡職調查，以及盤點市面上公開宣稱能累積幣數的做法，
+        <b>與 BTC 曝險正交的報酬來源</b>：其中<b>幣本位被動收益的盡職調查已經交回並否決</b>
+        （見上方「已交回 · 死在報酬側」，以及<a href="#lending">盡職調查</a>那一節）。剩下的是盤點市面上公開宣稱能累積幣數的做法，
         逐一用本報告的幣數比口徑與四項驗收標準去查證，而不是看它們自己報的績效。
       </div>
     </div>
@@ -2041,6 +2291,9 @@
         同時，第七輪的事後診斷指出<b>第四~六輪測到的主要是「2023H2 起的一段 regime」，
         不是穩定的結構性效應，而且它正在衰減</b>（半年 IC 從 2024H1 的 +0.109 一路掉到
         2026H2 的 +0.003）。
+        <b>而唯一一個非回測的候選（幣本位被動收益）也已結清——它死在報酬側</b>：
+        真實 APR 0.0913%，六年含定投 $31.54。
+        <b>七輪量化研究加上這一個非回測項目，全部結清，板上沒有剩下的候選。</b>
       </p>
       <p style="margin:10px 0 0">
         <b>不能說</b>：<b>不能說「所有路都走完了」。</b>
