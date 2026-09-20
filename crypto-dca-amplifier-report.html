@@ -1064,6 +1064,200 @@
     </p>
   </section>
 
+  <section id="triage">
+    <h2>外部策略盤點：43 個候選，0 個通過</h2>
+    <p class="section-note">
+      這一節不是我們自己跑的回測，是<b>把市面上已經存在、公開宣稱能累積幣數的做法抓過來逐一查證</b>。
+      結果是 <b>0 PASS ／ 3 CONDITIONAL ／ 4 INDETERMINATE ／ 36 FAIL</b>。
+      但這一節最有用的東西不是那個 0，是<b>掃完 43 個之後浮出來的一個規律</b>。
+    </p>
+
+    <div class="callout bad">
+      <h3>主軸：高績效宣稱與高證據等級幾乎完全不重疊</h3>
+      <p style="margin:0">
+        把 43 個候選按「證據等級」和「宣稱績效」兩軸擺開之後，
+        <b>兩者幾乎呈負相關</b>——而這個負相關本身就是結論。
+      </p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <caption>證據等級最高的那幾個，報酬都最平庸</caption>
+        <thead><tr><th>候選</th><th>證據等級</th><th>實際報酬</th></tr></thead>
+        <tbody>
+          <tr><td class="name">CTA 趨勢指數（SG Trend）</td>
+            <td class="wrap pos">20+ 年實盤</td>
+            <td class="wrap negv">CAGR <b>5.33%</b>、最大回撤 20.61%</td></tr>
+          <tr><td class="name">crypto 市場中性基金<br>（Galaxy VisionTrack，約 130 檔）</td>
+            <td class="wrap pos">基金資料庫</td>
+            <td class="wrap negv">2023 +14.5%／2024 +18.5%／2025 約 +13%——
+              但扣掉存活者偏誤（2.6~3.7%／年）與回填偏誤（4~5%／年）後<b>約 5~15%</b></td></tr>
+          <tr><td class="name">BTC 借貸</td>
+            <td class="wrap pos">可直接查價</td>
+            <td class="wrap negv"><b>1~3%</b></td></tr>
+          <tr class="bad"><td class="name">網格／跟單／AI 訊號</td>
+            <td class="wrap negv"><b>只有廠商行銷或單一回測</b></td>
+            <td class="wrap">宣稱數字漂亮</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout bad">
+      <p style="margin:0;font-size:1.02rem">
+        <b>真正有效的東西會被套利到平庸，無效的東西沒有任何力量阻止它宣稱漂亮數字。</b>
+      </p>
+      <p style="margin:10px 0 0">
+        <b>這可以直接當成篩選準則用，不只是感慨</b>：
+        看到一個策略時，先問「<b>它的證據等級是什麼</b>」，再看它宣稱多少。
+        <b>如果證據等級低而宣稱高，那個組合本身就是訊號</b>——
+        因為高證據等級的東西<b>結構上</b>不可能同時保有高報酬（會被套利掉）。
+        換句話說：<b>「又有實盤長期紀錄、報酬又漂亮」這件事很少見，
+        而聲稱同時具備兩者的，通常是第一項造假。</b>
+      </p>
+    </div>
+
+    <h3 class="sub">還沒關掉的門：3 CONDITIONAL 與 4 INDETERMINATE</h3>
+    <div class="callout">
+      <p style="margin:0">
+        <b>先誠實標註一個紀錄上的缺口</b>：本專案的狀態檔<b>只記了這四類的數量，
+        沒有逐一記錄哪 3 個被判為 CONDITIONAL、哪 4 個被判為 INDETERMINATE</b>。
+        所以下面能寫的是<b>有被明確記錄下來的兩扇門</b>，不是那 7 個的完整清單。
+        這個缺口本身值得補，但不該用推測填。
+      </p>
+    </div>
+    <ul class="limits">
+      <li><b>橫斷面動能／趨勢的永續合約多空籃子（已派工，已驗證，已死）</b> ——
+        它是盤點當時<b>唯一值得投資源的候選</b>：同時具備 JFQA／JF 級同行審查
+        （Liu/Tsyvinski/Wu <i>JF</i> 2022；Fieberg et al. <i>JFQA</i> 2025 的 CTREND）、
+        作者明確宣稱通過交易成本、結構上保留 β = 1。
+        當時就找到<b>直接反對的文獻</b>（SSRN 6701738，針對這個策略在永續上實作的失敗驗屍），
+        篩選者的先驗是 <b>6~7 成機率失敗</b>。
+        後來第四~七輪就是在驗它——<b>先驗是對的</b>，見
+        <a href="#basket">多空永續籃子</a>與<a href="#cleantest">第七輪</a>。</li>
+      <li><b>BTC 變異數風險溢酬（VRP）——這扇門還開著，而且不是因為證據不足</b> ——
+        它的報酬來源最乾淨（承接跳躍風險的保險費，與方向無關），
+        而且有同行審查支撐「BTC 的 VRP 持續為負且幅度大於股票」。
+        <b>它卡住的原因純粹是規模</b>：Deribit 反向選擇權最小 0.1 BTC ≈ $8,080，
+        <b>超過使用者全部倉位</b>；USDC 線性最小 0.01 BTC ≈ $808 仍佔 30%。
+        <b>這是「等得到」而不是「被否決」</b>——依<a href="#blindspot">研究議程盤點</a>的算術，
+        資本約在 2027H2~2028 自然到達 $10~15k。
+        在那之前建議只做零成本的資料驗證存檔：逐月 (RV−IV) 分布、
+        delta-hedged 短 straddle 的最差 10 日損失，以及<b>關鍵檢驗——
+        收益是否被 2020-03／2022-11 FTX／2025-10 這三次崩盤全部吐回去</b>。</li>
+    </ul>
+
+    <h3 class="sub">一條砍掉一半候選的結構約束</h3>
+    <p class="body-note" style="margin-top:0">
+      <b>任何需要美元保證金的市場中性策略，它的門檻就是 BTC 漂移</b>——因為那筆錢不在 BTC 裡。
+      這其實就是本報告反覆出現的「β &lt; 1 ＝ 付漂移保險費」換個包裝。
+      <b>唯一的出口是讓 BTC 本身當保證金</b>
+      （幣安 Multi-Assets Mode 支援 BTC 作 USDⓈ-M 保證金，折價 5%，不需 Portfolio Margin 的高門檻），
+      代價是 BTC 本體暴露在清算風險下。
+    </p>
+    <p class="body-note">
+      規模算術（BTC ＝ $80,800）：平均可部署約 <b>$5,339</b> →
+      要讓幣數 +5% 需要 <b>7.4%</b> 的淨年化，+10% 需要 <b>14.9%</b>。
+      而成本拖累的基準（20 檔多空、週再平衡、換手 50%）是
+      5bp×1 ＝ 2.6%／年；5bp×2 ＝ 5.2%；10bp×2 ＝ 10.4%。
+    </p>
+    <div class="callout">
+      <p style="margin:0">
+        <b>最大的單一參數敏感度，而且它會翻轉整個判斷</b>：BTC 2025 年 −6%、2026 年 YTD −7~−13%。
+        <b>如果前瞻漂移接近 0，美元保證金策略的門檻就掉到接近 0</b>——
+        那 36 個 FAIL 裡有一部分會需要重新評估。
+        這與 <a href="#regime">ν_crit</a> 那一節是同一件事：
+        <b>這些否決是條件式的，條件是「漂移維持在歷史高檔」。</b>
+      </p>
+    </div>
+
+    <h3 class="sub">為什麼門檻是 t &gt; 3.0，不是 t &gt; 2.0</h3>
+    <div class="callout bad">
+      <p style="margin:0">
+        掃 43 個候選，在 p &lt; 0.05 之下<b>期望的假陽性就有約 2.15 個</b>。
+        也就是說，如果用 t &gt; 2.0，<b>幾乎保證會撈到兩個看起來顯著、實際上是雜訊的東西</b>。
+        所以這一輪採用 Harvey, Liu &amp; Zhu (2016, <i>RFS</i>) 的 <b>t &gt; 3.0</b> 門檻。
+      </p>
+      <p style="margin:10px 0 0">
+        <b>而這個門檻正好解釋了本報告後面所有輪次的結果</b>：
+        第五輪 <b>0/816</b> 達 t &gt; 3.0、第四輪 <b>0/264</b>、
+        第六輪那個最漂亮的探索性數字是 <b>3.029</b>（還是 1,300 次搜尋之後才出現的），
+        第七輪的 22 週窗口<b>在數學上根本不可能</b>達到（要 t = 3.0 需要 Sharpe 4.61）。
+        <b>門檻不是事後拿來解釋失敗的，是掃 43 個候選的當下就先定好的。</b>
+      </p>
+      <p style="margin:10px 0 0">
+        <b>誠實揭露</b>：工程師自陳在寫下這個門檻之前<b>已經看過 4 個 headline 數字</b>，
+        所以它<b>不是嚴格的盲測</b>。
+      </p>
+    </div>
+
+    <h3 class="sub">地雷辨識手冊：給使用者自己對照用</h3>
+    <p class="body-note" style="margin-top:0">
+      這一段的用途跟報告其他部分不同——<b>它是拿來對照網路上看到的策略的</b>，
+      所以寫成「看到什麼 → 問什麼」。
+    </p>
+    <div class="table-wrap">
+      <table>
+        <caption>看到這些特徵時該問的問題</caption>
+        <thead><tr><th>看到什麼</th><th>該問什麼／已知的事實</th></tr></thead>
+        <tbody>
+          <tr class="bad"><td class="name">網格／馬丁格爾</td>
+            <td class="wrap">同一個策略在 S&amp;P 上回測 <b>+20.68%</b>，實盤 <b>−28.22%</b>。
+              特徵是<b>高勝率＋無停損＋加碼攤平</b>，報酬分布是「長期小賺、一次賠光」。
+              數學上與備兌看漲同源（都是賣波動率），本報告已證偽。</td></tr>
+          <tr class="bad"><td class="name">跟單交易</td>
+            <td class="wrap">頂尖帶單者宣稱月 5~15%，<b>跟單者實得 2~8%</b>
+              （滑價、延遲、10~30% 績效費）。
+              而且平台展示的是「<b>最多人複製的</b>」＝ 教科書級存活者偏誤，
+              <b>你看不到已經爆倉消失的帳號</b>。</td></tr>
+          <tr class="bad"><td class="name">引用對沖基金指數的績效</td>
+            <td class="wrap">存活者偏誤 2.6~3.7% ＋ 回填偏誤 4~5% ＝ <b>常見高估 3~8%／年</b>。
+              看到指數報酬先扣這個區間再談。</td></tr>
+          <tr class="bad"><td class="name">只報一組參數的回測</td>
+            <td class="wrap">《Non-standard errors in the cryptocurrency world》（<i>IRFA</i> 2024）：
+              10 個瑣碎的設計選擇就展開成 <b>20,736 種研究設計</b>，
+              而 crypto 的 <b>non-standard error 大於 standard error</b>。
+              <b>辨識法：問「再平衡從週三改成週五、幣數從 20 改成 30，結果變多少」——
+              沒有報告這個就不能用。</b></td></tr>
+          <tr class="bad"><td class="name">多空策略只報合併報酬</td>
+            <td class="wrap">crypto 的異常<b>集中在小型難交易的資產</b>，
+              所以 alpha 常常主要來自空頭腿。<b>看到只報合併報酬就要求拆腿</b>。</td></tr>
+          <tr class="bad"><td class="name">「有論文、有 t 值、有經濟故事」</td>
+            <td class="wrap"><b>這三樣都有也可能是假的。</b>標本：BTC 日曆效應。
+              當初論文、t 值、故事一應俱全，正確檢定後<b>全樣本與 2018 後子樣本都不顯著</b>，
+              而且 500 幣橫斷面顯示<b>週一效應的方向與原文相反</b>。
+              <b>記住它當初長什麼樣子。</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="sub">明確不建議的其餘候選</h3>
+    <p class="body-note" style="margin-top:0">
+      其餘 41 個候選都不建議，主要撞在三類障礙上：
+      <b>需要美元保證金的市場中性</b>（撞上漂移門檻）、
+      <b>需要速度的</b>（2025 Q1 三家 searcher 就拿走 90% 的 CEX-DEX 套利量，
+      而主要交易所不提供真正的 colocation）、
+      <b>需要雙平台的</b>（違反單一交易所的約束）。
+      Babylon BTC staking 在這裡<b>再次被否決</b>，理由與<a href="#upside">前面那節</a>相同：
+      獎勵是 BABY 通膨代幣，不是 BTC。
+    </p>
+
+    <div class="callout">
+      <h3>這一節不是結案宣告</h3>
+      <p style="margin:0">
+        <b>43 個是我們掃過的，不是全世界。</b>
+        0 PASS 的意思是「這 43 個裡面沒有一個通過我們的門檻」，
+        <b>不是「外面不存在能通過的東西」</b>。
+      </p>
+      <p style="margin:10px 0 0">
+        而且上面已經寫明了兩件會讓結論改變的事：
+        <b>VRP 那扇門是被規模卡住而不是被證據關掉的</b>（資本到位就該重開），
+        以及<b>那 36 個 FAIL 裡有一部分的否決是條件式的</b>——
+        條件是漂移維持在歷史高檔，而 2025~2026 的實際漂移已經在往下走。
+      </p>
+      <p style="margin:10px 0 0;font-size:1.02rem">
+        <b>用使用者自己的話：「在一萬個假的裡面發現一個真的就夠了。」搜尋沒有停。</b>
+      </p>
+    </div>
+  </section>
+
   <section id="crossex">
     <h2>第六輪：效應量放大失敗，但效應在別的交易所複製成功</h2>
     <p class="section-note">
@@ -2599,6 +2793,20 @@
         第（3）點特別值得記：<b>用錯誤的理由關掉一個候選，和用錯誤的理由接受它一樣危險</b>——
         它下次換個名字回來時就沒有防線了。
         詳見<a href="#calspread">COIN-M 日曆價差</a>。</li>
+      <li><b>宣稱報告裡有某段落，實際上沒有（2026-09-20，<span style="color:var(--s1)">查證後未建立錯誤連結</span>）</b> ——
+        專案經理在指示裡表示「43 個外部候選 triage 與幣本位被動收益 DD
+        <b>兩份都已經在報告裡有對應段落</b>」。
+        <b>實際上只有後者有</b>：發布端 grep 全文，
+        <code>43 個</code>／<code>0 PASS</code>／<code>CONDITIONAL</code>／<code>外部策略盤點</code>
+        的命中數<b>都是 0</b>，那份 triage 從來沒有被寫進報告。
+        <b>發布端因此拒絕建立指向不存在章節的連結</b>，
+        改為在時間軸如實註明「前者目前沒有獨立段落」，並回報這個落差。
+        （該段落已於同日補寫，見<a href="#triage">外部策略盤點</a>。）
+        <b>性質</b>：依協調端自己的計數，這是<b>第七次它的前提被推翻</b>。
+        本清單逐項記錄了其中六次：<b>執行者四次</b>（上面四項）、
+        <b>使用者一次</b>（下方的回撤篩子）、<b>發布端一次</b>（就是這一項）。
+        <b>這一次的教訓是可操作的：接到「某某東西已經在裡面了」這種陳述時，
+        正確的動作是去查，不是照著寫。</b></li>
       <li><b>坑 #11：<code>×365/τ</code> 年化再等權平均，隱含「基差線性衰減」（2026-09-20，<span style="color:var(--warn)">影響範圍超出單一候選</span>）</b> ——
         這個口徑在 BTC 季度合約上<b>高估 1.18pp／年</b>
         （基差衰減支出：速率估 −8.181% vs 實現 −9.358%；同期資金費側僅差 0.045pp，證明問題就在基差這一項）。
@@ -2880,8 +3088,8 @@
         <b>與 BTC 曝險正交的報酬來源</b>：由兩份產出結清——
         <b>43 個外部候選的 triage</b>（<b>0 PASS／3 CONDITIONAL／4 INDETERMINATE／36 FAIL</b>），
         以及<b>幣本位被動收益的盡職調查</b>（年收益 $2.52，否決）。
-        後者在<a href="#lending">盡職調查</a>那一節；
-        <b>前者目前沒有獨立段落，只在這裡留下結果摘要。</b>
+        兩份都有對應段落：前者見<a href="#triage">外部策略盤點</a>，
+        後者見<a href="#lending">盡職調查</a>。
       </div>
       <div class="ev">
         <div class="t">進行中 · 第一條</div>
