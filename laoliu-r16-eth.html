@@ -1,0 +1,1511 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>老六 · 第十六輪：ETH 定投計畫</title>
+<script>
+  // 存取控制：必須先在工具中心（index.html）輸入正確密碼解鎖，
+  // 才會核發這個 token；沒有 token 就直接導回工具中心，不渲染任何內容。
+  (function () {
+    var token = sessionStorage.getItem('hub_token');
+    if (token !== '36a71a5bca2513f92fc85544531b1605c3515ee5f6039882db0b17b05082652f') {
+      location.replace('index.html');
+      throw new Error('unauthorized');
+    }
+  })();
+</script>
+<style>
+  :root {
+    --bg:#0f1117; --surface:#171a23; --surface-2:#1f2330;
+    --text:#e8e9ee; --text-dim:#9aa0b4; --text-muted:#6b7185;
+    --accent:#d97757; --accent-soft:rgba(217,119,87,0.15); --border:#2a2e3c;
+    --code-bg:#11141c; --grid:#232735;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --neg:#d03b3b; --warn:#fab219;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);line-height:1.7;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Microsoft JhengHei",sans-serif}
+  a{color:var(--accent)}
+  header{padding:40px 24px 30px;text-align:center;border-bottom:1px solid var(--border);
+    background:radial-gradient(ellipse at top,var(--accent-soft),transparent 60%)}
+  .crumb{max-width:1000px;margin:0 auto 22px;text-align:left;font-size:.9rem}
+  .crumb a{text-decoration:none;color:var(--text-dim)}
+  .crumb a:hover{color:var(--accent)}
+  .crumb .sep{color:var(--text-muted);margin:0 8px}
+  .crumb .here{color:var(--text-muted)}
+  header h1{font-size:2.1rem;margin:0 0 6px}
+  header .tagline{color:var(--text-dim);font-size:1.02rem;margin:0 auto;max-width:700px}
+  .meta-bar{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:18px}
+  .badge{display:inline-flex;align-items:center;gap:6px;background:var(--surface);
+    border:1px solid var(--border);border-radius:999px;padding:5px 14px;font-size:.85rem;color:var(--text-dim)}
+  .badge b{color:var(--accent);font-weight:600}
+  .badge.live{border-color:rgba(250,178,25,.45)}
+  .badge.live b{color:var(--warn)}
+
+  main{max-width:1000px;margin:0 auto;padding:36px 24px 80px}
+  section{margin-bottom:50px}
+  h2{font-size:1.42rem;border-left:4px solid var(--accent);padding-left:12px;margin:0 0 8px}
+  h3.sub{font-size:1rem;margin:22px 0 8px;color:var(--text)}
+  .section-note{color:var(--text-dim);font-size:.92rem;margin:0 0 18px}
+  p{color:var(--text-dim)}
+  .body-note{font-size:.9rem;margin-top:14px}
+  .body-note b{color:var(--text)}
+  /* 白話導讀：視覺上必須和技術用的 callout 明顯區隔 */
+  .plain{background:rgba(57,135,229,.06);border-left:5px solid var(--s1);
+    border-radius:0 10px 10px 0;padding:16px 20px 18px;margin:0 0 20px;
+    font-size:1.04rem;line-height:1.9;color:var(--text-dim)}
+  .plain b{color:var(--text)}
+  .plain .lbl{display:block;font-size:.76rem;letter-spacing:2px;color:var(--s1);
+    margin-bottom:8px;font-weight:600}
+  .plain p{margin:0 0 8px;color:var(--text-dim)}
+  .plain p:last-child{margin-bottom:0}
+
+  /* 術語表 */
+  .gloss-group{font-size:.82rem;letter-spacing:1px;color:var(--accent);
+    margin:26px 0 8px;font-weight:600}
+  .gloss td:first-child{white-space:nowrap;color:var(--text);font-weight:600}
+  .gloss td{vertical-align:top;text-align:left}
+  .gloss th{text-align:left}
+  .gterm{scroll-margin-top:20px}
+  a.gl{color:var(--text-muted);text-decoration:none;border-bottom:1px dotted var(--text-muted);
+    font-size:.86em}
+  a.gl:hover{color:var(--accent);border-bottom-color:var(--accent)}
+
+  .pill{display:inline-block;font-size:.7rem;padding:2px 9px;border-radius:999px;
+    border:1px solid var(--border);color:var(--text-muted);vertical-align:middle;margin-left:8px}
+  .pill.hyp{color:var(--warn);border-color:rgba(250,178,25,.45)}
+  .pill.fact{color:var(--s1);border-color:rgba(57,135,229,.45)}
+
+  .hero{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+    padding:26px 24px;text-align:center;margin-bottom:18px}
+  .hero .lbl{color:var(--text-muted);font-size:.85rem;margin-bottom:6px}
+  .hero .big{font-size:2.6rem;font-weight:700;color:var(--s1);line-height:1.15}
+  .hero .cap{color:var(--text-dim);font-size:.92rem;margin-top:12px}
+  .hero .cap b{color:var(--text)}
+
+  .callout{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--warn);
+    border-radius:10px;padding:18px 22px;margin-bottom:20px;font-size:.92rem;color:var(--text-dim)}
+  .callout h3{margin:0 0 8px;font-size:1rem;color:var(--text)}
+  .callout b{color:var(--text)}
+  .callout ul{margin:10px 0 0;padding-left:20px}
+  .callout li{margin-bottom:8px}
+  .callout.good{border-left-color:var(--s1)}
+  .callout.bad{border-left-color:var(--neg)}
+
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
+  .stat .label{color:var(--text-muted);font-size:.8rem;margin-bottom:4px}
+  .stat .value{font-size:1.55rem;font-weight:600;line-height:1.2}
+  .stat .sub{color:var(--text-muted);font-size:.78rem;margin-top:4px}
+  .value.pos{color:var(--s1)} .value.neg{color:var(--neg)} .value.warn{color:var(--warn)}
+
+  .split{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px}
+
+  .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+    padding:6px 16px 4px;overflow-x:auto;margin-bottom:14px}
+  /* width:100% alone makes a table squash to the wrapper instead of overflowing,
+     so overflow-x:auto never engages. Add class="table-wrap wide" when a table has
+     enough columns that squashing would break it; v2's tables are all narrow enough. */
+  table{width:100%;border-collapse:collapse;font-size:.88rem}
+  .table-wrap.wide table{min-width:620px}
+  th,td{text-align:right;padding:9px 10px;border-bottom:1px solid var(--border)}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--text-muted);font-weight:500;font-size:.8rem}
+  td{color:var(--text-dim)} td.name{color:var(--text)}
+  td.wrap{text-align:left;white-space:normal}
+  tr.best td{background:rgba(57,135,229,.07)}
+  tr.best td.name{color:var(--s1);font-weight:600}
+  tr.bad td.name{color:var(--neg)}
+  tr.base td{background:rgba(217,119,87,.07)}
+  tr.base td.name{color:var(--accent);font-weight:600}
+  td.pos{color:var(--s1)} td.negv{color:var(--neg)}
+  .d{color:var(--text-muted);font-size:.85em;margin-left:6px}
+  caption{caption-side:top;text-align:left;color:var(--text-muted);font-size:.82rem;padding:8px 10px 2px}
+
+  .engine{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:14px}
+  .engine h3{margin:0 0 10px;font-size:.95rem;color:var(--text)}
+  .engine dl{margin:0}
+  .engine dt{color:var(--text);font-size:.85rem;font-weight:600;margin-top:12px}
+  .engine dt:first-child{margin-top:0}
+  .engine dd{margin:2px 0 0;color:var(--text-dim);font-size:.87rem}
+  .engine dd code{background:var(--code-bg);padding:1px 5px;border-radius:4px;font-size:.85em;color:var(--accent)}
+
+  ul.limits{padding-left:0;list-style:none;margin:0}
+  ul.limits li{background:var(--surface);border:1px solid var(--border);border-radius:10px;
+    padding:14px 18px;margin-bottom:10px;color:var(--text-dim);font-size:.92rem}
+  ul.limits li b{color:var(--text)}
+
+  .timeline{border-left:2px solid var(--border);margin-left:6px;padding-left:20px}
+  .timeline .ev{margin-bottom:18px;position:relative}
+  .timeline .ev::before{content:'';position:absolute;left:-25px;top:6px;width:9px;height:9px;
+    border-radius:50%;background:var(--accent)}
+  .timeline .ev .t{font-size:.8rem;color:var(--text-muted);margin-bottom:2px}
+  .timeline .ev b{color:var(--text)}
+
+  footer{border-top:1px solid var(--border);padding:28px 24px 48px;text-align:center;
+    color:var(--text-muted);font-size:.85rem}
+  @media(max-width:640px){header h1{font-size:1.6rem}.stat .value{font-size:1.3rem}.hero .big{font-size:2rem}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="crumb">
+    <a href="index.html">工具中心</a><span class="sep">›</span><a href="laoliu.html">老六研究院</a><span class="sep">›</span><span class="here">第十六輪 · ETH 定投計畫</span>
+  </div>
+  <h1>第十六輪：你的兩個定投計畫大約只跑了半年，不是六年</h1>
+  <p class="tagline">
+    這一輪去查 ETH 那個計畫該不該存在，結果先撞到一件更基礎的事：
+    十六輪的報告都把一個<b>六年的模擬</b>放在最前面，而你的帳戶裡的幣數對應的是<b>大約 24 週</b>。
+    這不會讓任何一次回測失效，但它改變了三個數字的讀法——而你看一眼帳戶就能確認或推翻它。
+  </p>
+  <div class="meta-bar">
+    <span class="badge">輪次 <b>第十六輪</b></span>
+    <span class="badge">日期 <b>2026-09-21</b></span>
+    <span class="badge">回歸測試 <b>17 passed</b></span>
+    <span class="badge">本輪新幣數比 <b>0 個</b></span>
+    <span class="badge live">狀態 <b>研究進行中</b></span>
+  </div>
+</header>
+
+<main>
+
+  <section id="summary">
+    <h2>摘要：這一輪發生了什麼</h2>
+
+    <div class="plain">
+      <span class="lbl">先看這裡</span>
+      <p>這一頁是<b>第十六輪的獨立研究紀錄</b>，不是舊報告的修訂版。
+        依照你 2026-09-21 的規則「以後報告盡量不要修改舊的，每次產生新的頁面」，
+        <a href="crypto-dca-amplifier-report.html">總覽報告（v1）</a>與
+        <a href="laoliu-r15-triage2.html">第十五輪</a><b>都一個字都沒有動</b>；
+        要更正它們的地方，寫在這裡並連回去。</p>
+      <p>這一輪的主線是「ETH 那個定投計畫該不該存在」。
+        答案是：<b>研究員拒絕替你決定，而且他有正當理由</b>——
+        資料在方向上什麼都量不出來，能量出來的只有「這個賭注有多大」。
+        <b>但在量的過程中撞到一件更基礎的事，它放在最前面。</b></p>
+      <p>所有英文縮寫、單個字母、希臘字母，在<a href="#glossary">這一頁自己的術語表</a>裡都有白話翻譯，
+        正文第一次用到時也會就地附註。</p>
+    </div>
+
+    <h3 class="sub">一、五件事，照重要性排</h3>
+
+    <div class="callout bad">
+      <h3>★★★ 1. 兩個定投計畫大約只跑了半年，不是六年——而<b>你一句話就能確認或推翻</b></h3>
+      <p style="margin:0">
+        狀態檔十六輪並排記著「每週 100 USDT」與「現貨 0.0339 BTC」，
+        <b>從來沒有人把它們相除</b>。相除之後：0.0339 BTC 只是六年純定投基準
+        （0.8511 顆）的 <b>3.97%~4.01%</b>，
+        而唯一對得上合理報酬的長度是<b>大約 24 次買進</b>。
+        影響有三個，<b>要分開讀</b>，見<a href="#headline">第一節</a>。
+      </p>
+    </div>
+
+    <div class="callout">
+      <h3>2. 「ETH 該不該存在」在資料上不可裁決，研究員拒絕代為決定</h3>
+      <p style="margin:0">
+        ETH/BTC 的漂移在 <b>6 個視窗全部不顯著</b>（最大 |t| = 0.97），
+        符號在子視窗之間翻轉，要把它釘到 ±5%／年需要 <b>111 年</b> 的資料。
+        最漂亮的一段是：<b>同一道 minimax 題目有兩個答案，而且兩個都對</b>——
+        差別不在數學，在<b>你拿誰當比較基準</b>，而那是你的選擇。見<a href="#exist">第二節</a>。
+      </p>
+    </div>
+
+    <div class="callout">
+      <h3>3. 持有 ETH 不是「分散風險」——兩個口徑都死</h3>
+      <p style="margin:0">
+        以 BTC 幣數為目標時，這是<b>推導</b>不是回測：變異數 = w²×Var，
+        對權重嚴格遞增、最小值就在「不要 ETH」。<b>而它在美元口徑下也不成立</b>：
+        相關係數 0.798（近一年 0.908），
+        <b>6 個視窗全部</b>顯示 50/50 比純 BTC 更晃。
+        <b>唯一站得住的反面理由，我們量不到，也不假裝量得到。</b>見<a href="#diversify">第三節</a>。
+      </p>
+    </div>
+
+    <div class="callout good">
+      <h3>4. 派工書的前提被推翻，而推翻的結果<b>對舊結論有利</b></h3>
+      <p style="margin:0">
+        原本以為「多一個 ETH 計畫就多一筆閒置漏損」。<b>不對</b>：兩個計畫吃的是同一個 USDT 餘額。
+        真正改變的是<b>錢被花掉的速度</b>——第十輪隱含的「每 9.53 週入一次金」是怪節奏，
+        改成兩個計畫後是「每 4.77 週」，<b>那就是月付</b>。
+        <b>這反而讓第十輪那個點估計變可信。</b>見<a href="#idle">第四節</a>。
+      </p>
+    </div>
+
+    <div class="callout bad">
+      <h3>5. 「挑執行時段」第六次被量測，仍然是零——而這次的格子最單純</h3>
+      <p style="margin:0">
+        第十輪只掃了計畫實際用的<b>兩個</b>小時。這一輪把 24 個小時全掃完，
+        樣本內看起來<b>剛好像通過門檻</b>（配對 t = +2.42 與 +3.06），
+        <b>樣本外 6 次全部失敗</b>。見<a href="#timing">第五節</a>。
+      </p>
+    </div>
+
+    <h3 class="sub">二、幣數比這一欄，這一輪是空的——為什麼</h3>
+    <div class="callout bad">
+      <p style="margin:0">
+        這個專案唯一的計分方式是<a class="gl" href="#g16-coinratio">幣數比</a>：
+        同一筆錢、同一段時間，最後手上的 BTC 顆數，除以什麼都不做、單純每週買進並持有的顆數。
+        <b>這一輪沒有任何候選走到可以算幣數比的階段，所以本頁不提供新的幣數比。</b>
+      </p>
+      <p style="margin:10px 0 0">
+        本頁出現的所有比值都是<b>「ETH 腿 vs BTC 腿」的對照</b>，不是「某個策略 vs 純持有」。
+        它回答的是「同一筆錢分一半去買 ETH，最後 BTC 顆數會變多還是變少」，
+        <b>而<a href="#headline">第一節</a>會說明：這個問題的答案完全由你假設的起點決定，因此它不預測任何事。</b>
+      </p>
+    </div>
+
+    <h3 class="sub">三、這一頁的把關程度（請按這個折扣讀）</h3>
+    <div class="callout">
+      <p style="margin:0">
+        本輪的覆核是<b>協調者對關鍵數字的逐項獨立重算</b>，
+        加上<b>本頁作者從原始資料與腳本輸出重新產生每一個數字</b>——
+        本頁沒有任何一個數字是人工從報告抄過來的。
+        研究員自己跑的回歸測試是 <b>17 passed</b>。
+      </p>
+      <p style="margin:10px 0 0">
+        <b>但本輪沒有走完整的外部覆核流程，也沒有任何乾淨的首次讀取。</b>
+        本頁作者在重算過程中找到<b>兩處與研究員報告不一致的地方</b>，
+        兩處都不改變結論，但都寫在<a href="#limits">第七節</a>，沒有被吸收掉。
+      </p>
+    </div>
+  </section>
+
+  <section id="glossary">
+    <h2>這一頁的術語表（精簡版）</h2>
+    <p class="section-note">
+      只收這一頁會用到的詞，共 25 條。
+      舊總覽報告有一份 69 條的完整版，在<a href="crypto-dca-amplifier-report.html#glossary">那邊的術語對照表</a>；
+      第十五輪也有自己的一份，在<a href="laoliu-r15-triage2.html#glossary">那一頁</a>。
+      第三欄寫的不是字典定義，是「這一輪為什麼在乎它」。
+    </p>
+    <div class="gloss-group">〔一〕怎麼記分、怎麼讀百分比</div>
+    <div class="table-wrap">
+      <table class="gloss">
+        <thead><tr><th>符號／術語</th><th>它是什麼（日常語言）</th><th>這一輪為什麼在乎它</th></tr></thead>
+        <tbody>
+          <tr id="g16-coinratio" class="gterm"><td class="name">幣數比</td>
+            <td class="wrap">這個做法最後拿到的 BTC 顆數 ÷ 什麼都不做、只是每週買進並持有拿到的顆數。</td>
+            <td class="wrap">純持有六年是 0.8511 顆，定義為 1.0000。<b>本輪沒有產生任何新的幣數比</b>；本頁的比值全部是「ETH 腿 vs BTC 腿」的對照。</td></tr>
+          <tr id="g16-relwealth" class="gterm"><td class="name">相對財富（幾倍），不是「差幾個百分點」</td>
+            <td class="wrap">比較兩個做法時，用「A 的結果是 B 的幾倍」，不要用兩個百分比相減。</td>
+            <td class="wrap">相減會騙人：0.70 與 1.00 不是「差 30%」，是「B 是 A 的 1.43 倍」。<b>本頁一律用倍數。</b></td></tr>
+          <tr id="g16-base" class="gterm"><td class="name">基準點</td>
+            <td class="wrap">任何「變動了幾 %」都必須說清楚<b>相對什麼</b>。</td>
+            <td class="wrap">本輪的頭條正是一個基準點問題：舊報告的 1.0000 是<b>一段模擬</b>的結果，不是你的帳戶。</td></tr>
+          <tr id="g16-log" class="gterm"><td class="name">對數／對數刻度</td>
+            <td class="wrap">把「幾倍」畫成等距。1.0 的上下兩側在對數軸上對稱，在普通軸上不對稱。</td>
+            <td class="wrap">比值天生右偏（可以漲到 3 倍，但最多跌到 0），<b>本頁兩張圖的座標軸都是對數的</b>，否則「贏」會被畫得比「輸」大。</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="gloss-group">〔二〕這一輪在量的東西</div>
+    <div class="table-wrap">
+      <table class="gloss">
+        <thead><tr><th>符號／術語</th><th>它是什麼（日常語言）</th><th>這一輪為什麼在乎它</th></tr></thead>
+        <tbody>
+          <tr id="g16-x" class="gterm"><td class="name">X＝ETH/BTC 比值</td>
+            <td class="wrap">一顆 ETH 值多少顆 BTC。</td>
+            <td class="wrap"><b>這一輪所有結論的主角。</b>以 BTC 顆數記分時，「有沒有 ETH」的全部損益只由它決定。</td></tr>
+          <tr id="g16-w" class="gterm"><td class="name">w（ETH 權重）</td>
+            <td class="wrap">每期的錢有多少比例拿去買 ETH。w = 0 是全買 BTC，w = 0.5 是一半一半。</td>
+            <td class="wrap">你現在是 w = 0.5（兩個計畫各 100 USDT）。</td></tr>
+          <tr id="g16-numeraire" class="gterm"><td class="name">計價單位（numeraire）</td>
+            <td class="wrap">你拿什麼當「一塊錢」來記帳：美元、BTC 顆數、還是 ETH 顆數。</td>
+            <td class="wrap"><b>這一輪最重要的觀念</b>：同一個部位，換個計價單位，「分散風險」這句話會從真變成假。</td></tr>
+          <tr id="g16-nu" class="gterm"><td class="name">ν（nu）＝漂移</td>
+            <td class="wrap">一個價格長期平均每年往上或往下走多少（取對數之後）。</td>
+            <td class="wrap">ETH/BTC 的漂移在 6 個視窗全部不顯著；要把它量準到 ±5%／年需要 111 年。</td></tr>
+          <tr id="g16-sigma" class="gterm"><td class="name">σ（sigma）＝波動率</td>
+            <td class="wrap">價格上下晃動的幅度，通常寫成「每年百分之幾」。</td>
+            <td class="wrap">ETH/BTC 的 σ 約 53%／年。<b>這個數很確定；漂移那個數很不確定。</b></td></tr>
+          <tr id="g16-rho" class="gterm"><td class="name">ρ（rho）＝相關係數</td>
+            <td class="wrap">兩個東西一起漲跌的程度，1 是完全同步，0 是無關。</td>
+            <td class="wrap">BTC 與 ETH 是 0.80（近一年 0.91）。<b>這麼高就沒有分散可言。</b></td></tr>
+          <tr id="g16-variance" class="gterm"><td class="name">變異數／內點</td>
+            <td class="wrap">變異數是波動的平方。「內點」是指最好的配置落在中間（例如 30% ETH），而不是落在兩端。</td>
+            <td class="wrap">以 BTC 顆數記分時<b>沒有內點</b>：最穩的就是 w = 0。這是推導出來的，不是測出來的。</td></tr>
+          <tr id="g16-geomean" class="gterm"><td class="name">幾何平均</td>
+            <td class="wrap">一串「倍數」的正確平均法（連乘再開根號），不是把它們加起來除以個數。</td>
+            <td class="wrap">算術平均會把「漲一倍再跌一半」算成賺，幾何平均算成打平——後者才是實際結果。</td></tr>
+          <tr id="g16-rebal" class="gterm"><td class="name">再平衡收割</td>
+            <td class="wrap">定期把漲多的賣掉、補到跌的那邊，靠來回震盪賺價差。</td>
+            <td class="wrap">理論上每年有 13.88%，<b>但兩個各自買進不賣的定投計畫一分錢都拿不到</b>。</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="gloss-group">〔三〕統計用語</div>
+    <div class="table-wrap">
+      <table class="gloss">
+        <thead><tr><th>符號／術語</th><th>它是什麼（日常語言）</th><th>這一輪為什麼在乎它</th></tr></thead>
+        <tbody>
+          <tr id="g16-t" class="gterm"><td class="name">t 值</td>
+            <td class="wrap">效應量除以它自己的誤差。大致可讀成「這個數看起來不像 0 的程度」。</td>
+            <td class="wrap">本專案的門檻是 3.0。|t| 小於 1 幾乎就是「和 0 分不出來」。</td></tr>
+          <tr id="g16-se" class="gterm"><td class="name">SE（標準誤）</td>
+            <td class="wrap">同樣的量測再做一次，答案大概會差多少。</td>
+            <td class="wrap"><b>它只跟日曆長度有關</b>：把日資料換成小時資料<b>一個基點都不會變準</b>。</td></tr>
+          <tr id="g16-bp" class="gterm"><td class="name">bp（基點）</td>
+            <td class="wrap">萬分之一。10 bp = 0.10%。</td>
+            <td class="wrap">費用與價差的慣用單位。本頁用它比較「買貴一點」與「配置選錯」的量級。</td></tr>
+          <tr id="g16-oos" class="gterm"><td class="name">樣本內／樣本外</td>
+            <td class="wrap">樣本內＝從這段資料裡挑出最好的那個；樣本外＝拿去沒看過的那段驗證。</td>
+            <td class="wrap"><b>本專案六次量測同一件事：樣本內挑出來的東西，到樣本外一律不成立。</b></td></tr>
+          <tr id="g16-boot" class="gterm"><td class="name">block bootstrap（區塊重抽）</td>
+            <td class="wrap">把歷史切成一段一段再隨機重組，產生很多條「平行時空」，看答案的範圍有多寬。</td>
+            <td class="wrap">用來給 w 的估計畫誤差範圍，結果那個範圍寬到同時蓋住 0、0.5、1。</td></tr>
+          <tr id="g16-indep" class="gterm"><td class="name">獨立觀測數</td>
+            <td class="wrap">不是「有幾筆資料」，是「有幾筆<b>互相不重複</b>的資料」。</td>
+            <td class="wrap">本輪最硬的限制：不重疊視窗只有 <b>9 / 4 / 3</b> 個。<b>這個數量不能拒絕任何東西。</b></td></tr>
+          <tr id="g16-minimax" class="gterm"><td class="name">minimax／遺憾</td>
+            <td class="wrap">遺憾＝事後回頭看，你比「最好的那個選擇」少賺多少。minimax＝挑一個讓<b>最糟情況下的遺憾最小</b>的做法。</td>
+            <td class="wrap">它不需要預測未來，所以本專案愛用它。<b>但它的答案取決於你把誰放進「最好的選擇」那個名單。</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="gloss-group">〔四〕幣安的產品與條款</div>
+    <div class="table-wrap">
+      <table class="gloss">
+        <thead><tr><th>符號／術語</th><th>它是什麼（日常語言）</th><th>這一輪為什麼在乎它</th></tr></thead>
+        <tbody>
+          <tr id="g16-dca" class="gterm"><td class="name">定投／Auto-Invest／Convert Recurring</td>
+            <td class="wrap">設定好「每週幾、幾點、多少錢、買什麼」，系統自動扣款買進。</td>
+            <td class="wrap">你有兩個：一個買 BTC，一個買 ETH。幣安內部視為同一個產品的兩條路徑。</td></tr>
+          <tr id="g16-spread" class="gterm"><td class="name">Spread（價差）</td>
+            <td class="wrap">幣安在參考價之上加收的一層費用，<b>在你建立計畫的當下被鎖定</b>。</td>
+            <td class="wrap"><b>它的實際數值仍然未知</b>——查詢端點需要帳號簽章，只有你本人查得到。</td></tr>
+          <tr id="g16-cycle" class="gterm"><td class="name"><code>subscriptionCycle</code>（定投週期）</td>
+            <td class="wrap">API 裡決定「多久扣一次款」的那個欄位。</td>
+            <td class="wrap">第十三輪把它標為未知，<b>這一輪查到了</b>八個值。但有三條但書，見<a href="#actionable">第六節</a>。</td></tr>
+          <tr id="g16-earn" class="gterm"><td class="name">Simple Earn／<code>marketApr</code></td>
+            <td class="wrap">幣安的活期理財；<code>marketApr</code> 是不含補貼的市場利率。</td>
+            <td class="wrap">ETH 的市場利率是 BTC 的六十幾倍。<b>這不是「該買 ETH」的理由</b>，理由見<a href="#actionable">第六節</a>。</td></tr>
+          <tr id="g16-idle" class="gterm"><td class="name">閒置漏損（鋸齒）</td>
+            <td class="wrap">你存一筆錢進去、定投慢慢花掉，中間那段「錢躺著沒生息」的損失。</td>
+            <td class="wrap">形狀像鋸齒：存進去跳高、每週往下削。<b>兩個計畫吃同一個池子，不會變兩份。</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="headline">
+    <h2>一、頭條：兩個定投計畫大約只跑了半年，不是六年<span class="pill hyp">推論，你一句話就能推翻</span></h2>
+    <p class="section-note">
+      這一節的結論<b>不是量測，是推論</b>。它建立在狀態檔自己記的兩個數字上，有四個假設，
+      <b>你打開帳戶看一眼「計畫建立日期」就能確認或推翻它。</b>
+      如果它錯了，請直接告訴協調者，這一節會被下一頁更正——但<b>下面那三個影響的邏輯不會變</b>。
+    </p>
+
+    <div class="plain">
+      <span class="lbl">白話導讀</span>
+      <p>狀態檔的第一頁同時記著兩件事：<b>「每週四 100 USDT 買 BTC」</b>
+        和<b>「現貨約 0.0339 BTC」</b>。
+        十六輪、兩千多行筆記，<b>沒有人把這兩個數字相除過</b>。</p>
+      <p>相除之後：如果這個計畫真的跑了六年（319 週、投入 $31,900），
+        今天手上應該有 0.8511 顆左右。實際是 0.0339 BTC，
+        也就是<b>基準的 3.97%~4.01%</b>。
+        往回推，唯一能對上合理報酬的長度是<b>大約 24 次買進、投入約 $2,400</b>。</p>
+      <p><b>為什麼這件事重要？</b>因為過去每一份報告最前面那個「六年 0.8511 顆 = 1.0000」，
+        <b>是一段模擬，不是你的帳戶歷史</b>。
+        如果你一直把它讀成自己的成績單，<b>那是我們沒有講清楚，不是你讀錯</b>。</p>
+      <p><b>但請同時記住另一半</b>：<b>回測沒有因此失效</b>。
+        回測量的是「這個策略放在那段歷史上會怎樣」，那件事仍然成立，
+        它只是<b>從來就不是在描述你的帳戶</b>。這兩句話要一起讀。</p>
+    </div>
+
+    <div class="split">
+      <div class="stat"><div class="label">六年純定投模擬會有</div>
+        <div class="value">0.8457 ~ 0.8541 顆</div>
+        <div class="sub">14 種星期／價格口徑全掃；報告引用的 0.8511 是其中一格</div></div>
+      <div class="stat"><div class="label">狀態檔記的實際持有</div>
+        <div class="value warn">0.0339 BTC</div>
+        <div class="sub">＝模擬基準的 3.97%~4.01%</div></div>
+      <div class="stat"><div class="label">唯一對得上的計畫長度</div>
+        <div class="value pos">24 次買進</div>
+        <div class="sub">約 0.44 年，投入約 $2,400，起點約 2026-04-09</div></div>
+      <div class="stat"><div class="label">今天這些幣值多少</div>
+        <div class="value">$2,752</div>
+        <div class="sub">以資料檔最後一根日 K（2026-09-20）BTC $81,178 計</div></div>
+    </div>
+
+    <h3 class="sub">1.1　為什麼「六年」對不上：把每個假設長度的隱含報酬算出來</h3>
+    <div class="table-wrap wide">
+      <table>
+        <caption>如果計畫真的跑了這麼久，那麼今天 0.0339 BTC（$2,752）代表你在 BTC 定投上是這個報酬</caption>
+        <thead><tr><th>假設跑了多久</th><th>累計投入</th><th>今天價值</th>
+          <th>隱含報酬（本頁重算）</th><th>狀態檔的協調者驗算</th></tr></thead>
+        <tbody>
+          <tr class="best"><td class="name">24 週（約 0.5 年）　← 唯一合理</td><td>$2,400</td><td>$2,752</td><td class="pos">+14.7%</td><td>+14.8%</td></tr>
+          <tr><td class="name">52 週（約 1.0 年）</td><td>$5,200</td><td>$2,752</td><td class="negv">−47.1%</td><td>−47.0%</td></tr>
+          <tr><td class="name">156 週（約 3.0 年）</td><td>$15,600</td><td>$2,752</td><td class="negv">−82.4%</td><td>−82.3%</td></tr>
+          <tr><td class="name">319 週（約 6.1 年）</td><td>$31,900</td><td>$2,752</td><td class="negv">−91.4%</td><td>−91.4%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout">
+      <p style="margin:0">
+        <b>怎麼讀這張表：</b>中間三列要求 BTC 定投在那些窗口裡虧掉四成到九成。
+        <b>那些期間的 BTC 定投不可能虧成那樣</b>——這就是「六年」被排除的理由，
+        不是統計檢定，是<b>量級上的荒謬</b>。
+      </p>
+      <p style="margin:10px 0 0">
+        最後一欄是協調者記在狀態檔裡的獨立驗算。
+        它與本頁差 0.1 個百分點，<b>原因是兩邊取的 BTC 報價差 $128</b>
+        （協調者用當下報價，本頁用資料檔最後一根收盤的 $81,178）。
+        <b>這個差別不改變任何一列的符號。</b>
+      </p>
+    </div>
+
+    <h3 class="sub">1.2　反過來推：要累積到 0.0339 BTC 需要幾次買進</h3>
+    <div class="table-wrap">
+      <table>
+        <caption>每週四 100 USDT 買進，一路往回推到哪一天才剛好累積到 0.0339 BTC（本頁用 eth_plan/data 的日 K 獨立重跑）</caption>
+        <thead><tr><th>假設起點</th><th>買進次數</th><th>累積 BTC</th><th>與 0.0339 的差</th></tr></thead>
+        <tbody>
+          <tr><td class="name">2026-06-04</td><td>16</td><td>0.02384</td><td>-0.01006</td></tr>
+          <tr><td class="name">2026-05-28</td><td>17</td><td>0.02520</td><td>-0.00870</td></tr>
+          <tr><td class="name">2026-05-21</td><td>18</td><td>0.02649</td><td>-0.00741</td></tr>
+          <tr><td class="name">2026-05-14</td><td>19</td><td>0.02772</td><td>-0.00618</td></tr>
+          <tr><td class="name">2026-05-07</td><td>20</td><td>0.02897</td><td>-0.00493</td></tr>
+          <tr><td class="name">2026-04-30</td><td>21</td><td>0.03028</td><td>-0.00362</td></tr>
+          <tr><td class="name">2026-04-23</td><td>22</td><td>0.03156</td><td>-0.00234</td></tr>
+          <tr><td class="name">2026-04-16</td><td>23</td><td>0.03289</td><td>-0.00101</td></tr>
+          <tr class="best"><td class="name">2026-04-09</td><td>24</td><td>0.03428</td><td>+0.00038</td></tr>
+          <tr><td class="name">2026-04-02</td><td>25</td><td>0.03578</td><td>+0.00188</td></tr>
+          <tr><td class="name">2026-03-26</td><td>26</td><td>0.03723</td><td>+0.00333</td></tr>
+          <tr><td class="name">2026-03-19</td><td>27</td><td>0.03866</td><td>+0.00476</td></tr>
+          <tr><td class="name">2026-03-12</td><td>28</td><td>0.04008</td><td>+0.00618</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout bad">
+      <h3>這個推論的四個假設——任何一個不成立，上面整張表就失效</h3>
+      <ul>
+        <li><b>中途沒有提領過。</b>提過就會讓現在的顆數偏低，計畫實際更老。</li>
+        <li><b>沒有從別的地方拿到 BTC</b>（空投、轉入、另外買）。有的話計畫實際更年輕。</li>
+        <li><b>金額一直是 100 USDT，沒有改過。</b></li>
+        <li><b>中間沒有暫停過。</b></li>
+      </ul>
+      <p style="margin:10px 0 0">
+        <b>研究員自己把這一條列為「推論層級」，不是觀測。</b>
+        本頁照樣把它放在最前面，是因為它<b>最容易被你證實或推翻，而代價只是看一眼帳戶</b>。
+      </p>
+    </div>
+
+    <h3 class="sub">1.3　三個影響，要分開讀</h3>
+
+    <div class="callout bad">
+      <h3>影響一：那個「1.0000」是模擬，不是你的帳戶——但回測沒有失效</h3>
+      <p style="margin:0">
+        舊報告每一頁最前面的記分板都寫著「六年 319 週純持有 = 0.8511 顆 = 1.0000」。
+        <b>那是一段從 2020-08-11 開始的模擬</b>，用來回答「如果一個計畫跑滿六年會怎樣」。
+        <b>它不是你的交易紀錄。</b>
+      </p>
+      <p style="margin:10px 0 0">
+        <b>但請不要把這句話讀成「回測都白做了」。</b>
+        回測問的是「策略 X 放在 2020-08 到今天這段歷史上，相對純定投會多拿還是少拿幣」，
+        <b>這個問題與你何時開戶完全無關，答案仍然成立</b>。
+        變的只有一件事：<b>當報告說「多拿 2.8%」時，那是在一段六年的模擬上，
+        不是在你這半年的帳戶上。</b>
+      </p>
+      <p style="margin:10px 0 0">
+        <b>這是一個基準點問題，而基準點沒有被寫出來，是我們的疏失。</b>
+        依規則<a href="crypto-dca-amplifier-report.html#coin-ratio">舊頁那一節</a>不修改，更正寫在這裡。
+      </p>
+    </div>
+
+    <div class="callout good">
+      <h3>影響二：流量／存量比是 3.78 倍，不是 1.89 倍——<b>這強化第九輪的結論</b></h3>
+      <p style="margin:0">
+        第九輪的核心論點是「作用在<b>每年新投進去的錢</b>上，天生比作用在<b>已經持有的部位</b>上有效」，
+        當時算的是 $5,200 ÷ $2,752 = <b>1.89 倍</b>。
+        <b>但那只算了一個計畫。</b>兩個計畫一起算是 $10,400 ÷ $2,752 =
+        <b>3.78 倍</b>（協調者的獨立驗算寫在狀態檔是 3.77×，差別只在取的 BTC 報價）。
+      </p>
+      <p style="margin:10px 0 0">
+        <b>方向要講清楚：這個更正讓第九輪的結論更強，不是更弱。</b>
+        第九輪說流量側重要，正確計數之後，流量側<b>比它自己以為的還重要一倍</b>。
+        <b>而這件事的實際意涵仍然是那一句：在這個資金規模上，把錢投進去的那個動作本身，
+        比任何一個聰明的操作都有效。</b>
+      </p>
+    </div>
+
+    <div class="callout">
+      <h3>影響三：ETH 腿在你<b>真正經歷過</b>的那段期間是領先的；在模擬那段是落後的。<b>兩個都是真的。</b></h3>
+      <p style="margin:0">
+        同樣一個問題——「一半的錢拿去買 ETH，最後 BTC 顆數會變多還變少」——
+        在兩個不同的起點上得到相反的答案：
+      </p>
+      <ul>
+        <li><b>你推估的真實期間（2026-04-09 起、24 次買進）</b>：
+          ETH 腿的 BTC 顆數是 BTC 腿的 <b>1.1215</b>（週三口徑）~ <b>1.1246</b>（週四口徑）倍，
+          <b>ETH 腿領先</b>。把起點前後各挪半年、七個星期、開盤收盤都掃過共 <b>322 格</b>，
+          範圍 <b>1.0283 ~ 1.1423</b>，<b>322/322 格全部大於 1</b>。</li>
+        <li><b>舊報告的模擬期間（2020-08-11 起、319 週）</b>：同樣的比值是
+          <b>0.6974 ~ 0.7024</b>（14 種星期／價格口徑），
+          換句話說 <b>BTC 腿的顆數是 ETH 腿的 1.424 ~ 1.434 倍</b>，
+          <b>ETH 腿落後</b>。</li>
+      </ul>
+      <p style="margin:10px 0 0">
+        <b>這裡用「幾倍」而不是「落後百分之幾」，是刻意的</b>：兩個方案比較時相減百分點會系統性誤導，
+        見<a class="gl" href="#g16-relwealth">術語表</a>。
+      </p>
+      <p style="margin:10px 0 0">
+        <b>最重要的一句話：這兩個數字都不預測任何事。</b>
+        下面那張圖就是理由——<b>同一個策略、同一個終點，光是換起點，答案就從 0.62 掃到 1.13。</b>
+      </p>
+    </div>
+
+    <h3 class="sub">1.4　同一個問題，答案完全由起點決定</h3>
+    <svg viewBox="0 0 960 320" width="100%" role="img" aria-label="ETH 腿相對 BTC 腿的期末 BTC 顆數，隨假設起點變化" style="background:#171a23;border:1px solid #2a2e3c;border-radius:12px"><line x1="62" y1="262.5" x2="810" y2="262.5" stroke="#2a2e3c" stroke-width="1" stroke-dasharray="3 3"/><text x="54" y="266.5" text-anchor="end" font-size="11" fill="#6b7185">0.6</text><line x1="62" y1="210.3" x2="810" y2="210.3" stroke="#2a2e3c" stroke-width="1" stroke-dasharray="3 3"/><text x="54" y="214.3" text-anchor="end" font-size="11" fill="#6b7185">0.7</text><line x1="62" y1="165.0" x2="810" y2="165.0" stroke="#2a2e3c" stroke-width="1" stroke-dasharray="3 3"/><text x="54" y="169.0" text-anchor="end" font-size="11" fill="#6b7185">0.8</text><line x1="62" y1="125.1" x2="810" y2="125.1" stroke="#2a2e3c" stroke-width="1" stroke-dasharray="3 3"/><text x="54" y="129.1" text-anchor="end" font-size="11" fill="#6b7185">0.9</text><line x1="62" y1="89.4" x2="810" y2="89.4" stroke="#d97757" stroke-width="2" stroke-dasharray=""/><text x="54" y="93.4" text-anchor="end" font-size="11" fill="#d97757">1</text><line x1="62" y1="57.1" x2="810" y2="57.1" stroke="#2a2e3c" stroke-width="1" stroke-dasharray="3 3"/><text x="54" y="61.1" text-anchor="end" font-size="11" fill="#6b7185">1.1</text><line x1="62" y1="27.6" x2="810" y2="27.6" stroke="#2a2e3c" stroke-width="1" stroke-dasharray="3 3"/><text x="54" y="31.6" text-anchor="end" font-size="11" fill="#6b7185">1.2</text><polyline points="62.0,110.7 84.1,104.6 105.7,95.4 127.6,83.0 149.7,75.3 171.8,77.2 193.5,71.3 215.3,71.4 237.5,89.0 259.6,117.1 281.4,152.4 303.3,194.0 325.4,221.0 347.5,246.1 369.2,253.5 391.1,252.1 413.2,248.2 435.3,244.3 456.9,239.1 478.8,233.6 500.9,220.0 523.0,198.9 544.6,177.4 566.5,157.0 588.6,132.6 610.7,112.2 632.6,93.7 654.5,77.1 676.6,59.1 698.7,48.8 720.3,50.8 742.2,71.5 764.3,67.9 786.4,57.7" fill="none" stroke="#3987e5" stroke-width="2"/><circle cx="62.0" cy="110.7" r="2.6" fill="#3987e5"/><circle cx="84.1" cy="104.6" r="2.6" fill="#3987e5"/><circle cx="105.7" cy="95.4" r="2.6" fill="#3987e5"/><circle cx="127.6" cy="83.0" r="2.6" fill="#3987e5"/><circle cx="149.7" cy="75.3" r="2.6" fill="#3987e5"/><circle cx="171.8" cy="77.2" r="2.6" fill="#3987e5"/><circle cx="193.5" cy="71.3" r="2.6" fill="#3987e5"/><circle cx="215.3" cy="71.4" r="2.6" fill="#3987e5"/><circle cx="237.5" cy="89.0" r="2.6" fill="#3987e5"/><circle cx="259.6" cy="117.1" r="2.6" fill="#3987e5"/><circle cx="281.4" cy="152.4" r="2.6" fill="#3987e5"/><circle cx="303.3" cy="194.0" r="2.6" fill="#3987e5"/><circle cx="325.4" cy="221.0" r="2.6" fill="#3987e5"/><circle cx="347.5" cy="246.1" r="2.6" fill="#3987e5"/><circle cx="369.2" cy="253.5" r="2.6" fill="#3987e5"/><circle cx="391.1" cy="252.1" r="2.6" fill="#3987e5"/><circle cx="413.2" cy="248.2" r="2.6" fill="#3987e5"/><circle cx="435.3" cy="244.3" r="2.6" fill="#3987e5"/><circle cx="456.9" cy="239.1" r="2.6" fill="#3987e5"/><circle cx="478.8" cy="233.6" r="2.6" fill="#3987e5"/><circle cx="500.9" cy="220.0" r="2.6" fill="#3987e5"/><circle cx="523.0" cy="198.9" r="2.6" fill="#3987e5"/><circle cx="544.6" cy="177.4" r="2.6" fill="#3987e5"/><circle cx="566.5" cy="157.0" r="2.6" fill="#3987e5"/><circle cx="588.6" cy="132.6" r="2.6" fill="#3987e5"/><circle cx="610.7" cy="112.2" r="2.6" fill="#3987e5"/><circle cx="632.6" cy="93.7" r="2.6" fill="#3987e5"/><circle cx="654.5" cy="77.1" r="2.6" fill="#3987e5"/><circle cx="676.6" cy="59.1" r="2.6" fill="#3987e5"/><circle cx="698.7" cy="48.8" r="2.6" fill="#3987e5"/><circle cx="720.3" cy="50.8" r="2.6" fill="#3987e5"/><circle cx="742.2" cy="71.5" r="2.6" fill="#3987e5"/><circle cx="764.3" cy="67.9" r="2.6" fill="#3987e5"/><circle cx="786.4" cy="57.7" r="2.6" fill="#3987e5"/><circle cx="313.2" cy="209.2" r="6" fill="#d03b3b" stroke="#171a23" stroke-width="2"/><text x="324.2" y="213.2" font-size="12" fill="#d03b3b">舊報告的模擬起點 2020-08</text><circle cx="810.0" cy="50.5" r="6" fill="#3987e5" stroke="#171a23" stroke-width="2"/><text x="821.0" y="54.5" font-size="12" fill="#3987e5">你推估的真實起點 2026-04</text><text x="62.0" y="292" text-anchor="middle" font-size="11" fill="#6b7185">2017-10</text><text x="193.5" y="292" text-anchor="middle" font-size="11" fill="#6b7185">2019-04</text><text x="325.4" y="292" text-anchor="middle" font-size="11" fill="#6b7185">2020-10</text><text x="456.9" y="292" text-anchor="middle" font-size="11" fill="#6b7185">2022-04</text><text x="588.6" y="292" text-anchor="middle" font-size="11" fill="#6b7185">2023-10</text><text x="720.3" y="292" text-anchor="middle" font-size="11" fill="#6b7185">2025-04</text><text x="786.4" y="292" text-anchor="middle" font-size="11" fill="#6b7185">2026-01</text><text x="62" y="312" font-size="11" fill="#6b7185">橫軸：假設的計畫起點（對數縱軸）　縱軸：ETH 腿的 BTC 顆數 ÷ BTC 腿的 BTC 顆數</text></svg>
+    <p class="section-note" style="margin-top:10px">
+      藍線是研究員掃過的 34 個季度起點（週三收盤口徑，終點全部固定在資料最後一天），
+      數值從 <b>0.6162</b> 掃到 <b>1.1271</b>；紅點是舊報告用的模擬起點，藍點是你推估的真實起點
+      （本頁用同一份日 K 獨立計算）。<b>縱軸是對數的</b>，所以 1.0 上下等距。
+      <b>這張圖唯一該帶走的訊息是：這條線的高低由「你何時開始」決定，不由「ETH 好不好」決定。</b>
+      研究員另外做了終點敏感度：起點固定不動，<b>只換一個結算月，數字就移動 27.6%</b>
+      （0.5741 ~ 0.7328）。<b>研究員把這一項標為「驗收檢驗 #4 大幅失敗」，本頁照實轉述。</b>
+    </p>
+    <div class="callout">
+      <p style="margin:0">
+        <b>34 個起點裡有 13/34 個是 ETH 腿領先，但這不是「勝率」</b>，
+        研究員自己先標註了：這 34 列共用<b>同一個終點價格</b>，不是獨立抽樣。
+        <b>要看獨立的樣本，必須用不重疊視窗——那在<a href="#exist">第二節</a>，
+        而那裡只有 9 / 4 / 3 個。</b>
+      </p>
+    </div>
+  </section>
+
+  <section id="exist">
+    <h2>二、ETH 該不該存在：研究員拒絕替你決定，而這個拒絕本身是結論<span class="pill fact">代數＋量測</span></h2>
+    <p class="section-note">
+      派工書問的是「ETH 計畫該不該存在」。研究員動用了派工書允許他推翻前提的權利，
+      回答是：<b>這不是一個有答案在等著被找到的問題。</b>本節說明為什麼，以及他交了什麼給你。
+    </p>
+
+    <div class="plain">
+      <span class="lbl">白話導讀</span>
+      <p>「ETH 以後會不會贏過 BTC」這種問題，<b>需要知道兩者長期的平均走勢差多少</b>。
+        這個數字叫<a class="gl" href="#g16-nu">漂移</a>，而它的量測誤差<b>只跟你有多少年的資料有關</b>——
+        <b>抓更細的資料（小時線、分鐘線）一個基點都不會讓它變準。</b></p>
+      <p>ETH/BTC 只有 9 年多的可交易歷史。要把這個數字量到「正負 5% 以內」，
+        需要 <b>111 年</b>。所以答案不是「還沒算出來」，是<b>算不出來</b>。</p>
+      <p>能算出來的只有<b>「這個賭注有多大」</b>——而它很大。研究員把這個交給你，
+        <b>拒絕替你決定要不要下</b>。這一頁同意這個做法。</p>
+    </div>
+
+    <h3 class="sub">2.1　先拆掉一個誤導框架：「三種計價口徑」其實只有一個數</h3>
+    <div class="callout good">
+      <p style="margin:0">
+        很自然會想：「用美元看、用 BTC 顆數看、用 ETH 顆數看，會得到三種不同的答案吧？」
+        <b>不會。研究員在真實序列上驗到浮點數極限：</b>
+      </p>
+      <ul>
+        <li><b>用美元算的比值，和用 BTC 顆數算的比值，是<u>同一個數</u></b>：
+          兩邊都是 <b>0.8921775207</b>，差 <b>1.11e-16</b>（電腦能表示的最小誤差級別）。</li>
+        <li><b>用 ETH 顆數算的是它的倒數</b>：1.1208531674，兩者相乘 = <b>1.0000000000</b>。</li>
+        <li>第二個恆等式更狠：這筆配置的全部結果 = <b>X(T) ÷ X<sub>買進期間的加權平均</sub></b>
+          （0.031733 ÷ 0.035568，與上面的比值差 4.44e-16）。
+          <b>BTC 自己的價格只透過「每期買到多少」進入，沒有第二個成分。</b></li>
+      </ul>
+      <p style="margin:10px 0 0">
+        <b>所以「ETH 計畫」在幣數記分下不是「對加密貨幣的配置」，也不是「對長期趨勢的配置」，
+        它就是一個對 <a class="gl" href="#g16-x">ETH/BTC 比值</a>的方向性部位，大小等於流量的一半。</b>
+        三個口徑真正分家的地方不是這個數字，是<b>變異數</b>——那在<a href="#diversify">第三節</a>。
+      </p>
+    </div>
+
+    <h3 class="sub">2.2　漂移：六個視窗沒有一個顯著，而且符號會翻轉</h3>
+    <div class="table-wrap wide">
+      <table>
+        <caption>ETH/BTC 比值的漂移（ν<sub>X</sub>）。最後一欄是「要把它量到 ±5%／年需要多少年資料」</caption>
+        <thead><tr><th>視窗</th><th>年數</th><th>ν<sub>X</sub>（%／年）</th><th>σ<sub>X</sub>（%）</th>
+          <th>標準誤（%／年）</th><th>t</th><th>需要幾年</th></tr></thead>
+        <tbody>
+          <tr><td class="name">全期 2017-08 ~ 2026-09</td><td>9.1</td><td class="negv">−8.48</td><td>52.69</td><td>17.47</td><td>−0.49</td><td>111</td></tr>
+          <tr><td class="name">2017-08 ~ 2020-08</td><td>3.0</td><td class="negv">−25.18</td><td>65.16</td><td>37.73</td><td>−0.67</td><td>170</td></tr>
+          <tr><td class="name">2020-08 ~ 2023-08</td><td>3.0</td><td class="pos">21.25</td><td>51.74</td><td>29.89</td><td>+0.71</td><td>107</td></tr>
+          <tr><td class="name">2023-08 ~ 2026-09</td><td>3.1</td><td class="negv">−21.10</td><td>38.33</td><td>21.73</td><td>−0.97</td><td>59</td></tr>
+          <tr><td class="name">近三年</td><td>3.0</td><td class="negv">−20.14</td><td>38.96</td><td>22.49</td><td>−0.90</td><td>61</td></tr>
+          <tr><td class="name">近一年</td><td>1.0</td><td class="negv">−17.27</td><td>30.17</td><td>30.17</td><td>−0.57</td><td>36</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout bad">
+      <p style="margin:0">
+        <b>六個視窗最大的 |t| 是 0.97，門檻是 3.0。</b>
+        更關鍵的是<b>符號會翻轉</b>：2017-08 ~ 2020-08 是 −25.18，
+        2020-08 ~ 2023-08 是 <b>+21.25</b>，2023-08 ~ 2026-09 又回到 −21.10。
+      </p>
+      <p style="margin:10px 0 0">
+        標準誤的公式是 σ÷√（年數），<b>分母是日曆年數，不是資料筆數</b>。
+        <b>這就是為什麼「抓小時線」救不了它</b>——這與本專案早就對 BTC 自身漂移下的結論逐字相同。
+      </p>
+    </div>
+
+    <h3 class="sub">2.3　不重疊視窗：把「ETH 明顯輸」這個印象拆掉</h3>
+    <svg viewBox="0 0 960 258" width="100%" role="img" aria-label="每個不重疊視窗裡，ETH 腿的 BTC 顆數 ÷ BTC 腿的 BTC 顆數" style="background:#171a23;border:1px solid #2a2e3c;border-radius:12px"><line x1="171.5" y1="14" x2="171.5" y2="222" stroke="#2a2e3c" stroke-width="1" stroke-dasharray="3 3"/><text x="171.5" y="238" text-anchor="middle" font-size="11" fill="#6b7185">0.5</text><line x1="291.4" y1="14" x2="291.4" y2="222" stroke="#2a2e3c" stroke-width="1" stroke-dasharray="3 3"/><text x="291.4" y="238" text-anchor="middle" font-size="11" fill="#6b7185">0.7</text><line x1="418.5" y1="14" x2="418.5" y2="222" stroke="#d97757" stroke-width="2" stroke-dasharray=""/><text x="418.5" y="238" text-anchor="middle" font-size="11" fill="#d97757">1</text><line x1="563.0" y1="14" x2="563.0" y2="222" stroke="#2a2e3c" stroke-width="1" stroke-dasharray="3 3"/><text x="563.0" y="238" text-anchor="middle" font-size="11" fill="#6b7185">1.5</text><line x1="665.5" y1="14" x2="665.5" y2="222" stroke="#2a2e3c" stroke-width="1" stroke-dasharray="3 3"/><text x="665.5" y="238" text-anchor="middle" font-size="11" fill="#6b7185">2</text><line x1="810.0" y1="14" x2="810.0" y2="222" stroke="#2a2e3c" stroke-width="1" stroke-dasharray="3 3"/><text x="810.0" y="238" text-anchor="middle" font-size="11" fill="#6b7185">3</text><text x="82" y="57.0" text-anchor="end" font-size="12" fill="#9aa0b4">52 週視窗（n = 9）</text><circle cx="294.9" cy="53.0" r="5.5" fill="#d03b3b" fill-opacity="0.85"/><circle cx="228.3" cy="53.0" r="5.5" fill="#d03b3b" fill-opacity="0.85"/><circle cx="598.2" cy="53.0" r="5.5" fill="#3987e5" fill-opacity="0.85"/><circle cx="653.7" cy="53.0" r="5.5" fill="#3987e5" fill-opacity="0.85"/><circle cx="472.8" cy="53.0" r="5.5" fill="#3987e5" fill-opacity="0.85"/><circle cx="381.2" cy="53.0" r="5.5" fill="#d03b3b" fill-opacity="0.85"/><circle cx="335.2" cy="53.0" r="5.5" fill="#d03b3b" fill-opacity="0.85"/><circle cx="456.3" cy="53.0" r="5.5" fill="#3987e5" fill-opacity="0.85"/><circle cx="400.8" cy="53.0" r="5.5" fill="#d03b3b" fill-opacity="0.85"/><line x1="424.6" y1="37.0" x2="424.6" y2="69.0" stroke="#fab219" stroke-width="3"/><text x="433.6" y="33.0" font-size="11" fill="#fab219">幾何平均 1.0172</text><text x="82" y="123.0" text-anchor="end" font-size="12" fill="#9aa0b4">104 週視窗（n = 4）</text><circle cx="139.2" cy="119.0" r="5.5" fill="#d03b3b" fill-opacity="0.85"/><circle cx="788.9" cy="119.0" r="5.5" fill="#3987e5" fill-opacity="0.85"/><circle cx="385.9" cy="119.0" r="5.5" fill="#d03b3b" fill-opacity="0.85"/><circle cx="328.8" cy="119.0" r="5.5" fill="#d03b3b" fill-opacity="0.85"/><line x1="410.7" y1="103.0" x2="410.7" y2="135.0" stroke="#fab219" stroke-width="3"/><text x="419.7" y="99.0" font-size="11" fill="#fab219">幾何平均 0.9783</text><text x="82" y="189.0" text-anchor="end" font-size="12" fill="#9aa0b4">156 週視窗（n = 3）</text><circle cx="453.0" cy="185.0" r="5.5" fill="#3987e5" fill-opacity="0.85"/><circle cx="493.1" cy="185.0" r="5.5" fill="#3987e5" fill-opacity="0.85"/><circle cx="320.7" cy="185.0" r="5.5" fill="#d03b3b" fill-opacity="0.85"/><line x1="422.3" y1="169.0" x2="422.3" y2="201.0" stroke="#fab219" stroke-width="3"/><text x="431.3" y="165.0" font-size="11" fill="#fab219">幾何平均 1.0106</text><text x="92" y="250" font-size="11" fill="#6b7185">橫軸為對數刻度：每個不重疊視窗裡，ETH 腿的 BTC 顆數 ÷ BTC 腿的 BTC 顆數　藍＝ETH 腿領先，紅＝落後，黃線＝該組幾何平均</text></svg>
+    <div class="table-wrap wide" style="margin-top:14px">
+      <table>
+        <caption>把歷史切成互不重疊的區段，每段各跑一個定投計畫到底（這是「獨立樣本」的正確做法）</caption>
+        <thead><tr><th>視窗長度</th><th>段數 n</th><th>最小</th><th>中位</th><th>最大</th>
+          <th>ETH 腿領先</th><th>幾何平均</th><th>log 標準差</th></tr></thead>
+        <tbody>
+          <tr><td class="name">52 週</td><td>9</td><td>0.5864</td><td>0.9514</td><td>1.9346</td><td>4/9</td><td class="pos">1.0172</td><td>0.3865</td></tr>
+          <tr><td class="name">104 週</td><td>4</td><td>0.4567</td><td>0.9125</td><td>2.8275</td><td>1/4</td><td class="pos">0.9783</td><td>0.7669</td></tr>
+          <tr><td class="name">156 週</td><td>3</td><td>0.7600</td><td>1.1017</td><td>1.2328</td><td>2/3</td><td class="pos">1.0106</td><td>0.2531</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout bad">
+      <h3>這張表要非常小心地讀——它證不了「ETH 沒差」，只證得了「量不出來」</h3>
+      <p style="margin:0">
+        三組的幾何平均是 <b>1.0172 / 0.9783 / 1.0106</b>，
+        全部貼在 1.0。<b>「BTC 明顯贏」那個印象，完全來自 2020-08 這一個起點加上今天這一個終點的單一路徑</b>，
+        而<a href="#headline">第一節</a>已經量過：光換一個結算月就能搬動 27.6%。
+      </p>
+      <p style="margin:10px 0 0">
+        <b>但 n = 9 / 4 / 3。</b>
+        <a class="gl" href="#g16-indep">獨立觀測數</a>只有個位數，
+        <b>這個樣本數不能拒絕任何東西，包括「幾何平均其實不是 1.0」。</b>
+        研究員自己把它列為限制第 2 條，本頁照列。
+        <b>正確的讀法是：把它當離散度的描述（log 標準差 0.2531~0.7669），
+        不要當檢定。</b>
+      </p>
+    </div>
+
+    <h3 class="sub">2.4　那「最佳 ETH 比例」是多少？——區間寬到同時蓋住 0、0.5、1</h3>
+    <div class="callout">
+      <p style="margin:0">
+        用本專案已經用過的那條成長最適公式（把 BTC/美元換成 ETH/BTC）：
+        點估計是 <b>w* = +0.195</b>，也就是「大約 20% 放 ETH」。
+        <b>但點估計沒有意義，要看它的區間。</b>
+      </p>
+      <p style="margin:10px 0 0">
+        研究員用 <a class="gl" href="#g16-boot">block bootstrap</a> 跑了 <b>12 格</b>
+        （4 種區塊長度 × 3 個亂數種子，每格 3,000 次）：
+        <b>95% 區間大約是 [−1.49, +1.59]</b>，中位數在 0.123~0.225 之間。
+      </p>
+      <p style="margin:10px 0 0">
+        <b>這個區間同時包含 0（不要 ETH）、0.5（一半一半）、1（全部 ETH）。</b>
+        也就是說：<b>資料無法區分這三種做法。</b>
+        這與本專案對另一個參數（β）的結論同構——那裡的 95% 區間也蓋住了整個可行範圍。
+      </p>
+      <p style="margin:10px 0 0">
+        順帶一個口徑細節，因為它是本專案第三次踩到同一個坑：
+        <b>對數漂移是負的（−8.48%／年），算術漂移卻是正的（+5.40%／年）</b>，
+        差的整個就是 σ²/2 = 13.88%/年。<b>而那一項要靠再平衡才拿得到，
+        兩個各自買進不賣的定投計畫一分錢都拿不到</b>——見<a href="#diversify">第三節</a>末段。
+      </p>
+    </div>
+
+    <h3 class="sub">2.5　★ 最漂亮的一段：同一道題有兩個答案，而且兩個都對</h3>
+    <div class="callout good">
+      <h3>minimax 的答案取決於你把誰放進「事後最好的選擇」名單</h3>
+      <p style="margin:0">
+        <a class="gl" href="#g16-minimax">minimax 遺憾</a>不需要預測未來，所以本專案很愛用它。
+        研究員先證了一件事：<b>用 BTC 顆數算的遺憾，和用 ETH 顆數算的遺憾，公式完全相同</b>
+        （有回歸測試）。所以答案<b>與你最後在乎哪個幣無關</b>。然後：
+      </p>
+      <ul>
+        <li><b>如果「事後最好的選擇」名單是 &#123;全 BTC, 全 ETH&#125;</b>：
+          最小的最大遺憾在 <b>w = 0.5</b>，值 = log 2 = <b>0.6931</b>。
+          <b>也就是恰好一半一半——你現在剛好就在這裡。</b></li>
+        <li><b>如果名單只有 &#123;全 BTC&#125;</b>——那正是本專案目標函數寫的那一行——
+          <b>那麼 w = 0 是唯一的零遺憾解，遺憾恆為 0、變異數恆為 0，對任何未來都成立。</b></li>
+      </ul>
+      <p style="margin:10px 0 0">
+        <b>兩個答案都正確。差別不在數學，在「遺憾要拿誰當比較對象」，
+        而那就是「你用什麼計價」這個問題本身。資料在這一步沒有立場。</b>
+        這與本專案對 β=1 的裁決結構一模一樣，差別是：那裡的「棄權動作」只有一個，
+        <b>這裡有兩個，取決於你叫哪個資產是家。</b>
+      </p>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <caption>最差情況有多大（零漂移參照，σ<sub>X</sub> = 52.69%）：w = 0.5 相對「事後完美選擇」讓出多少</caption>
+        <thead><tr><th>持有年數</th><th>log X 標準差</th><th>X 比值 5%~95%</th><th>w=0.5 的遺憾</th></tr></thead>
+        <tbody>
+          <tr><td class="name">0.5 年</td><td>0.373</td><td>0.542 ~ 1.846</td><td>0.2602</td></tr>
+          <tr><td class="name">1.0 年</td><td>0.527</td><td>0.420 ~ 2.379</td><td>0.3423</td></tr>
+          <tr><td class="name">2.0 年</td><td>0.745</td><td>0.294 ~ 3.407</td><td>0.4358</td></tr>
+          <tr><td class="name">3.0 年</td><td>0.913</td><td>0.223 ~ 4.487</td><td>0.4920</td></tr>
+          <tr><td class="name">5.0 年</td><td>1.178</td><td>0.144 ~ 6.946</td><td>0.5586</td></tr>
+          <tr><td class="name">10.0 年</td><td>1.666</td><td>0.065 ~ 15.501</td><td>0.6306</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="section-note">
+      讀法：<b>「這件事能錯到多離譜」，不是「預期會賠多少」。</b>
+      一年期 ETH/BTC 落在 0.420 ~ 2.379 倍之間是常態，
+      <b>這就是這個部位的實際大小</b>。
+    </p>
+
+    <div class="callout bad">
+      <h3>所以研究員交了什麼、沒交什麼</h3>
+      <p style="margin:0">
+        <b>沒交：「ETH 該不該存在」的答案。</b>他明確拒絕，理由寫在報告最後一節：
+        <b>資料在方向上量不出東西（六個視窗 |t| ≤ 0.97），在大小上量得很清楚（區間蓋住 0、0.5、1）。</b>
+      </p>
+      <p style="margin:10px 0 0">
+        <b>交了三件：</b>(1) 這筆配置在數學上究竟是什麼（一個 size = 1/2 的 ETH/BTC 方向性部位，不是分散化）；
+        (2) 它有多大（上面那張表）；
+        (3) 它在你真正經歷過的那段期間表現如何（<a href="#headline">第一節</a>，
+        <b>而那個數字不預測任何事</b>）。
+      </p>
+      <p style="margin:10px 0 0">
+        <b>本頁同意這個拒絕，而且認為這個拒絕本身就是本輪最有價值的產出之一。</b>
+        一個研究員在這裡給出「建議配置 30%」，會是把 12 格 bootstrap 的
+        [−1.49, +1.59] 假裝成一個點。
+      </p>
+    </div>
+  </section>
+
+  <section id="diversify">
+    <h2>三、持有 ETH 不是「分散風險」——兩個口徑都死<span class="pill fact">推導＋實測</span></h2>
+    <p class="section-note">
+      派工書只要求檢查「以 BTC 幣數為目標時，分散化還剩多少」。
+      研究員把同一把刀也切向美元口徑，<b>結果它在那裡也不成立</b>——這一段超出派工範圍。
+    </p>
+
+    <div class="plain">
+      <span class="lbl">白話導讀</span>
+      <p>「不要把雞蛋放在同一個籃子」是對的，但它有一個前提：<b>兩個籃子要不會同時掉。</b>
+        這一節分兩步：先看你<b>真正在乎的記分方式</b>（BTC 顆數），再看一般人說的那種（美元價值）。</p>
+      <p><b>第一步不需要任何歷史資料</b>，用代數就能證完：
+        如果你的目標是「BTC 顆數愈多愈好」，那麼「完全不買 ETH」這個做法的<b>波動恰好是 0</b>，
+        而且買愈多 ETH 波動愈大，<b>中間沒有任何一個「比較穩」的比例</b>。</p>
+      <p><b>第二步才需要資料，而結果一樣</b>：BTC 和 ETH 的相關係數是 0.80，近一年升到 0.91，
+        <b>而 ETH 晃得比 BTC 更兇</b>。六個時間視窗全部顯示：一半一半的組合<b>比純持有 BTC 還晃</b>。</p>
+    </div>
+
+    <h3 class="sub">3.1　以 BTC 顆數記分：這是推導，不是回測</h3>
+    <div class="engine">
+      <h3>兩行代數就結束了</h3>
+      <dl>
+        <dt>設定</dt>
+        <dd>投入 1 元，比例 <code>w</code> 買 ETH，令 <code>g</code> = 期末的 ETH/BTC 比值 ÷ 期初的 ETH/BTC 比值。</dd>
+        <dt>相對「全買 BTC」的 BTC 顆數</dt>
+        <dd><code>R(w) = 1 + w(g − 1)</code></dd>
+        <dt>它的變異數</dt>
+        <dd><code>Var[R(w)] = w² · Var[g]</code>
+          —— <b>對 w 嚴格遞增，最小值在 w = 0，而且在那一點恰好等於 0。沒有內點。</b>
+          （回歸測試：21 個 w 格點逐一檢查單調遞增。）</dd>
+        <dt>對照：用美元記分時就有內點了</dt>
+        <dd><code>w*<sub>最小變異數</sub> &gt; 0</code> 的條件是 <code>ρ &lt; σ<sub>BTC</sub>/σ<sub>ETH</sub></code>
+          —— <b>這個條件在真實資料上不成立，見 3.2。</b></dd>
+      </dl>
+    </div>
+    <div class="callout bad">
+      <p style="margin:0">
+        <b>「持有兩種幣就是分散化」在美元口徑下是一個有內容的主張，在 BTC 顆數口徑下是假的。
+        而翻轉它的是<a class="gl" href="#g16-numeraire">計價單位</a>，不是投資組合本身。</b>
+      </p>
+      <p style="margin:10px 0 0">
+        在 BTC 顆數目標下持有 ETH <b>不是分散化，是一個大小 = w 的 ETH/BTC 方向性部位</b>，句點。
+        這正是第十三輪那句「計價單位決定哪個資產是無風險資產」在橫斷面上的重演。
+      </p>
+    </div>
+
+    <h3 class="sub">3.2　★ 超出派工書：它在美元口徑下<b>也</b>不成立</h3>
+    <div class="table-wrap wide">
+      <table>
+        <caption>「vs 純 BTC」為正 = 一半一半的美元組合<b>比只拿 BTC 更晃</b>；最後一欄為負 = 要降低美元波動得去<b>放空</b> ETH</caption>
+        <thead><tr><th>視窗</th><th>σ<sub>BTC</sub></th><th>σ<sub>ETH</sub></th><th>ρ</th>
+          <th>σ(50/50)</th><th>vs 純 BTC</th><th>最小變異數的 ETH 權重</th></tr></thead>
+        <tbody>
+          <tr><td class="name">全期 2017-08 ~ 2026-09</td><td>67.6%</td><td>87.4%</td><td>0.798</td><td>73.5%</td><td class="negv">+8.8%</td><td class="negv">−0.053</td></tr>
+          <tr><td class="name">2017-08 ~ 2020-08</td><td>85.1%</td><td>104.7%</td><td>0.783</td><td>89.6%</td><td class="negv">+5.3%</td><td class="pos">0.063</td></tr>
+          <tr><td class="name">2020-08 ~ 2023-08</td><td>66.5%</td><td>88.7%</td><td>0.815</td><td>74.0%</td><td class="negv">+11.3%</td><td class="negv">−0.143</td></tr>
+          <tr><td class="name">2023-08 ~ 2026-09</td><td>46.5%</td><td>65.3%</td><td>0.817</td><td>53.3%</td><td class="negv">+14.8%</td><td class="negv">−0.218</td></tr>
+          <tr><td class="name">近三年</td><td>46.7%</td><td>66.2%</td><td>0.816</td><td>53.9%</td><td class="negv">+15.3%</td><td class="negv">−0.223</td></tr>
+          <tr><td class="name">近一年</td><td>44.8%</td><td>64.3%</td><td class="negv">0.908</td><td>53.3%</td><td class="negv">+18.9%</td><td class="negv">−0.666</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout bad">
+      <p style="margin:0">
+        <b>6 個視窗裡有 6 個</b>，50/50 的美元組合比純持有 BTC 更波動
+        （多 5.3% ~ 18.9%）。
+        <b>6 個視窗裡有 5 個</b>，美元最小變異數的 ETH 權重是負的。
+      </p>
+      <p style="margin:10px 0 0">
+        機制很單純：ρ 大約 0.78~0.91，而 ETH 的波動是 BTC 的 1.3~1.4 倍。
+        <b>ETH 在這段歷史裡基本上就是「BTC 的高倍數版本」。</b>
+        <b>而且趨勢在惡化：ρ 從 0.783 升到 0.908。</b>
+      </p>
+    </div>
+
+    <h3 class="sub">3.3　尾部也死：BTC 最慘的那些日子，ETH 跌得更兇</h3>
+    <div class="split">
+      <div class="stat"><div class="label">BTC 最差 5% 的日子（n=166）</div>
+        <div class="value neg">BTC −8.51%</div><div class="sub">同一批日子裡 ETH 平均 −9.61%</div></div>
+      <div class="stat"><div class="label">那些日子裡 ETH 逆勢上漲的比例</div>
+        <div class="value neg">3.0%</div><div class="sub">5/166 天</div></div>
+      <div class="stat"><div class="label">ETH 平常的上漲日比例</div>
+        <div class="value">51.0%</div><div class="sub">對照組：沒有條件的話是這個數</div></div>
+    </div>
+    <p class="section-note" style="margin-top:12px">
+      <b>在 BTC 最壞的日子裡，ETH 幾乎不會逆勢（3.0% vs 平常的 51.0%），而且跌得更多。
+      可量測的那一半尾部保護不存在。</b>
+    </p>
+
+    <div class="callout">
+      <h3>★ 唯一站得住的反面理由：而它我們量不到，也不假裝量得到</h3>
+      <p style="margin:0">
+        「分散化」最誠實的版本<b>不是變異數論證</b>，是<b>「BTC 專屬的災難」</b>——
+        協議層失效、量子計算、單一司法管轄的全面封殺。
+        <b>這種事件依定義不在樣本裡</b>：過去九年沒有發生過，所以相關係數、變異數、尾部統計
+        <b>全部碰不到它</b>。
+      </p>
+      <p style="margin:10px 0 0">
+        <b>這是這個配置唯一一條我們無法反駁的論證，而它同時也無法被任何資料支持。</b>
+        如果你持有 ETH 的理由是這一條，<b>那麼上面 3.1~3.3 的所有數字都不該影響你的決定</b>——
+        它們回答的是別的問題。<b>這句話是認真的，不是客套。</b>
+      </p>
+      <p style="margin:10px 0 0">
+        <b>但請不要把這一條和「ETH 比較會漲」混在一起。</b>
+        前者是保險，後者是方向賭注，<a href="#exist">第二節</a>已經量過方向賭注量不出來。
+      </p>
+    </div>
+
+    <h3 class="sub">3.4　「再平衡收割」這條路：研究員在這裡主動停手</h3>
+    <div class="callout">
+      <p style="margin:0">
+        <a class="gl" href="#g16-rebal">再平衡收割</a>在理論上有 <b>13.88%/年</b>
+        （就是 2.4 節那個 σ²/2）。<b>但它是「連續再平衡」的對價，
+        兩個從不互相再平衡的獨立定投計畫一分錢都拿不到。</b>實測：
+      </p>
+    </div>
+    <div class="table-wrap wide">
+      <table>
+        <caption>w = 0.5、BTC 顆數口徑：買進不動 vs 定期再平衡（理論年化收割值 3.47%）</caption>
+        <thead><tr><th>視窗</th><th>買進持有</th><th>每月再平衡</th><th>每週</th><th>每日</th><th>年化收割</th></tr></thead>
+        <tbody>
+          <tr><td class="name">全期 2017-08 ~ 2026-09</td><td>0.7312</td><td>1.0771</td><td>0.9732</td><td>0.9323</td><td>2.71%</td></tr>
+          <tr><td class="name">2017-08 ~ 2020-08</td><td>0.7359</td><td>0.9143</td><td>0.8557</td><td>0.8046</td><td>3.04%</td></tr>
+          <tr><td class="name">2020-08 ~ 2023-08</td><td>1.4452</td><td>1.5289</td><td>1.5191</td><td>1.5199</td><td>1.70%</td></tr>
+          <tr><td class="name">2023-08 ~ 2026-09</td><td>0.7593</td><td>0.7664</td><td>0.7613</td><td>0.7625</td><td class="negv">0.14%</td></tr>
+          <tr><td class="name">近三年</td><td>0.7733</td><td>0.7906</td><td>0.7815</td><td>0.7826</td><td class="negv">0.40%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout bad">
+      <p style="margin:0">
+        <b>理論值 3.47%／年，近三年實測 0.40%，最近的視窗 0.14%。</b>
+        而且全期的<b>每月再平衡（1.0771）勝過每日（0.9323）</b>——
+        <b>這與連續再平衡理論的預測方向相反</b>，是本專案早就記錄過的「路徑相依複利假象」。
+      </p>
+      <p style="margin:10px 0 0">
+        <b>然後研究員做了一件對的事：他停手了。</b>
+        「要選再平衡頻率」就是一個參數格（同一個視窗裡從 0.9323 到 1.0771 差 16%），
+        而<b>依本專案的收案標準，「需要跑一格參數再挑最好的」這類候選的期望值已被量測為零</b>。
+        <b>他沒有去挑那個最好的頻率，也沒有把它列成候選。</b>
+        （而<a href="#timing">第五節</a>正好又在最單純的 24 格上把同一件事量了第六次。）
+      </p>
+    </div>
+  </section>
+
+  <section id="idle">
+    <h2>四、推翻派工書：閒置池是共用的，ETH 不會多出第二筆漏損<span class="pill fact">代數＋實測</span></h2>
+    <p class="section-note">
+      派工書寫的是「本線算術逐字適用」。照字面讀會得出「ETH 再來一份 $33.88/年」。
+      <b>那是錯的，而且錯的方向剛好讓一個舊估計變得更可信。</b>
+    </p>
+
+    <div class="plain">
+      <span class="lbl">白話導讀</span>
+      <p>你存一筆 USDT 進幣安，定投每週從裡面扣一點。<b>還沒被扣走的那些錢躺著沒有生息</b>，
+        這就是第十輪算的「閒置漏損」。直覺會想：現在有兩個計畫在扣，是不是漏損變兩倍？</p>
+      <p><b>不是。</b>因為幣安的現貨帳戶<b>每種幣只有一個餘額</b>，
+        而定投的 API 裡<b>根本沒有「從哪個錢包扣」這個選項</b>（研究員去查了官方文件）。
+        兩個計畫吃的是<b>同一堆錢</b>。躺著沒生息的總金額只跟「你平均放多少錢在那裡」有關，
+        <b>跟有幾個計畫在花它無關</b>。</p>
+      <p><b>真正改變的是錢被花掉的速度</b>——而這一點反而幫了第十輪一個忙。</p>
+    </div>
+
+    <h3 class="sub">4.1　為什麼不會變兩份：一行代數＋一個回歸測試</h3>
+    <div class="callout good">
+      <p style="margin:0">
+        閒置利息 = <b>平均閒置餘額 × 利率</b>。<b>平均閒置餘額與「有幾個計畫在消耗它」無關。</b>
+        把一個池子拆成兩個各半的池子，在補貼上限以下<b>完全等值</b>（利息對餘額是線性的）：
+      </p>
+      <ul>
+        <li>一個池（峰值 $953.08）：<b>$32.45/年</b></li>
+        <li>兩個獨立的半大池：2 × $16.47 = <b>$32.95/年</b></li>
+        <li>差額：<b>+$0.49/年</b>（純粹來自補貼上限的非線性，不是來自「兩個計畫」）</li>
+      </ul>
+      <p style="margin:10px 0 0">
+        這條有回歸測試守著。<b>唯一的例外是兩個計畫分屬不同子帳戶</b>——
+        那會需要各自獨立入金，與「一次存一大筆慢慢花」的形狀不符，
+        <b>而且沒有任何紀錄指向它。研究員把這一條標為推論，不是觀測。</b>
+      </p>
+    </div>
+
+    <h3 class="sub">4.2　★ 真正改變的是燃燒率，而它讓第十輪的點估計變可信</h3>
+    <div class="table-wrap wide">
+      <table>
+        <caption>同樣的閒置金額，兩種「每週被花掉多少」的讀法</caption>
+        <thead><tr><th>每週燃燒</th><th>隱含的入金間隔</th><th>平均閒置餘額</th>
+          <th>年利息（正確口徑）</th><th>年利息（第十輪的簡化）</th></tr></thead>
+        <tbody>
+          <tr><td class="name">$100/週（第十輪的假設：只有 BTC 計畫）</td><td>9.53 週（67 天）</td><td>$476.54</td><td>$32.45</td><td>$32.95</td></tr>
+          <tr class="best"><td class="name">$200/週（兩個計畫，正確）</td><td>4.77 週（33 天）</td><td>$476.54</td><td>$32.45</td><td>$32.95</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout good">
+      <p style="margin:0">
+        <b>「每 9.53 週入一次金」是一個很怪的人類節奏。「每 4.77 週」就是月付。</b>
+        第十輪當時只能給一個很寬的區間（$17~$72），因為它不知道入金節奏。
+        用 $200/週去讀，<b>所有合理的人類節奏全部落在點估計附近</b>：
+      </p>
+    </div>
+    <div class="table-wrap wide">
+      <table>
+        <caption>燃燒率 $200/週之下，各種入金習慣對應的年利息</caption>
+        <thead><tr><th>入金節奏</th><th>每批金額</th><th>可撐幾週</th><th>平均閒置</th>
+          <th>年利息（含補貼）</th><th>只算市場利率</th></tr></thead>
+        <tbody>
+          <tr><td class="name">每週 $200</td><td>$200</td><td>1.00</td><td>$100.00</td><td>$6.91</td><td>$2.91</td></tr>
+          <tr><td class="name">每兩週 $400</td><td>$400</td><td>2.00</td><td>$200.00</td><td>$13.83</td><td>$5.83</td></tr>
+          <tr><td class="name">每月 $869（= 200×4.345）</td><td>$869</td><td>4.34</td><td>$434.50</td><td>$29.93</td><td>$12.66</td></tr>
+          <tr><td class="name">整數 $1,000</td><td>$1000</td><td>5.00</td><td>$500.00</td><td>$33.77</td><td>$14.57</td></tr>
+          <tr class="base"><td class="name">★ 點估計（觀測推得）</td><td>$953</td><td>4.77</td><td>$476.54</td><td>$32.45</td><td>$13.88</td></tr>
+          <tr><td class="name">每季 $2,608</td><td>$2608</td><td>13.04</td><td>$1304.00</td><td>$65.09</td><td>$37.99</td></tr>
+          <tr><td class="name">整數 $5,000</td><td>$5000</td><td>25.00</td><td>$2500.00</td><td>$102.28</td><td>$72.84</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="sub">4.3　同一節裡有一個對第十輪不利的更正，照報</h3>
+    <div class="callout bad">
+      <p style="margin:0">
+        第十輪用「平均餘額 × 7.109% 的混合利率」。
+        <b>但那 4% 的分層補貼只付前 800 USDT</b>，而鋸齒的峰值 $953.08 有一段時間在 800 以上，
+        那一段只能拿市場利率。正確算法要把兩層分開。
+      </p>
+      <p style="margin:10px 0 0">
+        結果：<b>$33.88/年 → $32.45/年</b>（在今日利率下的正確值），
+        <b>簡化公式高估了 $0.49/年，約 1.5%</b>。
+        <b>量級不變，但公式寫錯了，而且它在批次更大時會放大</b>（$2,600 批次下誤差 $7.3）。
+        已加回歸測試。
+      </p>
+      <p style="margin:10px 0 0">
+        另外，USDT 的市場利率<b>在持續下滑</b>：
+        第十輪 3.1090% → 第十三輪 3.0675% → 今日實測 <b>2.9137%</b>。
+        <b>所以 $32.45/年 這個數字帶有時效，不是常數。</b>
+      </p>
+    </div>
+  </section>
+
+  <section id="timing">
+    <h2>五、第十輪的時點檢定：判定成立，但理由現在才完整<span class="pill fact">逐位元重現</span></h2>
+    <p class="section-note">
+      第十輪的結論是「改定投的執行時間不是可行的改善手段，可以永久關閉」。
+      <b>這個判定成立。但第十輪只掃了兩個小時，而掃完 24 個之後，事情變得比它想的更有意思。</b>
+    </p>
+
+    <div class="plain">
+      <span class="lbl">白話導讀</span>
+      <p>「定投挑在星期幾、幾點扣款，會不會買得比較便宜？」第十輪測過兩個時段，說沒有差別。</p>
+      <p>這一輪先把第十輪的兩個數字<b>一模一樣地重算出來</b>（連小數點後兩位都對上），
+        然後做了第十輪沒做的事：<b>把一天 24 個小時全部掃一遍</b>。</p>
+      <p>結果很值得看：<b>樣本內</b>看起來<b>剛好像通過本專案的門檻</b>。
+        但把「用前半段挑出來的最便宜時段」拿到<b>後半段</b>去驗證，<b>六次全部失敗</b>。</p>
+    </div>
+
+    <h3 class="sub">5.1　先對帳：第十輪的兩個數字逐位元重現</h3>
+    <div class="table-wrap wide">
+      <table>
+        <caption>「本輪重算」與「第十輪原值」逐欄比對（標準誤的 0.1 差異來自浮點捨入）</caption>
+        <thead><tr><th>計畫</th><th>N</th><th>本輪平均（bp）</th><th>本輪 SE</th><th>本輪 t</th>
+          <th>第十輪 t</th></tr></thead>
+        <tbody>
+          <tr><td class="name">BTC 計畫（週三 17:00 UTC）</td><td>156</td><td>+14.70</td><td>22.3</td><td>+0.66</td><td>+0.66</td></tr>
+          <tr><td class="name">ETH 計畫（週三 16:00 UTC）</td><td>156</td><td>+1.64</td><td>31.3</td><td>+0.05</td><td>+0.05</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout good">
+      <h3>涵蓋稽核：這次連「資料本身有沒有洞」都查了</h3>
+      <ul>
+        <li><b>26280 根小時 K，缺 0 根。</b>（2023-09-21 01:00 → 2026-09-20 00:00，1094 天）</li>
+        <li>區間內的週三恰好 <b>156</b> 個，與 N 相符。</li>
+        <li>時區：<code>Asia/Ho_Chi_Minh</code> 2020~2026 的 UTC 偏移集合 = <b>UTC+07:00 這一個值，無日光節約</b>
+          —— 整段樣本不會漂移。</li>
+        <li><b>重疊造成的自相關是負的</b>（BTC −0.324、ETH −0.354），
+          代表原本的標準誤是<b>保守</b>的。修正後 SE 反而縮小
+          （22.3→13.2 bp、31.3→16.9 bp），
+          t 變成 +1.11 / +0.10，<b>仍然不顯著</b>。</li>
+        <li><b>修正後的偵測下限比第十輪自稱的還好</b>：
+          BTC ±26.4 bp = <b>$13.74/年</b>、
+          ETH ±33.8 bp = <b>$17.60/年</b>（以 $5,200 流量計）。
+          第十輪寫的 ±40 bp 是<b>高估了自己的雜訊</b>。</li>
+      </ul>
+      <p style="margin:10px 0 0">
+        <b>請用正確的方向讀這一條：檢定看不到比這更小的效應。
+        它沒有證明效應是零，它證明的是「效應在這條地板以下」。</b>
+      </p>
+    </div>
+
+    <h3 class="sub">5.2　★ 第十輪漏掉的那 22 個小時——而它看起來像個發現</h3>
+    <div class="split">
+      <div class="stat"><div class="label">BTC：最便宜 vs 最貴小時的落差</div>
+        <div class="value warn">14.33 bp</div>
+        <div class="sub">最便宜 01:00、最貴 22:00</div></div>
+      <div class="stat"><div class="label">BTC：同日配對檢定</div>
+        <div class="value warn">t = +2.42</div>
+        <div class="sub">N = 1094，日效應完全抵銷</div></div>
+      <div class="stat"><div class="label">ETH：同日配對檢定</div>
+        <div class="value warn">t = +3.06</div>
+        <div class="sub">N = 1094，落差 12.86 bp</div></div>
+      <div class="stat"><div class="label">拿到樣本外驗證</div>
+        <div class="value neg">6 / 6 失敗</div>
+        <div class="sub">樣本內最便宜的小時，樣本外排 13~21 / 24</div></div>
+    </div>
+    <p class="section-note" style="margin-top:12px">
+      <b>一個 t = +3.06、N = 1094、日效應完全抵銷的配對檢定，
+      長得就像本專案的門檻剛好被通過。</b>
+      研究員在自己的 log 裡就先標註了：<b>那兩個小時是從這同一批樣本裡挑出來的，
+      所以這個 t 不是證據，它是「最大值」的定義。</b>
+    </p>
+
+    <div class="table-wrap wide">
+      <table>
+        <caption>用前半段挑出最便宜的小時，拿到後半段量（rank 1 = 仍然最便宜，24 = 變成最貴）</caption>
+        <thead><tr><th>標的／切分點</th><th>樣本內挑中</th><th>樣本內 bp</th>
+          <th>樣本外 bp</th><th>樣本外排名</th><th>前後半段的秩相關</th></tr></thead>
+        <tbody>
+          <tr><td class="name">BTC · 2024-12-02</td><td>1:00</td><td>−13.98</td><td class="negv">0.84</td><td class="negv">15/24</td><td class="negv">−0.422</td></tr>
+          <tr><td class="name">BTC · 2025-03-22</td><td>1:00</td><td>−11.79</td><td class="negv">1.62</td><td class="negv">18/24</td><td class="negv">−0.336</td></tr>
+          <tr><td class="name">BTC · 2025-07-09</td><td>1:00</td><td>−10.99</td><td class="negv">3.77</td><td class="negv">21/24</td><td class="negv">−0.734</td></tr>
+          <tr><td class="name">ETH · 2024-12-02</td><td>2:00</td><td>−11.47</td><td class="negv">1.85</td><td class="negv">17/24</td><td>0.005</td></tr>
+          <tr><td class="name">ETH · 2025-03-22</td><td>1:00</td><td>−6.64</td><td class="negv">−0.62</td><td class="negv">13/24</td><td>0.537</td></tr>
+          <tr><td class="name">ETH · 2025-07-09</td><td>1:00</td><td>−8.65</td><td class="negv">3.88</td><td class="negv">19/24</td><td>0.223</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout bad">
+      <h3>這是同一件事的第六次獨立量測，仍然是零——而這次的格子最單純</h3>
+      <p style="margin:0">
+        六次全部：<b>樣本內最便宜的小時，到了樣本外排在中位數之後</b>
+        （13~21 / 24）；<b>符號翻轉 5/6</b>；
+        前後半段的秩相關從 −0.734 到 +0.537，<b>六個裡有 3 個是負的</b>。
+      </p>
+      <p style="margin:10px 0 0">
+        <b>而這一次的格子是最單純的一種</b>——24 個小時，沒有訊號、沒有加權、沒有標的池、
+        沒有任何可以「調」的東西。<b>連這種格子都挑不出可以轉移的東西。</b>
+      </p>
+      <p style="margin:10px 0 0">
+        <b>判定：第十輪「改執行時間不是可行的改善手段」成立，但它的理由現在才完整。</b>
+        第十輪靠的是結構論證（Spread 是常數、參考價沒有可預測的偏斜），
+        <b>那個結構論證這一輪回原始文件重讀確認了</b>（見<a href="#actionable">第六節</a>）；
+        但結構論證<b>排不掉樣本內的日內季節性</b>——那個是真的存在於樣本內，<b>只是不轉移</b>。
+        <b>兩條理由現在都在檔案裡了。</b>
+      </p>
+      <p style="margin:10px 0 0">
+        還有一個實務上的封口：<b>改執行小時必須修改計畫，而修改計畫會觸發 Spread 重新定價</b>。
+        即使那 14.33 bp 是真的（約 $15/年），
+        <b>它要賭的是一個方向未知的重新定價。取捨不划算，而且不需要再討論了。</b>
+      </p>
+    </div>
+  </section>
+
+  <section id="actionable">
+    <h2>六、兩件可執行的事，以及三個查到的新事實<span class="pill hyp">存量是推估值</span></h2>
+    <p class="section-note">
+      本節有一個貫穿的但書：<b>你的 ETH 現貨存量，十六輪從來沒有被記錄過。</b>
+      下面的金額建立在「ETH 計畫與 BTC 計畫同樣大小、同樣長度」的推估上，
+      <b>所以它是一個量級，不是一個帳單。</b>
+    </p>
+
+    <div class="plain">
+      <span class="lbl">白話導讀</span>
+      <p>這一節兩件事都很小（一年幾十塊美元），但它們是<b>確定的、不需要預測任何事</b>的那種小。
+        第一件是「你手上的 ETH 正在零收益地躺著」，第二件是一個第十三輪查不到的規格終於查到了。</p>
+      <p><b>第一件要特別小心讀</b>：它<u>不是</u>「所以該買 ETH」。
+        它是「<u>既然已經有</u> ETH，它不必是零收益」。這兩句話差很多，下面會拆開。</p>
+    </div>
+
+    <h3 class="sub">6.1　ETH 的活期理財利率是 BTC 的六十幾倍——這個資產十六輪沒人查過</h3>
+    <div class="callout good">
+      <p style="margin:0">
+        第八輪用 625 行否決了「把 BTC 拿去出借」（一年只有 $2.52，風險卻是全額）。
+        第十輪已經抓到一次：<b>那是對「BTC 這個幣種」的否決，卻被誤讀成對「Simple Earn 這個產品」的否決</b>，
+        USDT 因此被漏掉了七輪。<b>ETH 是第三個資產，十六輪沒有任何一輪查過它。</b>
+      </p>
+    </div>
+    <div class="table-wrap wide">
+      <table>
+        <caption>今日實測的市場利率（公開端點，不需要任何憑證；加法關係 <code>latest = market + tier</code> 五個幣種全部成立）</caption>
+        <thead><tr><th>資產</th><th>市場利率 <code>marketApr</code></th><th>分層補貼</th>
+          <th>補貼上限</th><th>合計</th></tr></thead>
+        <tbody>
+          <tr><td class="name">BTC</td><td>0.017294%</td><td>+0.2500%</td><td>前 0.01</td><td>0.267294%</td></tr>
+          <tr class="best"><td class="name">ETH</td><td>1.105060%</td><td>+0.1000%</td><td>前 0.2</td><td>1.205060%</td></tr>
+          <tr><td class="name">USDT</td><td>2.913700%</td><td>+4.0000%</td><td>前 800</td><td>6.913700%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout">
+      <h3>這個「幾倍」必須帶著時間戳一起講</h3>
+      <p style="margin:0">
+        研究員在 <b>2026-09-21T02:12:18Z</b> 量到 <b>ETH ÷ BTC = 63.9 倍</b>。
+        <b>本頁作者在同一天 2026-09-21T02:39:50Z 用同一個公開端點再量一次，是 64.5 倍。</b>
+      </p>
+      <p style="margin:10px 0 0">
+        <b>兩個都對——差別是利率會浮動，而 BTC 那個分母太小（0.017294%），
+        分母的微小變動就能把倍數推動好幾個單位。</b>
+        所以正確的說法是「<b>六十幾倍</b>，而且這個倍數每天會變」，
+        <b>不是「就是 63.9 倍」。任何引用這個倍數的句子都必須附上量測時間。</b>
+      </p>
+    </div>
+    <div class="table-wrap wide">
+      <table>
+        <caption>如果把 ETH 放進活期理財，一年能多拿多少（價格取資料檔最後一根日 K：ETH $2,645.21、BTC $81,178.00）</caption>
+        <thead><tr><th>ETH 存量</th><th>美元價值</th><th>ETH／年</th><th>$／年</th>
+          <th>折算 BTC 顆數／年</th><th>對照：BTC 存量的收益</th></tr></thead>
+        <tbody>
+          <tr><td class="name">0.250 ETH</td><td>$661</td><td>0.00296</td><td class="pos">$7.84</td><td>0.000097</td><td>$2.51</td></tr>
+          <tr><td class="name">0.500 ETH</td><td>$1,323</td><td>0.00573</td><td class="pos">$15.14</td><td>0.000187</td><td>$2.51</td></tr>
+          <tr><td class="name">1.000 ETH</td><td>$2,645</td><td>0.01125</td><td class="pos">$29.76</td><td>0.000367</td><td>$2.51</td></tr>
+          <tr class="base"><td class="name">1.137 ETH　← 推估值</td><td>$3,008</td><td>0.01276</td><td class="pos">$33.76</td><td>0.000416</td><td>$2.51</td></tr>
+          <tr><td class="name">2.000 ETH</td><td>$5,290</td><td>0.02230</td><td class="pos">$58.99</td><td>0.000727</td><td>$2.51</td></tr>
+          <tr><td class="name">4.000 ETH</td><td>$10,581</td><td>0.04440</td><td class="pos">$117.45</td><td>0.001447</td><td>$2.51</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout bad">
+      <h3>三個但書必須<b>同時</b>講，否則這一段會被讀成推薦</h3>
+      <ul>
+        <li><b>風險結構與第八輪否決 BTC 出借時<u>完全相同</u>。</b>
+          條款 C.2／C.3（與幣安自有資產混同存放的無擔保債權、平台可全權裁量挪用）、
+          ADGM 的對手方、SAFU 不涵蓋、贖回可延遲——
+          <b>第八輪那 625 行的風險工作原封不動適用，變的只有「承擔這個風險的對價」。</b>
+          第八輪那個「破產回收率必須用幣數重算」的口徑偏誤，<b>對 ETH 同樣適用</b>。</li>
+        <li><b>曝險是全額、無限期。</b>第八輪的 BTC 曝險是 $2,752 換 $2.51；
+          ETH 是 $3,008 換 $33.76。<b>倍數變好，但曝險的形狀沒變</b>——
+          對照閒置 USDT 那一項只曝險 <b>~4.8 週</b>，這是完全不同的東西。</li>
+        <li><b>★ 在 BTC 顆數的目標下，這筆收益買到的是 ETH 顆數，不是 BTC 顆數。</b>
+          0.01276 ETH／年 折算只有 <b>0.000416 BTC／年</b>。
+          <b>它讓一個已經存在的 ETH 部位變大，不會讓 BTC 部位變大。</b>
+          <b>它不是「應該持有 ETH」的理由，它是「既然已經持有 ETH，它可以不是零收益」的事實。
+          不要把這兩件事混在一起。</b></li>
+      </ul>
+      <p style="margin:10px 0 0">
+        研究員指出：這個「對資產的判決被擴大套用到產品」的錯誤，
+        <b>這是本專案第三次現身</b>（第八輪 → 第十輪抓到一次 → 這次）。
+      </p>
+    </div>
+
+    <h3 class="sub">6.2　第十三輪標為未知的那一項，查到了</h3>
+    <div class="callout good">
+      <p style="margin:0">
+        定投的可選週期（API 欄位 <a class="gl" href="#g16-cycle"><code>subscriptionCycle</code></a>）：
+      </p>
+      <p style="margin:10px 0 0;font-size:1.05rem">
+        <b>H1 / H4 / H8 / H12 / WEEKLY / DAILY / MONTHLY / BI_WEEKLY</b>
+      </p>
+      <p style="margin:10px 0 0">
+        來源是幣安官方開發者文件的 Wayback 封存（<code>plan/add</code> 與 <code>plan/edit</code>
+        兩個端點列的是<b>完全相同的八個值</b>）。同一份文件還確認了另外幾件事：
+        週期與時間<b>必須以 UTC+0 送出、而且只能是整點</b>；
+        <code>flexibleAllowedToUse</code> 是一個布林開關（就是第十輪在網頁上找到的那個）；
+        <code>planType</code> 有 <code>SINGLE / PORTFOLIO / INDEX</code>，
+        <b>而 <code>PORTFOLIO</code> 可以用<u>一個</u>計畫同時買 BTC 與 ETH 並指定百分比</b>。
+      </p>
+    </div>
+    <div class="callout bad">
+      <h3>三條但書要跟著這個答案一起走</h3>
+      <ul>
+        <li><b>封存快照是 2025-02，不是今天。</b>幣安在 2026 年是否增刪過週期選項，
+          在這個環境沒有辦法確認。</li>
+        <li><b>這是 Auto-Invest 的 API 文件，你走的是網頁上的 Convert Recurring。</b>
+          兩者被幣安視為同一個產品的兩條路徑（第十輪已判定），
+          <b>但「API 的週期集合 = 網頁 UI 的週期集合」這件事沒有被驗證過。這一條標為未驗證。</b></li>
+        <li><b>它不改變第十三輪的結論。</b>第十三輪需要它來回答「到帳就部署能不能不違反全自動」。
+          <code>DAILY</code> 與 <code>H1</code> 都存在，<b>代表那條路在機制上存在</b>；
+          但第十三輪自己的結論是「<b>資料無法在兩個零參數候選之間裁決</b>」，
+          <b>這個發現只是把「路徑是否存在」從未知變成已知，沒有動到那個裁決。</b></li>
+      </ul>
+    </div>
+
+    <h3 class="sub">6.3　Spread 條款重讀：三件新事實，以及一個仍然未知</h3>
+    <div class="callout">
+      <p style="margin:0">
+        研究員回原始出處重讀了《Recurring Reference Price Methodology》
+        （<code>binance.com</code> 被防火牆擋下，改由 <code>binance.info</code> 取得同一份，
+        文件自標日期 2026-04-23，全文已存檔）。<b>逐字的條文確認了三件事：</b>
+      </p>
+      <ul>
+        <li><b>改 ETH 計畫會重新定價，但不會波及 BTC 計畫。</b>
+          原文是 "a new spread amount will be applied to <b>the modified plan</b>"——
+          <b>用的是單數</b>，而且 Spread 明寫是每個幣種各自一份。</li>
+        <li><b>確認頁可以先看再決定。</b>原文 "before completing their configuration"——
+          <b>你可以走到最後一步看到新的 Spread，然後不送出。這條避險路徑對 ETH 計畫同樣成立。</b></li>
+        <li><b>轉換可能被整週跳過。</b>如果所有報價路徑在 5 秒內都取不到，
+          "the Scheduled Conversion will be <b>skipped</b>"，等下一個排程時間。
+          <b>文件的範例舉的正是 ETHUSDT。這是一個前面每一輪都沒記過的營運風險——
+          金額微小，但它的性質是「漏買」不是「買貴」。</b></li>
+      </ul>
+      <p style="margin:10px 0 0">
+        另外兩件：參考價<b>已經是「對使用者最有利」的路由</b>
+        （直接對與合成路徑一起比較後取最好的，這是結構性優勢不是成本）；
+        方法論或 Spread 計算方式的變更<b>有 30 天事前通知</b>
+        （<b>但那保護的是「幣安單方面改規則」，不保護「你自己改計畫」</b>）。
+      </p>
+      <p style="margin:10px 0 0">
+        <b>仍然未確認：暫停計畫算不算「modify」。</b>
+        API 層有兩個不同端點（<code>plan/edit</code> 管金額／週期／星期／資產，
+        <code>plan/edit-status</code> 管 ONGOING／PAUSED／REMOVED），
+        <b>定價相關欄位全在前者，這<u>暗示</u>暫停不是 modify——但法律文件沒有這樣寫，研究員不宣稱它成立。</b>
+      </p>
+    </div>
+
+    <div class="callout bad">
+      <h3>★ 兩個計畫的 Spread 實際值<b>仍然未知</b>，而且只有你本人查得到</h3>
+      <p style="margin:0">
+        研究員實測了六個 Auto-Invest 的 API 端點，<b>全部回 <code>-2014</code>（需要帳號簽章）</b>——
+        端點存在，但都要憑證。<code>binance.com</code> 的網頁在這個環境被防火牆擋下。
+      </p>
+      <p style="margin:10px 0 0">
+        <b>研究員沒有去尋找、也沒有使用你的 API 憑證。這一點明確寫出來。</b>
+        差別只在於：<b>「為什麼只有你查得到」從推測變成了實測</b>（六個端點的實際回應碼）。
+      </p>
+      <p style="margin:10px 0 0">
+        <b>如果你想自己查</b>：交易 → Convert → Recurring → 打開 <b>BTC 與 ETH 兩個計畫</b>的詳情；
+        另外走一次「建立計畫」到<b>確認頁但不要送出</b>，比較今天的報價與當初鎖定的值。
+        <b>兩個計畫要各做一次，因為文件明寫 Spread 是每個幣種各自一份。</b>
+      </p>
+    </div>
+
+    <h3 class="sub">6.4　順便把「Spread 重不重要」這件事定量了</h3>
+    <div class="table-wrap">
+      <table>
+        <caption>兩個計畫的 Spread 差距，對結果的影響</caption>
+        <thead><tr><th>ETH 與 BTC 的 Spread 差</th><th>對比值的影響</th><th>$5,200 流量上的年成本</th></tr></thead>
+        <tbody>
+          <tr><td class="name">0 bp</td><td>+0.00000</td><td>$0.00</td></tr>
+          <tr><td class="name">1 bp</td><td>-0.00010</td><td>$0.52</td></tr>
+          <tr><td class="name">5 bp</td><td>-0.00050</td><td>$2.60</td></tr>
+          <tr><td class="name">10 bp</td><td>-0.00100</td><td>$5.20</td></tr>
+          <tr><td class="name">20 bp</td><td>-0.00200</td><td>$10.40</td></tr>
+          <tr><td class="name">50 bp</td><td>-0.00500</td><td>$26.00</td></tr>
+          <tr><td class="name">100 bp</td><td>-0.01000</td><td>$52.00</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout good">
+      <p style="margin:0">
+        對照：<a href="#headline">第一節</a>那張起點掃描圖，比值從 0.6162 掃到 1.1271，
+        <b>等於 5109 bp 的價差當量</b>。
+      </p>
+      <p style="margin:10px 0 0">
+        <b>Spread 的問題與配置的問題差三到四個數量級。它們不該被放在同一句話裡當成可比的旋鈕。</b>
+        這也是為什麼「Spread 未知」不是一個擋路的問題——<b>它就算是 100 bp，也只有 $52/年。</b>
+      </p>
+    </div>
+  </section>
+
+  <section id="limits">
+    <h2>七、限制、未知，以及本頁作者重算時發現的兩處不一致</h2>
+    <p class="section-note">
+      這一節照慣例放在結論前面，而不是塞在最後面當免責聲明。
+      <b>如果下面任何一條讓你覺得前面的結論變弱了，那是對的——它本來就該那麼弱。</b>
+    </p>
+
+    <h3 class="sub">7.1　本頁作者的兩處不一致（都不改變結論，但都不吸收掉）</h3>
+    <div class="callout bad">
+      <h3>不一致 1：一個秩相關的中位數，研究員的報告寫反了方向</h3>
+      <p style="margin:0">
+        研究員的報告在講「挑執行小時」那一段寫：六個前後半段秩相關「<b>中位數約 +0.11</b>」。
+        <b>本頁從同一份 log 把六個值全部取出來重算，中位數是 −0.1655。</b>
+        六個值是：−0.734、−0.422、−0.336、+0.005、+0.223、+0.537。
+      </p>
+      <p style="margin:10px 0 0">
+        <b>更正的方向對結論無害，而且是往更不利於「挑得出來」的方向</b>：
+        秩相關的中位數是<u>負的</u>，代表前半段便宜的小時在後半段<b>偏向變貴</b>，
+        比「幾乎無關」更糟。<b>「六次全部失敗」這個判定不變。</b>
+      </p>
+      <p style="margin:10px 0 0">
+        <b>這句話只出現在研究員的報告檔裡，狀態檔沒有引用它</b>
+        （狀態檔寫的是區間 −0.734~+0.537，那是正確的）。
+        <b>所以這個錯誤沒有污染任何先前發布的頁面。</b>
+      </p>
+    </div>
+    <div class="callout">
+      <h3>不一致 2：0.8511 顆這個基準，對應的其實是星期五口徑</h3>
+      <p style="margin:0">
+        研究員的對帳表寫 0.8511「（週四 319 次；週一~週日全掃 0.8457~0.8541）」。
+        <b>本頁用同一份日 K 重跑那 14 種口徑：週四收盤是 0.8515，
+        而 0.8511 對應的是<u>週五</u>收盤（重算到小數第六位是 0.851133，週四是 0.851522）。</b>
+        全掃範圍 0.8457~0.8541 則與研究員寫的完全一致。
+      </p>
+      <p style="margin:10px 0 0">
+        <b>影響：可以忽略，但要說出來。</b>
+        頭條那個「實際是基準的幾 %」用全部 14 種口徑算是
+        <b>3.97%~4.01%</b>，差異出現在小數第二位。
+        <b>本頁因此全程報區間，而不是報那一個點。</b>
+      </p>
+    </div>
+
+    <h3 class="sub">7.2　明確的未知——研究員要求不要填補，本頁照辦</h3>
+    <ul class="limits">
+      <li><b>兩個計畫的 Spread 實際值。</b>六個端點實測全部需要簽章；
+        <b>只有你本人查得到，而團隊沒有、也不會去找你的憑證。</b></li>
+      <li><b>兩個計畫的真實建立日期與金額歷史。</b><a href="#headline">第一節</a>整段建立在這個未知上。</li>
+      <li><b>★ 你的 ETH 現貨存量——十六輪從來沒有被記錄過。</b>
+        <a href="#actionable">第六節</a>的 $33.76/年 建立在推估存量上，
+        <b>表裡已經給了 0.25~4.0 ETH 的敏感度，請用那個範圍讀它，不要用那一個數字。</b></li>
+      <li><b>入金紀錄。</b>第十輪已列，仍未查。整個閒置漏損的鋸齒形狀建立在
+        <b>2026-09-18 的單一觀測值</b>上，這一輪只改了它的利率口徑與燃燒率解讀，
+        <b>沒有增加任何新的觀測</b>。</li>
+      <li><b><code>subscriptionCycle</code> 在 2026 年是否仍是那八個。</b>封存快照是 2025-02。</li>
+      <li><b>BTC 專屬災難的機率。</b>分散化論證唯一站得住的版本，<b>無法從任何資料推導</b>。</li>
+    </ul>
+
+    <h3 class="sub">7.3　研究員自揭的限制（13 項，這裡挑最會影響讀法的）</h3>
+    <ul class="limits">
+      <li><b>本輪沒有取得任何乾淨的首次讀取，也不宣稱有。</b>
+        所有序列都落在本專案已經反覆使用過的同一段日曆上。</li>
+      <li><b>不重疊視窗 n = 9 / 4 / 3。
+        這個樣本數不能拒絕任何東西</b>，包括「幾何平均其實不是 1.0」。
+        它被當成離散度的描述，<b>不是檢定</b>。</li>
+      <li><b>母體限制與 BTC 自身漂移完全相同</b>：ETH/BTC 只有 9.1 年可交易史，
+        要釘到 ±5%／年需要 111 年。<b>這不是資料清理問題，是資料本身不夠長。</b></li>
+      <li><b>全部使用幣安單一場所、單一交易對、日收盤。</b>
+        星期／開收盤的 14 種口徑已測（差 ±0.5%），<b>但跨交易所沒有測。</b></li>
+      <li><b>起點掃描的 34 列共用同一個終點價格，不是獨立抽樣。</b>
+        「13/34」不是勝率，研究員自己先標註了，本頁跟著標。</li>
+      <li><b>時點檢定的置中均價用到了未來資料</b>，所以它不可交易——
+        但它本來就是公平性檢定而不是策略。研究員另外做了「只用未來 7 天」的因果版本，結論一致。</li>
+      <li><b>計畫年齡推論的四個假設：無提領、無計畫外 BTC、金額恆為 100 USDT、未暫停。
+        任何一項不成立就失效。</b></li>
+      <li><b>官方 API 文件來自 Wayback 封存</b>（時間戳已記錄），
+        <b>無法證明幣安此後沒有修訂</b>。法律文件則是今天直接讀的。</li>
+      <li><b>研究員沒有使用、也沒有去尋找你的 API 憑證。</b>
+        所有帳戶層級的數字都是推論或取自狀態檔。</li>
+    </ul>
+
+    <h3 class="sub">7.4　這一頁的把關程度</h3>
+    <div class="callout">
+      <p style="margin:0">
+        <b>本輪沒有走完整的外部覆核流程。</b>把關由兩層組成：
+        <b>(1) 協調者對關鍵數字的逐項獨立重算</b>（頭條那張隱含報酬表、流量／存量比、
+        今日利率複驗都是協調者自己重算的）；
+        <b>(2) 本頁作者從 <code>eth_plan/data/</code> 的原始日 K 與各腳本的 log 重新產生每一個數字</b>。
+      </p>
+      <p style="margin:10px 0 0">
+        <b>本頁沒有任何一個數字是人工從報告抄過來的。</b>
+        產生本頁的程式在寫檔前會做三件事：把只存在於狀態檔的數字
+        <b>逐一斷言「這串字確實出現在狀態檔裡」</b>；
+        把其餘數字<b>從資料檔或 log 解析出來並斷言解析成功</b>；
+        最後檢查<b>標籤閉合、樣式類別全部有定義、站內連結全部解析得到</b>。
+      </p>
+      <p style="margin:10px 0 0">
+        <b>這一段之所以寫出來，是因為「這一頁被檢查到什麼程度」本身就是你需要知道的資訊。
+        它比平常短，所以本頁的所有結論都該按這個折扣讀。</b>
+      </p>
+    </div>
+  </section>
+
+  <section id="conclusion">
+    <h2>結論</h2>
+
+    <div class="plain">
+      <span class="lbl">一段話講完</span>
+      <p>這一輪被派去查「ETH 那個定投計畫該不該存在」，
+        <b>研究員拒絕替你決定，而且他是對的</b>：資料在方向上量不出東西，
+        能量出來的只有「這個賭注有多大」，而那個答案是「很大，而且大到蓋住所有可能的配置」。</p>
+      <p><b>但在量的過程中撞到一件更基礎的事</b>：
+        十六輪的報告都把一個六年的模擬放在最前面，
+        <b>而你的帳戶對應的大約是 24 週</b>。
+        <b>回測沒有因此失效，但「1.0000 是誰的成績」這件事，我們一直沒有講清楚。</b></p>
+      <p><b>你現在可以做的最有價值的一件事，是打開帳戶看一眼兩個計畫的建立日期，
+        然後告訴協調者。</b>那一句話會確認或推翻這一頁的<a href="#headline">第一節</a>，而它只花你十秒鐘。</p>
+    </div>
+
+    <h3 class="sub">這一輪確定的事（代數層級，不會被新資料推翻）</h3>
+    <ul class="limits">
+      <li><b>用美元算的比值與用 BTC 顆數算的比值是同一個數，用 ETH 顆數算的是它的倒數。</b>
+        「三個計價口徑」在點估計上是誤導框架，<b>三者只在變異數上分家</b>。</li>
+      <li><b>在幣數口徑下，ETH 配置就是一個純粹對 ETH/BTC 的方向性部位</b>，
+        BTC 自己的價格只透過權重進入。<b>不是分散化。</b></li>
+      <li><b>以 BTC 顆數記分時變異數對 w 嚴格遞增、沒有內點。</b>
+        美元口徑下有內點的條件是 ρ &lt; σ<sub>BTC</sub>/σ<sub>ETH</sub>，
+        <b>而這個條件在 6 個視窗裡有 5 個不成立。</b></li>
+      <li><b>兩個口徑的對數遺憾完全相同</b>；對 &#123;全BTC, 全ETH&#125; 的 minimax 是 w = 1/2，
+        對 &#123;全BTC&#125; 的 minimax 是 w = 0。<b>兩者都對，差別是基準集合，而基準集合就是目標函數。</b></li>
+      <li><b>閒置利息 = 平均閒置餘額 × 利率，與有幾個計畫在消耗它無關。ETH 不會新增第二筆漏損。</b></li>
+      <li><b>成長最適公式裡的 σ²/2 要靠再平衡才拿得到，兩個獨立定投計畫拿不到。</b></li>
+    </ul>
+
+    <h3 class="sub">這一輪<b>沒有</b>確定的事</h3>
+    <ul class="limits">
+      <li><b>「ETH 該不該存在」沒有答案，而且本頁認為它不該有答案。</b>
+        任何人給你一個百分比，都是把 [−1.49, +1.59] 假裝成一個點。</li>
+      <li><b>計畫年齡是推論不是觀測</b>，有四個假設，<b>你一句話就能推翻</b>。</li>
+      <li><b>你的 ETH 存量仍然是未知</b>，所以那個 $33.76/年 是量級不是帳單。</li>
+      <li><b>兩個計畫的 Spread 實際值仍然未知</b>，而且<b>只有你查得到</b>。</li>
+      <li><b>本輪沒有任何候選走到能算幣數比的階段，因此本頁不提供新的幣數比。</b></li>
+    </ul>
+
+    <div class="callout bad">
+      <h3>為什麼這一頁不寫「終局」「結案」「已證實」</h3>
+      <p style="margin:0">
+        <b>因為這一輪本身就是反例。</b>一個被記在狀態檔第 9 行、放了十六輪的數字，
+        和另一個放在旁邊的數字，<b>相除一次就改變了三份結論的讀法</b>。
+        <b>沒有人做錯什麼，只是沒有人再看一次。</b>
+      </p>
+      <p style="margin:10px 0 0">
+        <b>這種事會再發生。</b>所以這一頁的每一個判定都該讀成
+        「以今天能看到的證據，它是這樣」，而不是「它永遠是這樣」。
+      </p>
+      <p style="margin:14px 0 0;font-size:1.04rem">
+        <b>而這一輪最實際的一句話，和前面每一輪是同一句，只是現在它的強度是原本的兩倍：
+        在目前這個資金規模上，把錢投進去的那個動作本身，比任何一個聰明的操作都有效。</b>
+        流量是存量的 3.78 倍，不是 1.89 倍。
+      </p>
+    </div>
+
+    <h3 class="sub">相關頁面</h3>
+    <ul class="limits">
+      <li><b><a href="crypto-dca-amplifier-report.html">DCA 放大器 · 總覽報告（v1，已凍結）</a></b>——
+        六年幣數比的完整記錄。<b>本頁更正它的是一個基準點的說明</b>：
+        <a href="crypto-dca-amplifier-report.html#coin-ratio">〈幣數比〉那一節</a>的
+        1.0000 是一段<b>模擬</b>的結果，不是使用者的帳戶歷史。
+        <b>依規則該頁不修改，更正寫在這裡並回連。</b></li>
+      <li><b><a href="crypto-dca-amplifier-report.html#lending">第八輪：出借 BTC 的否決</a></b>——
+        <a href="#actionable">第六節</a>說明那個否決是對「BTC 這個幣種」的，不是對產品的。</li>
+      <li><b><a href="crypto-dca-amplifier-report.html#flow">流量 vs 存量</a></b>——
+        本頁把那裡的 1.89 倍更正為 3.78 倍，<b>方向是讓該節的論點更強。</b></li>
+      <li><b><a href="laoliu-r15-triage2.html">第十五輪：第二輪外部盤點</a></b>——
+        上一輪；它的<a href="laoliu-r15-triage2.html#glossary">術語表</a>與本頁的互補。</li>
+      <li><b><a href="crypto-dca-amplifier-report.html#glossary">完整術語對照表（69 條）</a></b>——
+        本頁的<a href="#glossary">術語表</a>只收這一頁用得到的。</li>
+      <li><b><a href="laoliu.html">老六研究院索引</a></b></li>
+    </ul>
+  </section>
+
+</main>
+
+<footer>
+  老六 · 第十六輪：ETH 定投計畫 · 2026-09-21<br>
+  數字來源：<code>eth_plan/</code>（<code>data/</code> 的日 K 與利率快照、10 支腳本的
+  <code>logs_*.log</code>、<code>evidence/</code> 的法律與 API 文件存檔），
+  由 <code>tools/build_laoliu_r16.py</code> 讀取後注入本頁，<b>未經人工轉抄</b>；
+  只存在於狀態檔的數字在建置時逐一斷言其字面存在。<br>
+  研究員的回歸測試：<code>pytest test_eth_plan.py -q</code> → <b>17 passed</b>。
+  本頁作者的獨立重算使用同一份 <code>eth_plan/data/</code>，<b>未修改該目錄任何檔案</b>。<br>
+  本頁為研究記錄，不構成投資建議；<b>研究仍在進行中，結論可能隨新證據修正</b>。<br>
+  <b>本頁發布後不再修改。</b>要更新請建立新頁並回連本頁。
+</footer>
+
+</body>
+</html>
