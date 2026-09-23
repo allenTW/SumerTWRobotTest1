@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>資料上傳 · 老六</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<section id="gate" class="gate" hidden>
+  <form id="gate-form" class="card gate-card">
+    <h1>資料上傳</h1>
+    <p class="muted">這個頁面會把檔案存到 Mac mini。請輸入上傳密碼。</p>
+    <label for="gate-token">上傳密碼</label>
+    <input id="gate-token" type="password" autocomplete="current-password" required>
+    <button type="submit" class="primary">進入</button>
+    <p id="gate-error" class="error" role="alert" hidden></p>
+  </form>
+</section>
+
+<main id="app" hidden>
+  <header class="topbar">
+    <h1>資料上傳</h1>
+    <p class="muted" id="root-hint"></p>
+  </header>
+
+  <section class="card">
+    <h2>1 · 分類</h2>
+    <div class="row">
+      <select id="category" aria-label="分類"></select>
+      <button type="button" id="new-category" class="ghost">＋ 新分類</button>
+    </div>
+    <div class="row new-cat" id="new-category-row" hidden>
+      <input id="new-category-name" type="text" placeholder="例如：券商對帳單" maxlength="60">
+      <button type="button" id="new-category-save" class="primary">建立</button>
+      <button type="button" id="new-category-cancel" class="ghost">取消</button>
+    </div>
+
+    <label for="tags">標籤<span class="muted">（選填，逗號分隔）</span></label>
+    <input id="tags" type="text" placeholder="binance, 2026Q3" maxlength="200">
+
+    <label for="note">備註<span class="muted">（選填）</span></label>
+    <textarea id="note" rows="2" maxlength="500" placeholder="這批資料是什麼、之後想拿來做什麼"></textarea>
+  </section>
+
+  <section class="card">
+    <h2>2 · 選擇檔案</h2>
+    <div id="drop" class="drop" tabindex="0" role="button"
+         aria-label="拖曳檔案到這裡，或按下選擇檔案">
+      <strong>把檔案拖到這裡</strong>
+      <span class="muted">或點一下選擇檔案 · 可多選 · 單檔上限 2 GiB</span>
+    </div>
+    <input id="picker" type="file" multiple hidden>
+    <ul id="queue" class="queue"></ul>
+  </section>
+
+  <section class="card">
+    <div class="row between">
+      <h2>最近上傳</h2>
+      <button type="button" id="refresh" class="ghost">重新整理</button>
+    </div>
+    <ul id="recent" class="recent"><li class="muted">載入中…</li></ul>
+  </section>
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
