@@ -36,15 +36,21 @@ APP_SUPPORT = Path.home() / "Library" / "Application Support" / "Claude"
 PLAN_USAGE = APP_SUPPORT / "plan-usage-history.json"
 
 TELEGRAM_TIMEOUT = 10
-SUMMARY_LIMIT = 700           # Telegram 上限是 4096，但通知要能一眼看完
+SUMMARY_LIMIT = 400           # Telegram 上限是 4096，但通知要能一眼看完
 PLAN_USAGE_STALE_HOURS = 2    # 抽樣超過這麼久就標示「可能過舊」
 
 DEFAULTS = {
     "bot_token": "",
     "chat_id": "",
-    # 太短的回合不通知，否則每問一句話都會響
-    "min_seconds": 60,
-    "min_tool_calls": 5,
+    # 太短的回合不通知，否則每問一句話都會響（跑超過 min_seconds 秒，
+    # 或用了 min_tool_calls 次工具以上，才算「做完一件事」）
+    "min_seconds": 600,
+    "min_tool_calls": 40,
+    # 同一個工作階段的「任務完成」至少隔這麼多秒才再發一則
+    "done_cooldown_seconds": 1800,
+    # 這些種類的訊息直接不送（只寫進日誌）。種類由呼叫端傳入，
+    # 沒傳就依腳本名稱推斷（SOURCE_KINDS）。要重新打開就從這份清單拿掉。
+    "mute_kinds": ["progress", "digest"],
     # 只在你離開電腦超過這麼久才通知；0 = 一律通知
     "idle_only_minutes": 0,
     # 同一個工作階段這麼多秒內不重複發相同類型的通知
@@ -52,6 +58,18 @@ DEFAULTS = {
     # 靜默心跳：完全沒發過任何通知超過這麼多小時，就送一則「我還活著」。
     # 不是每日定時訊息 —— 有在通知的日子一則都不會多。0 = 關閉。
     "heartbeat_hours": 24,
+}
+
+
+# 沒明確傳 kind 的腳本，依自己的檔名歸類。progress = 過程中的進度回報、
+# digest = 每日晨報／日報，預設都靜音；只有「全部完成」和「需要你授權」才該打擾人。
+SOURCE_KINDS = {
+    "muse_inbox": "progress",
+    "muse_bridge": "progress",
+    "gemini_music": "progress",
+    "colabflow": "progress",
+    "jules_harvest": "progress",
+    "morning": "digest",
 }
 
 
@@ -87,9 +105,18 @@ def telegram_call(token, method, params):
         return json.loads(resp.read().decode("utf-8", "replace"))
 
 
-def send_message(cfg, text):
+def infer_kind():
+    name = os.path.splitext(os.path.basename(sys.argv[0] or ""))[0]
+    return SOURCE_KINDS.get(name)
+
+
+def send_message(cfg, text, kind=None):
     if not cfg.get("bot_token") or not cfg.get("chat_id"):
         raise RuntimeError("還沒設定 bot_token / chat_id，先跑 configure")
+    kind = kind or infer_kind()
+    if kind and kind in (cfg.get("mute_kinds") or []):
+        log("靜音（%s）：%s" % (kind, str(text).replace("\n", " ")[:60]))
+        return {"ok": True, "muted": True}
     return telegram_call(cfg["bot_token"], "sendMessage", {
         "chat_id": cfg["chat_id"],
         "text": text,
@@ -347,7 +374,10 @@ def should_skip(cfg, kind, session_id, turn):
     state = cm.load_json(STATE_FILE, {}) or {}
     key = "%s:%s" % (session_id, kind)
     last = (state.get("sent") or {}).get(key) or 0
-    if time.time() - last < cfg["dedup_seconds"]:
+    gap = cfg["dedup_seconds"]
+    if kind == "done":
+        gap = max(gap, cfg.get("done_cooldown_seconds") or 0)
+    if time.time() - last < gap:
         return "剛剛才發過同一則（%.0f 秒前）" % (time.time() - last)
     return None
 
@@ -405,27 +435,30 @@ def build_message(kind, payload, turn, cfg):
         summary = turn.get("summary")
         lines.append("")
         if summary:
-            lines.append("<b>做了什麼</b>")
             lines.append(esc(tidy_summary(summary)))
         else:
             lines.append("<i>（這個回合沒有留下文字說明）</i>")
-        stats = []
         if turn.get("seconds"):
-            stats.append("耗時 %s" % human_duration(turn["seconds"]))
-        if turn.get("tool_calls"):
-            stats.append("%d 次工具" % turn["tool_calls"])
-        if stats:
-            detail = " · ".join(stats)
-            if turn.get("tools"):
-                detail += "（%s）" % tool_breakdown(turn["tools"])
             lines.append("")
-            lines.append("⏱ " + esc(detail))
+            lines.append("⏱ " + esc(human_duration(turn["seconds"])))
 
-    lines.append("")
-    lines.extend(esc_usage_lines(plan_usage(), turn))
-    if turn.get("model"):
-        lines.append("🤖 %s" % esc(turn["model"]))
+    usage = compact_usage(plan_usage())
+    if usage:
+        lines.append("")
+        lines.append(esc(usage))
     return "\n".join(lines)
+
+
+def compact_usage(usage):
+    """一行用量；取樣過舊就不放，免得放一個誤導人的數字。"""
+    if not usage or usage["stale"]:
+        return None
+    bits = []
+    if usage["five_hour"] is not None:
+        bits.append("5h %d%%" % usage["five_hour"])
+    if usage["seven_day"] is not None:
+        bits.append("7d %d%%" % usage["seven_day"])
+    return ("📊 " + " · ".join(bits)) if bits else None
 
 
 def esc_usage_lines(usage, turn):
@@ -473,7 +506,7 @@ def run_hook(dry_run=False):
         if reason:
             print("\n[dry-run] 正常情況下會被略過：%s" % reason)
         return
-    send_message(cfg, text)
+    send_message(cfg, text, kind=kind)
     remember_sent(kind, session_id)
     log("已通知（%s）：%s" % (kind, session_label(session_id)))
 
